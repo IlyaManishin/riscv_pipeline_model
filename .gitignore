@@ -1,0 +1,32 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+env/
+.python-version
+build/
+dist/
+*.egg-info/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Testing and Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Hardware Simulation (Cocotb)
+*.vcd
+*.ghw
+*.fst
+sim_build/
+results.xml
+
+# IDEs and OS
+.vscode/
