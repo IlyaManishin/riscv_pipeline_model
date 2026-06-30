@@ -30,3 +30,6 @@ results.xml
 
 # IDEs and OS
 .vscode/
+
+#Temp files
+.$*.bkp
