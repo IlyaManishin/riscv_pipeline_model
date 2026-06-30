@@ -1,0 +1,50 @@
+import pytest
+from src.riscv_entities.memory.register_file import RegisterFile
+
+def test_register_file_initialization():
+    rf = RegisterFile()
+    assert rf.size == 32
+    assert rf.cell_size == 32
+    for i in range(32):
+        assert rf.read(i) == 0
+
+def test_register_file_read_write_cycle():
+    rf = RegisterFile()
+    
+    rf.write(address=1, value=42)
+    assert rf.read(1) == 0
+    
+    rf.update()
+    assert rf.read(1) == 42
+
+def test_register_file_x0_always_zero():
+    rf = RegisterFile()
+    
+    rf.write(address=0, value=100)
+    rf.update()
+    
+    assert rf.read(0) == 0
+
+def test_register_file_bit_masking():
+    rf = RegisterFile()
+    
+    rf.write(address=5, value=0xFFFFFFFF + 5)
+    rf.update()
+    
+    assert rf.read(5) == 4
+
+def test_register_file_multiple_writes_conflict():
+    rf = RegisterFile()
+    rf.write(address=2, value=10)
+    
+    with pytest.raises(RuntimeError, match="Memory write conflict"):
+        rf.write(address=3, value=20)
+
+def test_register_file_bounds_checking():
+    rf = RegisterFile()
+    
+    with pytest.raises(IndexError):
+        rf.read(32)
+        
+    with pytest.raises(IndexError):
+        rf.write(32, 10)

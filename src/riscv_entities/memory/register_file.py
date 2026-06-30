@@ -1,4 +1,4 @@
-from base_entities.memory.async_read_mem import AsyncReadMem
+from src.base_entities.memory.async_read_mem import AsyncReadMem
 
 class RegisterFile(AsyncReadMem):
     REG_COUNT: int = 32
