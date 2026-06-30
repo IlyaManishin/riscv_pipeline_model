@@ -1,19 +1,29 @@
-from .async_read_mem import AsyncReadMem
+from ..core.mem import BaseMem
 
-class BlockMem(AsyncReadMem):
+class BlockMem(BaseMem):
     def __init__(self, size: int, cell_size: int):
         super().__init__(size, cell_size)
-        self._current_read_data: int = 0
-        self._next_read_addr: int | None = None
+        self._next_write: tuple[int, int] | None = None
+        self._has_read_this_cycle: bool = False
 
     def read(self, address: int) -> int:
         self._validate_address(address)
-        self._next_read_addr = address
-        return self._current_read_data
+        if self._has_read_this_cycle:
+            raise RuntimeError("Memory read conflict: multiple reads detected within a single clock cycle")
+        
+        self._has_read_this_cycle = True
+        return self._memory[address]
+
+    def write(self, address: int, value: int) -> None:
+        self._validate_address(address)
+        if self._next_write is not None:
+            raise RuntimeError("Memory write conflict: multiple writes detected within a single clock cycle")
+        self._next_write = (address, value & self._mask)
 
     def update(self) -> None:
-        if self._next_read_addr is not None:
-            self._current_read_data = self._memory[self._next_read_addr]
-            self._next_read_addr = None
+        self._has_read_this_cycle = False
         
-        super().update()
+        if self._next_write is not None:
+            addr, val = self._next_write
+            self._memory[addr] = val
+            self._next_write = None

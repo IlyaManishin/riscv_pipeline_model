@@ -1,19 +1,18 @@
 import pytest
 from src.riscv_entities.memory.imem import InstrMem
 
-def test_imem_load_and_sync_read_cycle():
+def test_imem_load_and_async_read_cycle():
     imem = InstrMem(size=16)
-    program = [0x00100093, 0x00200113, 0x002081b3] 
+    program = [0x00100093, 0x00200113, 0x002081b3]
     imem.load_program(program)
 
-    out_data = imem.read(0)
-    assert out_data == 0
-
-    imem.update()
     assert imem.read(0) == 0x00100093
 
-    imem.read(1)
+    with pytest.raises(RuntimeError, match="Memory read conflict"):
+        imem.read(0)
+
     imem.update()
+
     assert imem.read(1) == 0x00200113
 
 def test_imem_write_protection():
