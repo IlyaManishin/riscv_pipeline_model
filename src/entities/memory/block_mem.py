@@ -3,7 +3,7 @@ from ..core.itrigger import ITrigger
 class BlockMemory(ITrigger):
     def __init__(self, size_bytes: int):
         self.size_bytes: int = size_bytes
-        self._memory: dict[int, int] = {}
+        self._memory: list[int] = [0] * size_bytes
         self._transactions: list[tuple[int, int]] = []
 
     def _validate_address(self, address: int) -> None:
@@ -21,4 +21,4 @@ class BlockMemory(ITrigger):
 
     def read(self, address: int) -> int:
         self._validate_address(address)
-        return self._memory.get(address, 0)
+        return self._memory[address]
