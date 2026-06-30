@@ -1,4 +1,4 @@
-from ..core.itrigger import ITrigger
+from .itrigger import ITrigger
 
 class Clock:
     def __init__(self):
