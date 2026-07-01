@@ -1,5 +1,5 @@
-from src.sim_base.mem.async_read_mem import AsyncReadMem
-from src.risc_v import riscv_config as conf
+from sim_base.mem.async_read_mem import AsyncReadMem
+from risc_v import riscv_config as conf
 
 class RegFile(AsyncReadMem):
     REG_COUNT: int = 32

@@ -1,5 +1,5 @@
-from src.sim_base.mem.block_mem import BlockMem
-from src.risc_v import riscv_config as conf
+from sim_base.mem.block_mem import BlockMem
+from risc_v import riscv_config as conf
  
 class InstrMem(BlockMem):
     def __init__(self, size: int, cell_size: int = conf.XLEN):
