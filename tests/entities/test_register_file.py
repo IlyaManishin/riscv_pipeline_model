@@ -1,4 +1,5 @@
 import pytest
+
 from src.riscv_entities.memory.register_file import RegisterFile
 
 def test_register_file_initialization():
