@@ -1,7 +1,7 @@
-from src.base_entities.memory.async_read_mem import AsyncReadMem
-from src import riscv_config as conf
+from src.sim_base.mem.async_read_mem import AsyncReadMem
+from src.risc_v import riscv_config as conf
 
-class RegisterFile(AsyncReadMem):
+class RegFile(AsyncReadMem):
     REG_COUNT: int = 32
     REG_WIDTH: int = conf.XLEN
 

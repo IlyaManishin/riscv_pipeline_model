@@ -1,7 +1,7 @@
 import pytest
 
-from src.riscv_entities.memory.dmem import DataMem
-from src import riscv_config as conf
+from src.risc_v.entities.mem.dmem import DataMem
+from src.risc_v import riscv_config as conf
 
 def test_data_mem_initialization():
     size = 64

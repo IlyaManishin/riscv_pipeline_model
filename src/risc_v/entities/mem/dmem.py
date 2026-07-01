@@ -1,5 +1,5 @@
-from src.base_entities.memory.block_mem import BlockMem
-from src import riscv_config as conf
+from src.sim_base.mem.block_mem import BlockMem
+from src.risc_v import riscv_config as conf
 
 class DataMem(BlockMem):
     def __init__(self, size: int, cell_size: int = conf.XLEN):

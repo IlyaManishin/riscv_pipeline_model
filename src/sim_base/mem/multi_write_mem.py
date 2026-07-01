@@ -1,4 +1,4 @@
-from ..core.mem import BaseMem
+from .base_mem import BaseMem
 
 class MultiWriteMem(BaseMem):
     def __init__(self, size: int, cell_size: int):

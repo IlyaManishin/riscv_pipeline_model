@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from .itrigger import ITrigger
+from ..core.itrigger import ITrigger
 
 class BaseMem(ITrigger):
     def __init__(self, size: int, cell_size: int):

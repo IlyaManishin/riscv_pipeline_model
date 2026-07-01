@@ -1,6 +1,6 @@
 import pytest
 
-from src.riscv_entities.memory.imem import InstrMem
+from src.risc_v.entities.mem.imem import InstrMem
 
 def test_imem_load_and_async_read_cycle():
     imem = InstrMem(size=16)
