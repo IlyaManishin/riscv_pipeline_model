@@ -5,6 +5,10 @@ class AsyncReadMem(BaseMem):
         super().__init__(size, cell_size)
         self._next_write: tuple[int, int] | None = None
 
+    def read(self, address: int) -> int:
+        self._validate_address(address)
+        return self._memory[address]
+
     def write(self, address: int, value: int) -> None:
         self._validate_address(address)
         if self._next_write is not None:

@@ -14,9 +14,9 @@ class BaseMem(ITrigger):
         if not (0 <= address < self.size):
             raise IndexError(f"Address {address} out of memory bounds (size: {self.size} cells)")
 
+    @abstractmethod
     def read(self, address: int) -> int:
-        self._validate_address(address)
-        return self._memory[address]
+        pass
 
     @abstractmethod
     def write(self, address: int, value: int) -> None:
