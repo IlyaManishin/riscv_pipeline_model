@@ -5,7 +5,7 @@ class InstrMem(BlockMem):
     def __init__(self, size: int, cell_size: int = conf.XLEN):
         super().__init__(size, cell_size)
 
-    def write(self, address: int, value: int) -> None:
+    def write(self, address: int, value: int, byte_we: int | None = None) -> None:
         raise PermissionError("Instruction Memory is read-only during simulation execution")
 
     def load_program(self, program_code: list[int]) -> None:

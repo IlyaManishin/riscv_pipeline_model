@@ -1,6 +1,6 @@
 import pytest
 
-from risc_v.entities.mem.reg_file import RegFile
+from risc_v.modules.mem.reg_file import RegFile
 
 
 def test_register_file_initialization():

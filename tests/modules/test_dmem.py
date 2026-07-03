@@ -1,6 +1,6 @@
 import pytest
 
-from risc_v.entities.mem.dmem import DataMem
+from risc_v.modules.mem.dmem import DataMem
 from risc_v import riscv_config as conf
 
 def test_data_mem_initialization():
@@ -23,6 +23,16 @@ def test_data_mem_read_write_pipeline():
     
     dmem.update()
     
+    assert dmem.read(address=4) == (0xABCDEFA0 & ((1 << conf.XLEN) - 1))
+
+
+def test_data_mem_write_cell_primitive():
+    dmem = DataMem(size=16)
+
+    dmem.write_cell(address=4, value=0xABCDEFA0)
+    assert dmem.read(address=4) == 0
+
+    dmem.update()
     assert dmem.read(address=4) == (0xABCDEFA0 & ((1 << conf.XLEN) - 1))
 
 def test_data_mem_single_read_per_cycle_constraint():
@@ -53,6 +63,24 @@ def test_data_mem_bit_masking():
     dmem.update()
     
     assert dmem.read(address=1) == (overflow_value & mask)
+
+
+def test_data_mem_partial_byte_write():
+    dmem = DataMem(size=16)
+
+    dmem.write(address=0, value=0x11223344)
+    dmem.update()
+
+    dmem.write(address=0, value=0xAABBCCDD, byte_we=0b1100)
+    dmem.update()
+
+    assert dmem.read(address=0) == 0xAABB3344
+
+    dmem.write(address=0, value=0x55667788, byte_we=0b0011)
+    dmem.update()
+
+    assert dmem.read(address=0) == 0xAABB7788
+
 
 def test_data_mem_bounds_checking():
     size = 10
