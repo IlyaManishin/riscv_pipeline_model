@@ -1,6 +1,6 @@
 from sim_base.mem.register import Register
 
-import riscv_config as conf 
+import risc_v.riscv_config as conf 
 
 class PC:
     def __init__(self, rst_reg: Register, width: int = conf.XLEN, pc_start_addr: int = conf.PC_START_ADDR):
