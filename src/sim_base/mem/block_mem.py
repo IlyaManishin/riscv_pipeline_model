@@ -1,13 +1,15 @@
 from .base_mem import BaseMem
 
 class BlockMem(BaseMem):
-    def __init__(self, size: int, cell_size: int):
+    def __init__(self, addr_width: int, cell_size: int):
+        size = 1 << addr_width
         super().__init__(size, cell_size)
+        
         self._bytes_per_cell: int = cell_size // 8
         self._byte_mask: int = (1 << self._bytes_per_cell) - 1
         self._next_write: tuple[int, int] | None = None
         self._has_read_this_cycle: bool = False
-
+    
     def read(self, address: int) -> int:
         self._validate_address(address)
         if self._has_read_this_cycle:
