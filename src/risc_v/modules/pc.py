@@ -1,42 +1,30 @@
-from risc_v.riscv_config import XLEN, PC_START_ADDR
+from sim_base.mem.register import Register
 
+import riscv_config as conf 
 
-class ProgramCounter:
+class PC:
+    def __init__(self, rst_reg: Register, width: int = conf.XLEN, pc_start_addr: int = conf.PC_START_ADDR):
+        self._reg = Register(init_value=pc_start_addr)
+        
+        self.rst_reg = rst_reg
+        self._pc_start_addr = pc_start_addr
 
-    def __init__(self):
-        self.pc = PC_START_ADDR & ((1 << XLEN) - 1)
+    @property
+    def reg(self) -> Register:
+        return self._reg
 
-    def update(
-        self,
-        rst: bool,
-        br_taken: bool,
-        pc_br: int
-    ) -> int:
-        """
-        Program Counter.
+    def read(self) -> int:
+        return self._reg.read()
 
-        Args:
-            rst:      Active-high reset.
-            br_taken: Branch/jump taken.
-            pc_br:    Branch target address.
-
-        Returns:
-            Current PC after clock edge.
-        """
-
-        mask = (1 << XLEN) - 1
-
+    def set_pc(self, br_taken: bool, pc_br: int) -> None:
+        """always_ff logic"""
+        rst = self.rst_reg.read()
         if rst:
-            self.pc = PC_START_ADDR
-
+            next_pc = self._pc_start_addr
         elif br_taken:
-            self.pc = pc_br & mask
-
+            next_pc = pc_br
         else:
-            self.pc = (self.pc + 4) & mask
+            next_pc = self._reg.read() + 4
 
-        return self.pc
-
-    def get(self) -> int:
-        """Current PC value."""
-        return self.pc
+        self._reg.set(next_pc & conf.NUM_MASK)
+        
