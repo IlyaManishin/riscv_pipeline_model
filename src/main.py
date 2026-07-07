@@ -1,17 +1,10 @@
-from sim_base.mem.register import Register
-from risc_v.core import clk
+from risc_v import core
 
-shift_len = 5
-shift_reg = [Register() for i in range(shift_len)]
-for reg in shift_reg:
-    clk.add_trigger(reg)
+core = core.Core(2**10, 2**10)
 
-iters = 100
-for i in range(1, iters + 1):
-    for j in range(shift_len):
-        if (j == 0):
-            shift_reg[0].set(i)
-        else:
-            shift_reg[j].set(shift_reg[j - 1].read())
-    print(", ".join([str(r.read()) for r in shift_reg]))
-    clk.tick()
+program = "C:\\Users\\Lecoo\\Documents\\rv-nsu\\prg\\uBench\\hex\\andi_test.hex"
+
+core.upload_instr_from_hex(program)
+
+for i in range(20):
+    core.tick()
