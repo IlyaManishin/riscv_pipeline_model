@@ -3,12 +3,11 @@ import math
 
 XLEN = 32
 PC_START_ADDR = 0
-NUM_MASK = 2**10
 
 IMEM_ADDR_BYTE_WIDTH = 14
 DMEM_ADDR_BYTE_WIDTH = 14
 
-DATA_BYTE_NUM   = XLEN / 8
+DATA_BYTE_NUM   = XLEN / 8 # bytes in block with XLEN size
 BYTE_ADDR_WIDTH = math.log2(DATA_BYTE_NUM)
 
 class Alu_sel_t(enum.Enum):
