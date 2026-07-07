@@ -1,0 +1,193 @@
+# =========================================================================
+# IMPORTS
+# =========================================================================
+from sim_base.clock import Clock
+from sim_base.mem.register import Register
+from risc_v.modules.pc import PC
+from risc_v.modules.mem.reg_file import RegFile
+from risc_v.modules.decode import Instruction_Decoder
+from risc_v.modules.immgen import ImmGen
+from risc_v.modules.alu import Alu
+from risc_v.modules.shifter import Shifter
+from risc_v.modules.branch_unit import BranchUnit
+from risc_v.riscv_config import WB_sel_t
+import risc_v.riscv_config as conf
+
+
+# =========================================================================
+# CORE CLASS DEFINITION (Single-Cycle uArch)
+# =========================================================================
+class Core:
+
+    # ---------------------------------------------------------------------
+    # INITIALIZATION & HARDWARE BINDING
+    # ---------------------------------------------------------------------
+    def __init__(self, clk: Clock, rst_reg: Register):
+        self.clk = clk
+        
+        # Hardware instances
+        self.pc_inst = PC(rst_reg=rst_reg)
+        self.clk.add_trigger(self.pc_inst.reg)
+        
+        self.rf_inst = RegFile()
+        self.clk.add_trigger(self.rf_inst)
+        
+        # Internal Wires (Combinational state)
+        self.pc = 0
+        self.instr = None
+        self.rs1 = 0
+        self.rs2 = 0
+        self.rd = 0
+        
+        self.rf_rd1 = 0
+        self.rf_rd2 = 0
+        self.rf_wd3 = 0
+        self.rf_we3 = False
+        
+        self.imm = 0
+        self.alu_in_a = 0
+        self.alu_in_b = 0
+        self.alu_out = 0
+        
+        self.shift_shamt = 0
+        self.shifter_out = 0
+        self.id_controls = None
+        
+        # DMEM Interface Wires
+        self.dmem_addr = 0
+        self.dmem_we = False
+        self.dmem_funct3 = 0
+        self.dmem_byte_off = 0
+        self.dmem_wdata = 0
+        self.dmem_byte_we = 0
+
+    # ---------------------------------------------------------------------
+    # INTERFACE METHODS
+    # ---------------------------------------------------------------------
+    def get_imem_addr(self) -> int:
+        return self.pc_inst.read()
+
+    def get_dmem_addr(self) -> int:
+        return self.dmem_addr
+
+    def get_dmem_wdata(self) -> int:
+        return self.dmem_wdata
+
+    def get_dmem_byte_we(self) -> int:
+        return self.dmem_byte_we
+
+    # ---------------------------------------------------------------------
+    # STAGE 1: COMBINATIONAL LOGIC (Before DMEM read)
+    # ---------------------------------------------------------------------
+    def evaluate_combinational(self, instr) -> None:
+        self.instr = instr
+        self.pc = self.pc_inst.read()
+        
+        # Instruction Decode basic fields
+        self.rs1 = instr.rs1
+        self.rs2 = instr.rs2
+        self.rd = instr.rd
+        
+        # Register File read (asynchronous / combinational)
+        self.rf_rd1 = self.rf_inst.read(self.rs1)
+        self.rf_rd2 = self.rf_inst.read(self.rs2)
+        
+        # Branch Unit & Instruction Decoder
+        br_eq, br_lt = BranchUnit.compare(self.rf_rd1, self.rf_rd2, br_un=False)
+        self.id_controls = Instruction_Decoder.decode(instr, br_eq=br_eq, br_lt=br_lt)
+        
+        # Re-evaluate Branch Unit with exact signedness from decoder
+        br_eq, br_lt = BranchUnit.compare(self.rf_rd1, self.rf_rd2, bool(self.id_controls.br_un))
+        
+        # Immediate Generation
+        self.imm = ImmGen.generate(instr, self.id_controls.imm_type)
+        
+        # DMEM Address Calculation
+        self.dmem_addr = (self.rf_rd1 + self.imm) & ((1 << conf.XLEN) - 1)
+        
+        # ALU Execution
+        self.alu_in_a = self.rf_rd1 if self.id_controls.a_sel else self.pc
+        self.alu_in_b = self.rf_rd2 if self.id_controls.b_sel else self.imm
+        self.alu_out = Alu.execute(self.id_controls.alu_sel, self.alu_in_a, self.alu_in_b)
+        
+        # Shifter Execution
+        self.shift_shamt = (self.rf_rd2 & 0x1F) if self.id_controls.b_sel else ((instr.raw >> 20) & 0x1F)
+        self.shifter_out = Shifter.shift(self.rf_rd1, self.shift_shamt, self.id_controls.sh_sel)
+        
+        # DMEM Write Port Logic (Data formatting and Byte Enable)
+        self.dmem_we = bool(getattr(self.id_controls, 'dmem_we', getattr(self.id_controls, 'dmem_sel', 0)))
+        self.dmem_funct3 = instr.funct3
+        self.dmem_byte_off = self.dmem_addr & 0b11
+        
+        self.dmem_wdata = 0
+        self.dmem_byte_we = 0
+        
+        if self.dmem_we:
+            match self.dmem_funct3:
+                case 0b000: # SB
+                    val = self.rf_rd2 & 0xFF
+                    self.dmem_wdata = val | (val << 8) | (val << 16) | (val << 24)
+                    self.dmem_byte_we = 1 << self.dmem_byte_off
+                case 0b001: # SH
+                    val = self.rf_rd2 & 0xFFFF
+                    self.dmem_wdata = val | (val << 16)
+                    self.dmem_byte_we = 0b1100 if (self.dmem_byte_off & 0b10) else 0b0011
+                case 0b010: # SW
+                    self.dmem_wdata = self.rf_rd2 & 0xFFFFFFFF
+                    self.dmem_byte_we = 0b1111
+
+    # ---------------------------------------------------------------------
+    # STAGE 2: SEQUENTIAL LOGIC & WRITE-BACK (Clock step)
+    # ---------------------------------------------------------------------
+    def step(self, dmem_data_in: int, rst: int) -> None:
+        
+        # DMEM Read Port Logic (Data formatting from memory)
+        byte_data = [
+            (dmem_data_in >> 0) & 0xFF,
+            (dmem_data_in >> 8) & 0xFF,
+            (dmem_data_in >> 16) & 0xFF,
+            (dmem_data_in >> 24) & 0xFF,
+        ]
+        
+        dmem_rdata_out = 0
+        match self.dmem_funct3:
+            case 0b000: # LB
+                val = byte_data[self.dmem_byte_off]
+                dmem_rdata_out = (val | 0xFFFFFF00) if (val & 0x80) else val
+            case 0b001: # LH
+                if self.dmem_byte_off & 0b10:
+                    val = byte_data[2] | (byte_data[3] << 8)
+                else:
+                    val = byte_data[0] | (byte_data[1] << 8)
+                dmem_rdata_out = (val | 0xFFFF0000) if (val & 0x8000) else val
+            case 0b010: # LW
+                dmem_rdata_out = dmem_data_in
+            case 0b100: # LBU
+                dmem_rdata_out = byte_data[self.dmem_byte_off]
+            case 0b101: # LHU
+                if self.dmem_byte_off & 0b10:
+                    dmem_rdata_out = byte_data[2] | (byte_data[3] << 8)
+                else:
+                    dmem_rdata_out = byte_data[0] | (byte_data[1] << 8)
+        
+        # Write-back MUX
+        match self.id_controls.wb_sel:
+            case WB_sel_t.WB_PC4_OUT:
+                self.rf_wd3 = (self.pc + 4) & ((1 << conf.XLEN) - 1)
+            case WB_sel_t.WB_ALU_OUT:
+                self.rf_wd3 = self.alu_out
+            case WB_sel_t.WB_SHIFTER_OUT:
+                self.rf_wd3 = self.shifter_out
+            case WB_sel_t.WB_DMEM_OUT:
+                self.rf_wd3 = dmem_rdata_out
+            case _:
+                self.rf_wd3 = 0
+        
+        # Update Register File
+        self.rf_we3 = bool(self.id_controls.reg_wr) and not bool(rst)
+        if self.rf_we3:
+            self.rf_inst.write(self.rd, self.rf_wd3)
+            
+        # Update Program Counter
+        br_taken = not bool(self.id_controls.pc_sel)
+        self.pc_inst.set_pc(br_taken=br_taken, pc_br=self.alu_out)
