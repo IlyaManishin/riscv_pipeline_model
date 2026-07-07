@@ -41,6 +41,8 @@ class Shifter:
                     data -= 1 << XLEN
 
                 res = data >> shamt
+            case Shift_sel_t.ANY:
+                res = 0
 
             case _:
                 raise ValueError(f"Unsupported shift operation: {sel}")
