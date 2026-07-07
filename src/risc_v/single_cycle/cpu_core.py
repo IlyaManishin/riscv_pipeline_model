@@ -1,6 +1,3 @@
-# =========================================================================
-# IMPORTS
-# =========================================================================
 from sim_base.clock import Clock
 from sim_base.mem.register import Register
 from risc_v.modules.pc import PC
@@ -15,7 +12,7 @@ import risc_v.riscv_config as conf
 
 
 # =========================================================================
-# CORE CLASS DEFINITION (Single-Cycle uArch)
+# CORE CLASS DEFINITION (Single-Cycle)
 # =========================================================================
 class Core:
 
@@ -116,7 +113,7 @@ class Core:
         self.shifter_out = Shifter.shift(self.rf_rd1, self.shift_shamt, self.id_controls.sh_sel)
         
         # DMEM Write Port Logic (Data formatting and Byte Enable)
-        self.dmem_we = bool(getattr(self.id_controls, 'dmem_we', getattr(self.id_controls, 'dmem_sel', 0)))
+        self.dmem_we = self.id_controls.dmem_sel
         self.dmem_funct3 = self.instr.funct3
         self.dmem_byte_off = self.dmem_addr & 0b11
         
@@ -173,13 +170,13 @@ class Core:
         
         # Write-back MUX
         match self.id_controls.wb_sel:
-            case WB_sel_t.WB_PC4_OUT:
+            case WB_sel_t.PC4_OUT:
                 self.rf_wd3 = (self.pc + 4) & ((1 << conf.XLEN) - 1)
-            case WB_sel_t.WB_ALU_OUT:
+            case WB_sel_t.ALU_OUT:
                 self.rf_wd3 = self.alu_out
-            case WB_sel_t.WB_SHIFTER_OUT:
+            case WB_sel_t.SHIFTER_OUT:
                 self.rf_wd3 = self.shifter_out
-            case WB_sel_t.WB_DMEM_OUT:
+            case WB_sel_t.DMEM_OUT:
                 self.rf_wd3 = dmem_rdata_out
             case _:
                 self.rf_wd3 = 0
