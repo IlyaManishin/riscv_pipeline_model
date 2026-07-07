@@ -61,8 +61,7 @@ class CpuSystem:
             data_to_cpu = 0
             
         # 4. Core Write-Back & Sequential updates (Updates PC and RF)
-        rst_val = self.rst_reg.read()
-        self.cpu.step(dmem_data_in=data_to_cpu, rst=rst_val)
+        self.cpu.step(dmem_data_in=data_to_cpu)
         
         # 5. Commit all synchronous changes (Clock Tick)
         self.clk.tick()
