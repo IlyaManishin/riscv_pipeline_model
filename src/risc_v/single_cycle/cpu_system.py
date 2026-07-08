@@ -44,7 +44,7 @@ class CpuSystem:
         dmem_data = self.cpu.dec_exec_alu(instr)
 
         # 3. Handle Data Memory access based on combinational outputs
-        is_dmem_access = (dmem_data.addr >> 28) == 0x0
+        is_dmem_access = (dmem_data.addr >> 28) == 0x8 # research this 
         if is_dmem_access:
             word_dmem_addr = (dmem_data.addr & 0x0FFFFFFF) >> 2
 
