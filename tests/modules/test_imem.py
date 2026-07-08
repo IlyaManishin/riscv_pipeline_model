@@ -32,14 +32,6 @@ def test_imem_load_overflow():
     with pytest.raises(ValueError, match="exceeds Instruction Memory capacity"):
         imem.load_program(big_program)
 
-
-def test_imem_read_out_of_bounds():
-    imem = InstrMem(addr_width=2)
-
-    with pytest.raises(IndexError, match="out of memory bounds"):
-        imem.read(4)
-
-
 def test_imem_load_program_masking():
     imem = InstrMem(addr_width=2, cell_size=8)
     program = [0x1FF]

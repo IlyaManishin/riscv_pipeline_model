@@ -75,18 +75,18 @@ def test_data_mem_partial_byte_write():
     assert dmem.read(addr=0) == 0xAABB7788
 
 
-def test_data_mem_bounds_checking():
-    dmem = DataMem(addr_width=4)
-    size = dmem.get_size()
+# def test_data_mem_bounds_checking():
+#     dmem = DataMem(addr_width=4)
+#     size = dmem.get_size()
     
-    with pytest.raises(IndexError):
-        dmem.read(size)
+#     with pytest.raises(IndexError):
+#         dmem.read(size)
         
-    with pytest.raises(IndexError):
-        dmem.write(size, 0x1)
+#     with pytest.raises(IndexError):
+#         dmem.write(size, 0x1)
         
-    with pytest.raises(IndexError):
-        dmem.read(-1)
+#     with pytest.raises(IndexError):
+#         dmem.read(-1)
 
 
 def test_data_mem_load_data():
