@@ -94,14 +94,15 @@ class Core:
         self.rf_rd2 = self.rf_inst.read(self.rs2)
 
         # Branch Unit & Instruction Decoder
-        br_eq, br_lt = BranchUnit.compare(
-            self.rf_rd1, self.rf_rd2, br_un=False)
         self.id_controls = Instruction_Decoder.decode(
-            self.instr, br_eq=br_eq, br_lt=br_lt)
+            self.instr)
 
         # Re-evaluate Branch Unit with exact signedness from decoder
         br_eq, br_lt = BranchUnit.compare(
             self.rf_rd1, self.rf_rd2, bool(self.id_controls.br_un))
+        
+        self.id_controls = Instruction_Decoder.decode(
+            self.instr, br_eq=br_eq, br_lt=br_lt)
 
         # Immediate Generation
         self.imm = ImmGen.generate(self.instr, self.id_controls.imm_type)
@@ -122,7 +123,7 @@ class Core:
             self.rf_rd1, self.shift_shamt, self.id_controls.sh_sel)
 
         # DMEM Write Port Logic (Data formatting and Byte Enable)
-        self.dmem_we = self.id_controls.dmem_sel
+        self.dmem_we = self.id_controls.dmem_sel.is_write()
         self.dmem_funct3 = self.instr.funct3
         self.dmem_byte_off = self.dmem_addr & 0b11
 

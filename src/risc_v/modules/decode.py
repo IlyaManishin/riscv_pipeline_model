@@ -4,7 +4,7 @@ class Instruction_Decoder:
     
     @staticmethod
     def decode(instr: Instruction, br_eq: bool = False, br_lt: bool = False) -> Id_controls_out:
-        opcode = instr.opcode
+        opcode = instr.opcode >> 2
         funct3 = instr.funct3
         funct7 = instr.funct7
 
