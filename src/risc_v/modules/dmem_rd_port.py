@@ -1,10 +1,7 @@
-from risc_v.modules.mem.dmem import DataMem
-
-
 def dmem_rd_port(
-    mem: DataMem,
-    address: int,
-    func3: int
+    dmem_raw: int,
+    byte_addr: int,
+    funct3: int
 ) -> int:
     """
     Data memory read port.
@@ -16,20 +13,14 @@ def dmem_rd_port(
         100 - LBU
         101 - LHU
     """
-
-    word_addr = address >> 2
-    byte_addr = address & 0b11
-
-    data = mem.read(word_addr)
-
     byte_data = [
-        (data >> 0) & 0xFF,
-        (data >> 8) & 0xFF,
-        (data >> 16) & 0xFF,
-        (data >> 24) & 0xFF,
+        (dmem_raw >> 0) & 0xFF,
+        (dmem_raw >> 8) & 0xFF,
+        (dmem_raw >> 16) & 0xFF,
+        (dmem_raw >> 24) & 0xFF,
     ]
 
-    match func3:
+    match funct3:
 
         # LB
         case 0b000:
@@ -54,7 +45,7 @@ def dmem_rd_port(
 
         # LW
         case 0b010:
-            return data
+            return dmem_raw
 
         # LBU
         case 0b100:
@@ -64,8 +55,8 @@ def dmem_rd_port(
         case 0b101:
             if byte_addr & 0b10:
                 return byte_data[2] | (byte_data[3] << 8)
-
-            return byte_data[0] | (byte_data[1] << 8)
+            else:
+                return byte_data[0] | (byte_data[1] << 8)
 
         case _:
-            raise ValueError(f"Unsupported load funct3: {func3:#05b}")
+            return 0

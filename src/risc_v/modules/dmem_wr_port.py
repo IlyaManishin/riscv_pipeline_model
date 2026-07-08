@@ -1,13 +1,4 @@
-from risc_v.modules.mem.dmem import DataMem
-
-
-def dmem_wr_port(
-    mem: DataMem,
-    address: int,
-    data: int,
-    func3: int,
-    we: bool
-) -> None:
+def dmem_wr_port(data: int, byte_offset: int, funct3: int) -> tuple[int, int]:
     """
     Data memory write port.
 
@@ -16,14 +7,7 @@ def dmem_wr_port(
         001 - SH
         010 - SW
     """
-
-    if not we:
-        return
-
-    word_addr = address >> 2
-    byte_addr = address & 0b11
-
-    match func3:
+    match funct3:
 
         # SB
         case 0b000:
@@ -36,7 +20,8 @@ def dmem_wr_port(
                 (value << 24)
             )
 
-            byte_we = 1 << byte_addr
+            byte_we = 1 << byte_offset
+            return write_data, byte_we
 
         # SH
         case 0b001:
@@ -44,17 +29,18 @@ def dmem_wr_port(
 
             write_data = value | (value << 16)
 
-            if byte_addr & 0b10:
+            if byte_offset & 0b10:
                 byte_we = 0b1100
             else:
                 byte_we = 0b0011
+                
+            return write_data, byte_we
 
         # SW
         case 0b010:
             write_data = data & 0xFFFFFFFF
             byte_we = 0b1111
+            return write_data, byte_we
 
         case _:
-            raise ValueError(f"Unsupported store funct3: {func3:#05b}")
-
-    mem.write(word_addr, write_data, byte_we)
+            raise ValueError(f"Unsupported store funct3: {funct3:#05b}")

@@ -50,7 +50,7 @@ class CpuSystem:
         
         is_dmem_access = (dmem_addr >> 28) == 0x0
         if is_dmem_access:
-            word_dmem_addr = (dmem_addr & 0x0FFFFFFF) >> 2
+            word_dmem_addr = (dmem_addr & 0x0FFFFFFF) >> 2 # FIX ADDR
             
             # Execute memory writes if write enable is active
             if dmem_byte_we != 0:

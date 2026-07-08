@@ -7,6 +7,8 @@ from risc_v.modules.immgen import ImmGen
 from risc_v.modules.alu import Alu
 from risc_v.modules.shifter import Shifter
 from risc_v.modules.branch_unit import BranchUnit
+from risc_v.modules.dmem_wr_port import dmem_wr_port
+from risc_v.modules.dmem_rd_port import dmem_rd_port
 from risc_v.riscv_config import WB_sel_t
 import risc_v.riscv_config as conf
 
@@ -75,7 +77,7 @@ class Core:
         return self.dmem_byte_we
 
     # ---------------------------------------------------------------------
-    # STAGE 1: DECODE + EXEC
+    # STAGE 1: DECODE/REGISTER_FETCH + EXECUTE
     # ---------------------------------------------------------------------
     def dec_exec_alu(self, instr_raw: int) -> None:
         self.instr = conf.Instruction(instr_raw)
@@ -121,18 +123,7 @@ class Core:
         self.dmem_byte_we = 0
         
         if self.dmem_we:
-            match self.dmem_funct3:
-                case 0b000: # SB
-                    val = self.rf_rd2 & 0xFF
-                    self.dmem_wdata = val | (val << 8) | (val << 16) | (val << 24)
-                    self.dmem_byte_we = 1 << self.dmem_byte_off
-                case 0b001: # SH
-                    val = self.rf_rd2 & 0xFFFF
-                    self.dmem_wdata = val | (val << 16)
-                    self.dmem_byte_we = 0b1100 if (self.dmem_byte_off & 0b10) else 0b0011
-                case 0b010: # SW
-                    self.dmem_wdata = self.rf_rd2 & 0xFFFFFFFF
-                    self.dmem_byte_we = 0b1111
+            self.dmem_wdata, self.dmem_byte_we = dmem_wr_port(self.rf_rd2, self.dmem_byte_off, self.dmem_funct3)
 
     # ---------------------------------------------------------------------
     # STAGE 2: SEQUENTIAL LOGIC & WRITE-BACK (Clock step)
@@ -140,33 +131,7 @@ class Core:
     def write_back_comb(self, dmem_data_in: int) -> None:
         
         # DMEM Read Port Logic (Data formatting from memory)
-        byte_data = [
-            (dmem_data_in >> 0) & 0xFF,
-            (dmem_data_in >> 8) & 0xFF,
-            (dmem_data_in >> 16) & 0xFF,
-            (dmem_data_in >> 24) & 0xFF,
-        ]
-        
-        dmem_rdata_out = 0
-        match self.dmem_funct3:
-            case 0b000: # LB
-                val = byte_data[self.dmem_byte_off]
-                dmem_rdata_out = (val | 0xFFFFFF00) if (val & 0x80) else val
-            case 0b001: # LH
-                if self.dmem_byte_off & 0b10:
-                    val = byte_data[2] | (byte_data[3] << 8)
-                else:
-                    val = byte_data[0] | (byte_data[1] << 8)
-                dmem_rdata_out = (val | 0xFFFF0000) if (val & 0x8000) else val
-            case 0b010: # LW
-                dmem_rdata_out = dmem_data_in
-            case 0b100: # LBU
-                dmem_rdata_out = byte_data[self.dmem_byte_off]
-            case 0b101: # LHU
-                if self.dmem_byte_off & 0b10:
-                    dmem_rdata_out = byte_data[2] | (byte_data[3] << 8)
-                else:
-                    dmem_rdata_out = byte_data[0] | (byte_data[1] << 8)
+        dmem_rdata_out = dmem_rd_port(dmem_data_in, self.dmem_byte_off, self.dmem_funct3)
         
         # Write-back MUX
         match self.id_controls.wb_sel:
