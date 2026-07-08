@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from sim_base.clock import Clock
 from sim_base.mem.register import Register
 from risc_v.modules.pc import PC
@@ -12,6 +14,11 @@ from risc_v.modules.dmem_rd_port import dmem_rd_port
 from risc_v.riscv_config import WB_sel_t
 import risc_v.riscv_config as conf
 
+@dataclass
+class DMemAccessData:
+    addr: int
+    wdata: int
+    byte_we: int
 
 # =========================================================================
 # CORE CLASS DEFINITION (Single-Cycle)
@@ -62,24 +69,15 @@ class Core:
         self.dmem_byte_we = 0
 
     # ---------------------------------------------------------------------
-    # INTERFACE METHODS
+    # FETCH ADDRESS FROM PC
     # ---------------------------------------------------------------------
     def get_imem_addr(self) -> int:
         return self.pc_inst.read()
 
-    def get_dmem_addr(self) -> int:
-        return self.dmem_addr
-
-    def get_dmem_wdata(self) -> int:
-        return self.dmem_wdata
-
-    def get_dmem_byte_we(self) -> int:
-        return self.dmem_byte_we
-
     # ---------------------------------------------------------------------
     # STAGE 1: DECODE/REGISTER_FETCH + EXECUTE
     # ---------------------------------------------------------------------
-    def dec_exec_alu(self, instr_raw: int) -> None:
+    def dec_exec_alu(self, instr_raw: int) -> DMemAccessData:
         self.instr = conf.Instruction(instr_raw)
         self.pc = self.pc_inst.read()
         
@@ -124,6 +122,12 @@ class Core:
         
         if self.dmem_we:
             self.dmem_wdata, self.dmem_byte_we = dmem_wr_port(self.rf_rd2, self.dmem_byte_off, self.dmem_funct3)
+
+        return DMemAccessData(
+            addr=self.dmem_addr,
+            wdata=self.dmem_wdata,
+            byte_we=self.dmem_byte_we
+        )
 
     # ---------------------------------------------------------------------
     # STAGE 2: SEQUENTIAL LOGIC & WRITE-BACK (Clock step)

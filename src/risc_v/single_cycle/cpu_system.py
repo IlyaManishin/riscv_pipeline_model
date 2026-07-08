@@ -41,20 +41,16 @@ class CpuSystem:
         instr = self.imem.read(word_imem_addr)
         
         # 2. Decode and evaluate combinational signals (Generates memory addr & write data)
-        self.cpu.dec_exec_alu(instr)
+        dmem_data = self.cpu.dec_exec_alu(instr)
         
         # 3. Handle Data Memory access based on combinational outputs
-        dmem_addr = self.cpu.get_dmem_addr()
-        dmem_wdata = self.cpu.get_dmem_wdata()
-        dmem_byte_we = self.cpu.get_dmem_byte_we()
-        
-        is_dmem_access = (dmem_addr >> 28) == 0x0
+        is_dmem_access = (dmem_data.addr >> 28) == 0x0
         if is_dmem_access:
-            word_dmem_addr = (dmem_addr & 0x0FFFFFFF) >> 2 # FIX ADDR
+            word_dmem_addr = (dmem_data.addr & 0x0FFFFFFF) >> 2 # FIX ADDR
             
             # Execute memory writes if write enable is active
-            if dmem_byte_we != 0:
-                self.dmem.write(word_dmem_addr, dmem_wdata, byte_we=dmem_byte_we)
+            if dmem_data.byte_we != 0:
+                self.dmem.write(word_dmem_addr, dmem_data.wdata, byte_we=dmem_data.byte_we)
                 
             data_to_cpu = self.dmem.read(word_dmem_addr)
         else:
