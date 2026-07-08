@@ -8,13 +8,13 @@ class InstrMem(BlockMem):
                  cell_size: int = conf.XLEN):
         super().__init__(addr_width, cell_size)
 
-    def write(self, address: int, value: int, byte_we: int | None = None) -> None:
+    def write(self, addr: int, value: int, byte_we: int | None = None) -> None:
         raise PermissionError(
             "Instruction Memory is read-only during simulation execution")
 
     def load_program(self, program_code: list[int]) -> None:
-        if len(program_code) > self.size:
+        if len(program_code) > self._size:
             raise ValueError(
                 "Program size exceeds Instruction Memory capacity")
         for addr, instr in enumerate(program_code):
-            self._memory[addr] = instr & self._mask
+            self._memory[addr] = instr & self._cell_mask

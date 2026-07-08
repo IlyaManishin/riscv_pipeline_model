@@ -2,30 +2,40 @@ from abc import abstractmethod
 
 from ..core.itrigger import ITrigger
 
+
 class BaseMem(ITrigger):
     def __init__(self, size: int, cell_size: int):
-        self.size: int = size
-        self.cell_size: int = cell_size
-        
-        self._mask: int = (1 << cell_size) - 1
+        self._size: int = size
+        self._cell_size: int = cell_size
+
+        self._cell_mask: int = (1 << cell_size) - 1
         self._memory: list[int] = [0] * size
 
     def get_size(self) -> int:
-            return self.size
+        return self._size
 
     def get_cell_size(self) -> int:
-        return self.cell_size
+        return self._cell_size
 
-    def _validate_address(self, address: int) -> None:
-        if not (0 <= address < self.size):
-            raise IndexError(f"Address {address} out of memory bounds (size: {self.size} cells)")
+    def _validate_address(self, addr: int) -> None:
+        if addr < 0 or addr >= self._size:
+            raise IndexError(
+                f"Address {addr} out of memory bounds (size: {self._size} cells)")
+
+    def _read_cell(self, addr: int):
+        self._validate_address(addr)
+        return self._memory[addr]
+    
+    def _write_cell(self, addr: int, value: int):
+        self._validate_address(addr)
+        self._memory[addr] = value & self._cell_mask
 
     @abstractmethod
-    def read(self, address: int) -> int:
+    def read(self, addr: int) -> int:
         pass
 
     @abstractmethod
-    def write(self, address: int, value: int) -> None:
+    def write(self, addr: int, value: int) -> None:
         pass
 
     @abstractmethod

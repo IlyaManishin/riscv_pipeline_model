@@ -9,8 +9,8 @@ class DataMem(BlockMem):
         super().__init__(addr_width, cell_size)
 
     def load_data(self, data: list[int]) -> None:
-        if len(data) > self.size:
+        if len(data) > self._size:
             raise ValueError(
                 "The size of the data exceeds the amount of data memory")
         for addr, instr in enumerate(data):
-            self._memory[addr] = instr & self._mask
+            self._memory[addr] = instr & self._cell_mask
