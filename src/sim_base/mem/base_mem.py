@@ -10,6 +10,12 @@ class BaseMem(ITrigger):
         self._mask: int = (1 << cell_size) - 1
         self._memory: list[int] = [0] * size
 
+    def get_size(self) -> int:
+            return self.size
+
+    def get_cell_size(self) -> int:
+        return self.cell_size
+
     def _validate_address(self, address: int) -> None:
         if not (0 <= address < self.size):
             raise IndexError(f"Address {address} out of memory bounds (size: {self.size} cells)")
