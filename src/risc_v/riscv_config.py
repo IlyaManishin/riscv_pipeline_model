@@ -60,15 +60,15 @@ class DMem_sel(enum.Enum):
     def from_load_funct3(funct3: int) -> int:
         match funct3:
             case 0b000:
-                return DMem_sel.LB.value
+                return DMem_sel.LB
             case 0b001:
-                return DMem_sel.LH.value
+                return DMem_sel.LH
             case 0b010:
-                return DMem_sel.LW.value
+                return DMem_sel.LW
             case 0b100:
-                return DMem_sel.LBU.value
+                return DMem_sel.LBU
             case 0b101:
-                return DMem_sel.LHU.value
+                return DMem_sel.LHU
             case _:
                 raise ValueError(f"Unsupported load funct3: {funct3:#05b}")
 
@@ -76,11 +76,11 @@ class DMem_sel(enum.Enum):
     def from_store_funct3(funct3: int) -> int:
         match funct3:
             case 0b000:
-                return DMem_sel.SB.value
+                return DMem_sel.SB
             case 0b001:
-                return DMem_sel.SH.value
+                return DMem_sel.SH
             case 0b010:
-                return DMem_sel.SW.value
+                return DMem_sel.SW
             case _:
                 raise ValueError(f"Unsupported store funct3: {funct3:#05b}")
 

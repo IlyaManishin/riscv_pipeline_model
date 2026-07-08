@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Optional
 
+import csv
+
 import pytest
 
 from risc_v.single_cycle import cpu_system
@@ -42,6 +44,24 @@ def load_hex_file(filename: str) -> list[int]:
 
     return result
 
+def create_trace_writer(text_file: str):
+    if not confs.TRACE_ENABLE:
+        return None, None
+
+    trace_dir = Path(confs.TRACE_DIR)
+    trace_dir.mkdir(parents=True, exist_ok=True)
+
+    trace_file = trace_dir / (Path(text_file).stem + ".csv")
+
+    f = open(trace_file, "w", newline="")
+    writer = csv.writer(f)
+
+    header = ["cycle", "pc"]
+    header.extend(f"x{i}" for i in range(32))
+
+    writer.writerow(header)
+
+    return f, writer
 
 def run_program(
     cpu: cpu_system.CpuSystem,
@@ -53,31 +73,47 @@ def run_program(
     if data_file is not None:
         cpu.dmem.load_data(load_hex_file(data_file))
 
-    cpu.rst_reg.set(1)
-    cpu.rst_reg.update()
+    trace_file, trace = create_trace_writer(text_file)
 
-    for _ in range(confs.TIMEOUT_ITERATIONS):
+    try:
 
-        cpu.step()
+        for cycle in range(confs.TIMEOUT_ITERATIONS):
 
-        rf_dbg = cpu.cpu.rf_inst.read(confs.RF_DBG_NUM)
+            cpu.step()
 
-        if rf_dbg == confs.Test_Result.TEST_RUN.value:
-            continue
+            if trace is not None:
+                row = [
+                    cycle,
+                    cpu.cpu.pc_inst.read(),
+                ]
 
-        if rf_dbg == confs.Test_Result.TEST_PASS.value:
-            return
+                for i in range(32):
+                    row.append(cpu.cpu.rf_inst.read(i))
 
-        if rf_dbg == confs.Test_Result.TEST_FAIL.value:
-            pytest.fail("Program returned TEST_FAIL")
+                trace.writerow(row)
 
-        raise ValueError(
-            f"Invalid RF_DBG value: {rf_dbg:#x}"
+            rf_dbg = cpu.cpu.rf_inst.read(confs.RF_DBG_NUM)
+
+            if rf_dbg == confs.Test_Result.TEST_RUN.value:
+                continue
+
+            if rf_dbg == confs.Test_Result.TEST_PASS.value:
+                return
+
+            if rf_dbg == confs.Test_Result.TEST_FAIL.value:
+                pytest.fail("Program returned TEST_FAIL")
+
+            raise ValueError(
+                f"Invalid RF_DBG value: {rf_dbg:#x}"
+            )
+
+        pytest.fail(
+            f"Timeout ({confs.TIMEOUT_ITERATIONS} cycles)"
         )
 
-    pytest.fail(
-        f"Timeout ({confs.TIMEOUT_ITERATIONS} cycles)"
-    )
+    finally:
+        if trace_file is not None:
+            trace_file.close()
 
 
 def collect_tests():
