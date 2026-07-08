@@ -117,8 +117,7 @@ class Core:
             self.id_controls.alu_sel, self.alu_in_a, self.alu_in_b)
 
         # Shifter Execution
-        self.shift_shamt = (self.rf_rd2 & 0x1F) if self.id_controls.b_sel else (
-            (self.instr.raw >> 20) & 0x1F)
+        self.shift_shamt = (self.rf_rd2 & 0x1F) if self.id_controls.b_sel else self.instr.shamt
         self.shifter_out = Shifter.shift(
             self.rf_rd1, self.shift_shamt, self.id_controls.sh_sel)
 

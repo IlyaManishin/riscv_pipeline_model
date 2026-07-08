@@ -56,7 +56,7 @@ def create_trace_writer(text_file: str):
     f = open(trace_file, "w", newline="")
     writer = csv.writer(f)
 
-    header = ["cycle", "pc"]
+    header = ["cycle", "pc", "rs1", "rs2", "rd"]
     header.extend(f"x{i}" for i in range(32))
 
     writer.writerow(header)
@@ -85,6 +85,9 @@ def run_program(
                 row = [
                     cycle,
                     cpu.cpu.pc_inst.read(),
+                    cpu.cpu.rs1,
+                    cpu.cpu.rs2,
+                    cpu.cpu.rd
                 ]
 
                 for i in range(32):

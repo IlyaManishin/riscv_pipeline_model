@@ -7,14 +7,6 @@ class Alu:
     def execute(sel: Alu_sel_t, a: int, b: int) -> int:
         """
         Arithmetic Logic Unit.
-
-        Args:
-            sel: ALU operation.
-            a:   First operand.
-            b:   Second operand.
-
-        Returns:
-            XLEN-bit result.
         """
 
         mask = (1 << XLEN) - 1
@@ -25,10 +17,10 @@ class Alu:
         match sel:
 
             case Alu_sel_t.ADD:
-                res = a + b
+                res = (a + b) & mask
 
             case Alu_sel_t.SUB:
-                res = a - b
+                res = (a - b) & mask
 
             case Alu_sel_t.AND:
                 res = a & b
@@ -51,7 +43,7 @@ class Alu:
                 res = int(a < b)
 
             case Alu_sel_t.JALR:
-                res = (a + b) & ~1
+                res = ((a + b) & mask) & ~1
 
             case Alu_sel_t.LUI:
                 res = b
@@ -59,4 +51,4 @@ class Alu:
             case _:
                 raise ValueError(f"Unsupported ALU operation: {sel}")
 
-        return res & mask
+        return res
