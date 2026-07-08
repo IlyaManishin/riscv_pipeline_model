@@ -1,0 +1,13 @@
+from enum import Enum
+
+
+TIMEOUT_ITERATIONS = 10000
+RF_DBG_NUM = 31
+
+TEST_DIR = "C:\\Users\\Lecoo\\Documents\\rv-nsu\\prg\\uBench\\hex"
+
+
+class Test_Result(Enum):
+    TEST_RUN = 0
+    TEST_PASS = 1
+    TEST_FAIL = 2

@@ -8,7 +8,7 @@ IMEM_ADDR_BYTE_WIDTH = 14
 DMEM_ADDR_BYTE_WIDTH = 14
 
 DATA_BYTE_NUM   = XLEN / 8 # bytes in block with XLEN size
-BYTE_ADDR_WIDTH = math.log2(DATA_BYTE_NUM)
+BYTE_ADDR_WIDTH = int(math.log2(DATA_BYTE_NUM))
 
 class Alu_sel_t(enum.Enum):
     ADD  = 0b0000
