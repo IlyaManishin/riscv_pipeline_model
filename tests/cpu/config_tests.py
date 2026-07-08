@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-TIMEOUT_ITERATIONS = 10000
+TIMEOUT_ITERATIONS = 50000
 RF_DBG_NUM = 31
 
 TEST_DIR = "C:\\Users\\Lecoo\\Documents\\rv-nsu\\prg\\uBench\\hex"

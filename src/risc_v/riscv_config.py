@@ -129,6 +129,32 @@ class Instruction:
         self.funct7 = (self.raw >> 25) & 0x7F
         self.funct7_onebit = (self.funct7 >> 5) & 1
         self.shamt = (self.raw >> 20) & 0x1F
+    
+    def __repr__(self) -> str:
+        return (
+            f"Instruction("
+            f"0x{self.raw:08X}, "
+            f"opcode=0x{self.opcode:02X}, "
+            f"rd=x{self.rd}, "
+            f"rs1=x{self.rs1}, "
+            f"rs2=x{self.rs2}, "
+            f"funct3=0b{self.funct3:03b}, "
+            f"funct7=0b{self.funct7:07b}, "
+            f"shamt={self.shamt}"
+            f")"
+        )
+
+    def __str__(self) -> str:
+        """Более компактный вариант для print()."""
+        return (
+            f"0x{self.raw:08X} | "
+            f"op={self.opcode:05b} "
+            f"rd=x{self.rd} "
+            f"rs1=x{self.rs1} "
+            f"rs2=x{self.rs2} "
+            f"f3={self.funct3:03b} "
+            f"f7={self.funct7:07b}"
+        )
 
 
 
