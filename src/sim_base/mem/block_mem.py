@@ -11,7 +11,7 @@ class BlockMem(BaseMem):
         * Writes are deferred and committed to memory only when `update()` is called.
         * Supports selective sub-word updates via byte-level masking (`byte_we`).
         * Supports address overflow and can get mask from address.
-        
+
     """
 
     def __init__(self, addr_width: int, cell_size: int, addr_overflow: bool = False):
@@ -21,10 +21,10 @@ class BlockMem(BaseMem):
         self._addr_overflow = addr_overflow
         self._addr_width = addr_width
         self._addr_mask = (1 << addr_width) - 1
-        
+
         self._bytes_per_cell: int = cell_size // 8
         self._byte_mask: int = (1 << self._bytes_per_cell) - 1
-        
+
         self._next_write: tuple[int, int] | None = None
         self._last_read_addr: int = None
 
@@ -38,7 +38,7 @@ class BlockMem(BaseMem):
         if self._last_read_addr is not None and self._last_read_addr != addr:
             raise RuntimeError(
                 "Memory read conflict: multiple reads detected within a single clock cycle")
-            
+
         data = self._read_cell(addr)
         self._last_read_addr = addr
         return data
@@ -46,7 +46,7 @@ class BlockMem(BaseMem):
     def write(self, addr: int, value: int, byte_we: int | None = None) -> None:
         if (self._addr_overflow):
             addr = addr & self._addr_mask
-            
+
         if self._next_write is not None:
             raise RuntimeError(
                 "Memory write conflict: multiple writes detected within a single clock cycle")
