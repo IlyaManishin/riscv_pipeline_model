@@ -41,7 +41,7 @@ class CpuSystem:
         instr = self.imem.read(word_imem_addr)
         
         # 2. Decode and evaluate combinational signals (Generates memory addr & write data)
-        self.cpu.evaluate_combinational(instr)
+        self.cpu.dec_exec_alu(instr)
         
         # 3. Handle Data Memory access based on combinational outputs
         dmem_addr = self.cpu.get_dmem_addr()
@@ -61,7 +61,7 @@ class CpuSystem:
             data_to_cpu = 0
             
         # 4. Core Write-Back & Sequential updates (Updates PC and RF)
-        self.cpu.step(dmem_data_in=data_to_cpu)
+        self.cpu.write_back_comb(dmem_data_in=data_to_cpu)
         
         # 5. Commit all synchronous changes (Clock Tick)
         self.clk.tick()

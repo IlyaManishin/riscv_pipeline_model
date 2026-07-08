@@ -77,7 +77,7 @@ class Core:
     # ---------------------------------------------------------------------
     # STAGE 1: DECODE + EXEC
     # ---------------------------------------------------------------------
-    def evaluate_combinational(self, instr_raw: int) -> None:
+    def dec_exec_alu(self, instr_raw: int) -> None:
         self.instr = conf.Instruction(instr_raw)
         self.pc = self.pc_inst.read()
         
@@ -137,7 +137,7 @@ class Core:
     # ---------------------------------------------------------------------
     # STAGE 2: SEQUENTIAL LOGIC & WRITE-BACK (Clock step)
     # ---------------------------------------------------------------------
-    def step(self, dmem_data_in: int) -> None:
+    def write_back_comb(self, dmem_data_in: int) -> None:
         
         # DMEM Read Port Logic (Data formatting from memory)
         byte_data = [
