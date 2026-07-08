@@ -75,7 +75,7 @@ class Core:
     # FETCH ADDRESS FROM PC
     # ---------------------------------------------------------------------
     def get_imem_addr(self) -> int:
-        return self.pc_inst.read() # FIX ADDR
+        return self.pc_inst.read()
 
     # ---------------------------------------------------------------------
     # STAGE 1: DECODE/REGISTER_FETCH + EXECUTE

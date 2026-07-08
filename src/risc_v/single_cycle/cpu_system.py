@@ -46,7 +46,7 @@ class CpuSystem:
         # 3. Handle Data Memory access based on combinational outputs
         is_dmem_access = (dmem_data.addr >> 28) == 0x0
         if is_dmem_access:
-            word_dmem_addr = (dmem_data.addr & 0x0FFFFFFF) >> 2  # FIX ADDR
+            word_dmem_addr = (dmem_data.addr & 0x0FFFFFFF) >> 2
 
             # Execute memory writes if write enable is active
             if dmem_data.byte_we != 0:
