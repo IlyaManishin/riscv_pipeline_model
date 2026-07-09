@@ -4,7 +4,7 @@ class Instruction_Decoder:
     
     @staticmethod
     def decode(instr: Instruction, br_eq: bool = False, br_lt: bool = False) -> Id_controls_out:
-        opcode = instr.opcode
+        opcode = instr.opcode >> 2
         funct3 = instr.funct3
         funct7 = instr.funct7
 
@@ -236,7 +236,7 @@ class Instruction_Decoder:
                         alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.SHIFTER_OUT,
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0
                     )
-                if funct7 == 0b10:   # 0b1 00000? У RISC-V SRAI имеет funct7[5]=1
+                if funct7 == 0b100000:   # 0b1 00000? У RISC-V SRAI имеет funct7[5]=1
                     return Id_controls_out(
                         reg_wr=1, dmem_sel = DMem_sel.NONE, a_sel=0, b_sel=0,
                         sh_sel=Shift_sel_t.SRA, br_un=0, pc_sel=1,
@@ -255,7 +255,7 @@ class Instruction_Decoder:
                         alu_sel=Alu_sel_t.ADD, wb_sel=WB_sel_t.ALU_OUT,
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0
                     )
-                if funct7 == 0b10:  # SUB
+                if funct7 == 0b100000:  # SUB
                     return Id_controls_out(
                         reg_wr=1, dmem_sel = DMem_sel.NONE, a_sel=1, b_sel=1,
                         sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1,
@@ -302,7 +302,7 @@ class Instruction_Decoder:
                         alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.SHIFTER_OUT,
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0
                     )
-                if funct7 == 0b10:
+                if funct7 == 0b100000:
                     return Id_controls_out(
                         reg_wr=1, dmem_sel = DMem_sel.NONE, a_sel=0, b_sel=1,
                         sh_sel=Shift_sel_t.SRA, br_un=0, pc_sel=1,

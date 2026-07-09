@@ -7,7 +7,7 @@ class MultiWriteMem(BaseMem):
 
     def write(self, address: int, value: int) -> None:
         self._validate_address(address)
-        self._transactions.append((address, value & self._mask))
+        self._transactions.append((address, value & self._cell_mask))
 
     def update(self) -> None:
         for addr, val in self._transactions:

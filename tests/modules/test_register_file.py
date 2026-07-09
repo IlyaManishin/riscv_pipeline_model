@@ -5,8 +5,8 @@ from risc_v.modules.mem.reg_file import RegFile
 
 def test_register_file_initialization():
     rf = RegFile()
-    assert rf.size == 32
-    assert rf.cell_size == 32
+    assert rf.get_size() == 32
+    assert rf.get_cell_size() == 32
     for i in range(32):
         assert rf.read(i) == 0
 
@@ -50,3 +50,4 @@ def test_register_file_bounds_checking():
         
     with pytest.raises(IndexError):
         rf.write(32, 10)
+        rf.update()

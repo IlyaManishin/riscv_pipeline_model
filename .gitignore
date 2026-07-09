@@ -34,3 +34,9 @@ results.xml
 #Temp files
 .$*.bkp
 .$*.dtmp
+*.hex
+ub.lst
+
+#Test result
+trace/
+*.csv

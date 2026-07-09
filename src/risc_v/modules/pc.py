@@ -6,6 +6,7 @@ class PC:
     def __init__(self, rst_reg: Register, width: int = conf.XLEN, pc_start_addr: int = conf.PC_START_ADDR):
         self._reg = Register(init_value=pc_start_addr)
         
+        self.pc_mask = (1 << width) - 1
         self.rst_reg = rst_reg
         self._pc_start_addr = pc_start_addr
 
@@ -26,5 +27,5 @@ class PC:
         else:
             next_pc = self._reg.read() + 4
 
-        self._reg.set(next_pc & conf.NUM_MASK)
+        self._reg.set(next_pc & self.pc_mask)
         

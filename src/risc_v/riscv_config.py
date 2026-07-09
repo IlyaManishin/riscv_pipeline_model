@@ -1,8 +1,14 @@
 import enum
+import math
 
 XLEN = 32
 PC_START_ADDR = 0
-NUM_MASK = 2**10
+
+IMEM_ADDR_BYTE_WIDTH = 14
+DMEM_ADDR_BYTE_WIDTH = 14
+
+DATA_BYTE_NUM   = XLEN / 8 # bytes in block with XLEN size
+BYTE_ADDR_WIDTH = int(math.log2(DATA_BYTE_NUM))
 
 class Alu_sel_t(enum.Enum):
     ADD  = 0b0000
@@ -54,15 +60,15 @@ class DMem_sel(enum.Enum):
     def from_load_funct3(funct3: int) -> int:
         match funct3:
             case 0b000:
-                return DMem_sel.LB.value
+                return DMem_sel.LB
             case 0b001:
-                return DMem_sel.LH.value
+                return DMem_sel.LH
             case 0b010:
-                return DMem_sel.LW.value
+                return DMem_sel.LW
             case 0b100:
-                return DMem_sel.LBU.value
+                return DMem_sel.LBU
             case 0b101:
-                return DMem_sel.LHU.value
+                return DMem_sel.LHU
             case _:
                 raise ValueError(f"Unsupported load funct3: {funct3:#05b}")
 
@@ -70,11 +76,11 @@ class DMem_sel(enum.Enum):
     def from_store_funct3(funct3: int) -> int:
         match funct3:
             case 0b000:
-                return DMem_sel.SB.value
+                return DMem_sel.SB
             case 0b001:
-                return DMem_sel.SH.value
+                return DMem_sel.SH
             case 0b010:
-                return DMem_sel.SW.value
+                return DMem_sel.SW
             case _:
                 raise ValueError(f"Unsupported store funct3: {funct3:#05b}")
 
@@ -123,6 +129,32 @@ class Instruction:
         self.funct7 = (self.raw >> 25) & 0x7F
         self.funct7_onebit = (self.funct7 >> 5) & 1
         self.shamt = (self.raw >> 20) & 0x1F
+    
+    def __repr__(self) -> str:
+        return (
+            f"Instruction("
+            f"0x{self.raw:08X}, "
+            f"opcode=0x{self.opcode:02X}, "
+            f"rd=x{self.rd}, "
+            f"rs1=x{self.rs1}, "
+            f"rs2=x{self.rs2}, "
+            f"funct3=0b{self.funct3:03b}, "
+            f"funct7=0b{self.funct7:07b}, "
+            f"shamt={self.shamt}"
+            f")"
+        )
+
+    def __str__(self) -> str:
+        """Более компактный вариант для print()."""
+        return (
+            f"0x{self.raw:08X} | "
+            f"op={self.opcode:05b} "
+            f"rd=x{self.rd} "
+            f"rs1=x{self.rs1} "
+            f"rs2=x{self.rs2} "
+            f"f3={self.funct3:03b} "
+            f"f7={self.funct7:07b}"
+        )
 
 
 

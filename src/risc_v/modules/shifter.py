@@ -21,7 +21,7 @@ class Shifter:
         mask = (1 << XLEN) - 1
 
         data &= mask
-        shamt &= XLEN.bit_length() - 2   # для XLEN=32 -> 0x1F
+        shamt &= (1 << ((XLEN - 1).bit_length())) - 1
 
         match sel:
 
