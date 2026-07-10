@@ -1,5 +1,6 @@
 import enum
 import math
+from dataclasses import dataclass
 
 XLEN = 32
 PC_START_ADDR = 0
@@ -56,33 +57,35 @@ class DMem_sel(enum.Enum):
     SH  = 0b1001
     SW  = 0b1010
 
-    @staticmethod
-    def from_load_funct3(funct3: int) -> int:
-        match funct3:
-            case 0b000:
-                return DMem_sel.LB
-            case 0b001:
-                return DMem_sel.LH
-            case 0b010:
-                return DMem_sel.LW
-            case 0b100:
-                return DMem_sel.LBU
-            case 0b101:
-                return DMem_sel.LHU
-            case _:
-                raise ValueError(f"Unsupported load funct3: {funct3:#05b}")
+    # ---------- Фабричные методы (возвращают DMem_sel) ----------
 
     @staticmethod
-    def from_store_funct3(funct3: int) -> int:
+    def from_load_funct3(funct3: int) -> 'DMem_sel':
         match funct3:
-            case 0b000:
-                return DMem_sel.SB
-            case 0b001:
-                return DMem_sel.SH
-            case 0b010:
-                return DMem_sel.SW
-            case _:
-                raise ValueError(f"Unsupported store funct3: {funct3:#05b}")
+            case 0b000: return DMem_sel.LB
+            case 0b001: return DMem_sel.LH
+            case 0b010: return DMem_sel.LW
+            case 0b100: return DMem_sel.LBU
+            case 0b101: return DMem_sel.LHU
+            case _: raise ValueError(f"Unsupported load funct3: {funct3:#05b}")
+
+    @staticmethod
+    def from_store_funct3(funct3: int) -> 'DMem_sel':
+        match funct3:
+            case 0b000: return DMem_sel.SB
+            case 0b001: return DMem_sel.SH
+            case 0b010: return DMem_sel.SW
+            case _: raise ValueError(f"Unsupported store funct3: {funct3:#05b}")
+
+    @staticmethod
+    def from_int(value: int) -> 'DMem_sel':
+        """Конвертирует int в DMem_sel, если такое значение существует."""
+        for member in DMem_sel:
+            if member.value == value:
+                return member
+        raise ValueError(f"Invalid DMem_sel value: {value:#x}")
+
+    # ---------- Методы экземпляра ----------
 
     def funct3(self) -> int:
         return self.value & 0b111
@@ -90,27 +93,25 @@ class DMem_sel(enum.Enum):
     def is_write(self) -> bool:
         return bool(self.value & 0b1000)
 
+    def to_int(self) -> int:
+        """Конвертирует DMem_sel в int."""
+        return self.value
 
+@dataclass
 class Id_controls_out:
-    def __init__(self, reg_wr=0, dmem_sel=DMem_sel.NONE, a_sel=0, b_sel=0,
-                 sh_sel=Shift_sel_t.ANY,
-                 br_un=0, pc_sel=0,
-                 alu_sel=Alu_sel_t.ANY,
-                 wb_sel=WB_sel_t.ANY,
-                 imm_type=Instr_type_t.TYPE_ANY,
-                 illegal=0, jf_exe=0):
-        self.reg_wr   = reg_wr
-        self.dmem_sel = dmem_sel
-        self.a_sel    = a_sel
-        self.b_sel    = b_sel
-        self.sh_sel   = sh_sel
-        self.br_un    = br_un
-        self.pc_sel   = pc_sel
-        self.alu_sel  = alu_sel
-        self.wb_sel   = wb_sel
-        self.imm_type = imm_type
-        self.illegal  = illegal
-        self.jf_exe   = jf_exe
+    reg_wr: int = 0
+    dmem_sel: DMem_sel = DMem_sel.NONE
+    a_sel: int = 0
+    b_sel: int = 0
+    sh_sel: Shift_sel_t   = Shift_sel_t.ANY
+    br_un: int = 0
+    pc_sel: int = 0
+    alu_sel: Alu_sel_t = Alu_sel_t.ANY
+    wb_sel: WB_sel_t = WB_sel_t.ANY
+    imm_type: int = Instr_type_t.TYPE_ANY
+    illegal: int = 0
+    jf_exe: int = 0
+    alushift_sel: int = 0
 
 
 class Instruction:
