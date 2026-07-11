@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import Optional
 import pytest
 import csv
 
@@ -29,9 +29,9 @@ def load_hex_file(filename: str) -> list[int]:
                     f"Invalid hex at line {line_num}: '{clean_line}'"
                 ) from e
 
-            if value > 0xFFFFFFFF:
+            if value > (1 << XLEN) - 1:
                 raise ValueError(
-                    f"Value 0x{value:X} exceeds 32 bits at line {line_num}"
+                    f"Value 0x{value:X} exceeds {XLEN} bits at line {line_num}"
                 )
 
             result.append(value)
@@ -52,7 +52,7 @@ def create_trace_writer(text_file: str):
     writer = csv.writer(f)
 
     header = ["cycle", "pc", "rs1", "rs2", "rd"]
-    header.extend(f"x{i}" for i in range(32))
+    header.extend(f"x{i}" for i in range(REG_COUNT))
 
     writer.writerow(header)
 
@@ -83,7 +83,7 @@ def run_program(
                     cpu.cpu.rs2,
                     cpu.cpu.rd,
                 ]
-                for i in range(32):
+                for i in range(REG_COUNT):
                     row.append(cpu.cpu.rf_inst.read(i))
                 trace.writerow(row)
 

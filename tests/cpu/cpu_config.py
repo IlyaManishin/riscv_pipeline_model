@@ -1,9 +1,9 @@
 from enum import Enum
-from pathlib import Path
 
 XLEN = 32
 TIMEOUT_ITERATIONS = 50000
 RF_DBG_NUM = 31
+REG_COUNT = 32
 
 TRACE_ENABLE = True
 TRACE_DIRNAME = "trace"
