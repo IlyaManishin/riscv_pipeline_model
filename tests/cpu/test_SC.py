@@ -1,15 +1,13 @@
 from pathlib import Path
 from typing import Optional
-
+import pytest
 import csv
 
-import pytest
-
 from risc_v.single_cycle import cpu_system
-import config_tests as confs
+import tests.cpu.config as confs
 
 
-TEST_DIR = Path(confs.TEST_DIR)
+TEST_DIR = Path(confs.ASM_TEST_DIR)
 LIST_FILE = TEST_DIR / "ub.lst"
 
 
@@ -18,21 +16,16 @@ def load_hex_file(filename: str) -> list[int]:
 
     with open(filename, "r") as f:
         for line_num, line in enumerate(f, 1):
-            line = line.strip()
+            clean_line = line.strip().replace("0x", "").replace("0X", "").replace(" ", "")
 
-            if not line:
-                continue
-
-            line = line.replace("0x", "").replace("0X", "").replace(" ", "")
-
-            if not line:
+            if not clean_line:
                 continue
 
             try:
-                value = int(line, 16)
+                value = int(clean_line, 16)
             except ValueError as e:
                 raise ValueError(
-                    f"Invalid hex at line {line_num}: '{line}'"
+                    f"Invalid hex at line {line_num}: '{clean_line}'"
                 ) from e
 
             if value > 0xFFFFFFFF:
@@ -43,6 +36,7 @@ def load_hex_file(filename: str) -> list[int]:
             result.append(value)
 
     return result
+
 
 def create_trace_writer(text_file: str):
     if not confs.TRACE_ENABLE:
@@ -62,6 +56,7 @@ def create_trace_writer(text_file: str):
     writer.writerow(header)
 
     return f, writer
+
 
 def run_program(
     cpu: cpu_system.CpuSystem,

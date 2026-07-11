@@ -4,16 +4,19 @@ import os
 import sys
 import subprocess
 from pathlib import Path
+from datetime import datetime
+
+from . import build_paths as bpaths
 
 # ============================================================
 # CONFIGURATION
 # ============================================================
 
 # Input directory with source files (.s, .asm)
-IN_DIR = Path("./uBench")
+IN_DIR = bpaths.BENCHES_DIR / bpaths.ASM_DIRNAME
 
 # Output directory for .hex files
-OUT_DIR = Path("./uBench/hex")
+OUT_DIR = bpaths.BUILD_DIR / bpaths.ASM_DIRNAME
 
 # Path to RARS (either .jar file or executable)
 RARS_PATH = Path("rars1_6.jar")
@@ -21,7 +24,7 @@ RARS_PATH = Path("rars1_6.jar")
 # Path to lst file (list .hex files)
 # if = None, lst file not create
 LST_PATH = OUT_DIR / "ub.lst"
-#LST_PATH = Path("./uBench/hex/ub.lst")
+# LST_PATH = Path("./uBench/hex/ub.lst")
 LST_UNUSED = ['Deprecated']
 
 DUMP_CONFIG = {
@@ -32,7 +35,7 @@ DUMP_CONFIG = {
         # - 'Binary': Raw binary data (useful for direct memory loading)
         # - 'Text': Human-readable disassembly (not recommended for machine processing)
         'format': 'HexText',
-        
+
         # Output file path template with placeholders
         # Available placeholders:
         #   %name%     - test name without extension (e.g., 'add_test_01')
@@ -74,6 +77,7 @@ DUMP_CONFIG = {
 # FUNCTIONS
 # ============================================================
 
+
 def find_asm_files(directory: Path):
     return [
         f for f in directory.rglob("*")
@@ -83,7 +87,7 @@ def find_asm_files(directory: Path):
 
 def convert_to_hex(asm_file: Path, dump_config: dict, output_dir: Path) -> dict:
     """Run RARS to convert .s/.asm file to multiple hex dumps based on config
-    
+
     Args:
         asm_file: Path to assembly file
         dump_config: Dictionary where keys are segment names (e.g., '.text', '.data')
@@ -97,29 +101,28 @@ def convert_to_hex(asm_file: Path, dump_config: dict, output_dir: Path) -> dict:
                                %segment% - segment name (e.g., '.text', '.data')
                                %date% - current date (YYYY-MM-DD)
                                %time% - current time (HH-MM-SS)
-                           
+
                            Examples:
                                './%name%_imem.hex' -> saves in output_dir as 'add_test_01_imem.hex'
                                './%name%/%segment%_dump.bin' -> creates subfolder with test name
                                './subdir/%name%_data.bin' -> nested subdirectories
                                '../external/%name%/code.hex' -> relative path outside output_dir
                                'C:/absolute/path/%name%.bin' -> absolute path
-    
+
     Returns:
         bool: True if all dumps succeeded, False otherwise
     """
-    
-    from datetime import datetime
-    
+
     errors = []
     warnings = []
     dumps = {}
 
     hex_files = {}
-    
+
     for segment, config in dump_config.items():
-        path_template = config.get('output_file_path', f'./%name%{config.get("add_in_name", "")}{config.get("extension", "")}')
-        
+        path_template = config.get(
+            'output_file_path', f'./%name%{config.get("add_in_name", "")}{config.get("extension", "")}')
+
         current_time = datetime.now()
         replacements = {
             '%name%': asm_file.stem,
@@ -132,18 +135,18 @@ def convert_to_hex(asm_file: Path, dump_config: dict, output_dir: Path) -> dict:
             '%month%': current_time.strftime('%m'),
             '%day%': current_time.strftime('%d'),
         }
-        
+
         expanded_path = path_template
         for placeholder, value in replacements.items():
             expanded_path = expanded_path.replace(placeholder, value)
-        
+
         if os.path.isabs(expanded_path):
             output_file = Path(expanded_path)
         else:
             output_file = output_dir / expanded_path
-        
+
         output_file.parent.mkdir(parents=True, exist_ok=True)
-        
+
         hex_files[segment] = output_file
     for segment, output_file in hex_files.items():
         try:
@@ -151,19 +154,19 @@ def convert_to_hex(asm_file: Path, dump_config: dict, output_dir: Path) -> dict:
         except ValueError:
             rel_path = output_file
         dumps[segment] = str(rel_path)
-    
+
     if str(RARS_PATH).endswith(".jar"):
         cmd_base = ["java", "-jar", str(RARS_PATH), "a", "nc", str(asm_file)]
     else:
         cmd_base = [str(RARS_PATH), "a", "nc", str(asm_file)]
-    
+
     dump_args = []
     for segment, output_file in hex_files.items():
         fmt = dump_config[segment]['format']
         dump_args.extend(["dump", segment, fmt, str(output_file)])
-    
+
     cmd = cmd_base + dump_args
-    
+
     try:
         result = subprocess.run(
             cmd,
@@ -173,7 +176,7 @@ def convert_to_hex(asm_file: Path, dump_config: dict, output_dir: Path) -> dict:
             timeout=60,
             text=True
         )
-        
+
         combined_output = result.stdout + result.stderr
         if result.stdout != '':
             for line in combined_output.split('\n'):
@@ -190,22 +193,23 @@ def convert_to_hex(asm_file: Path, dump_config: dict, output_dir: Path) -> dict:
                 "warnings": warnings,
                 "dumps": dumps
             }
-        
+
         all_valid = True
         for segment, output_file in hex_files.items():
             if not output_file.exists():
-                errors.append(f"{segment} dump file was not created: {output_file}")
+                errors.append(
+                    f"{segment} dump file was not created: {output_file}")
                 all_valid = False
             elif output_file.stat().st_size == 0:
                 warnings.append(f"{segment} dump file is empty: {output_file}")
-        
+
         return {
             "success": all_valid,
             "errors": errors,
             "warnings": warnings,
             "dumps": dumps
         }
-        
+
     except subprocess.TimeoutExpired:
         errors.append(f"TIMEOUT processing {asm_file.name}")
         return {"success": False, "errors": errors, "warnings": warnings, "dumps": dumps}
@@ -226,18 +230,18 @@ def main():
         sys.exit(1)
 
     processed_files = []
-    
+
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    
+
     asm_files = find_asm_files(IN_DIR)
-    
+
     if not asm_files:
         print(f"No .s or .asm files found in {IN_DIR}")
         sys.exit(0)
-    
+
     print(f"Found {len(asm_files)} files to convert")
     print("=" * 50)
-    
+
     success_count = 0
     fail_count = 0
 
@@ -246,23 +250,24 @@ def main():
     RESET = '\033[0m'
     YELLOW = '\033[33m'
     COLOR_PATH = '\033[96m'
-    
+
     for asm_file in asm_files:
         rel_path = asm_file.relative_to(IN_DIR)
-        
+
         if rel_path.parent == Path('.'):
             out_subdir = OUT_DIR
         else:
             out_subdir = OUT_DIR / rel_path.parent
-        
+
         print(f"Converting: {COLOR_PATH}{rel_path}{RESET}:")
-        
+
         result = convert_to_hex(asm_file, DUMP_CONFIG, out_subdir)
 
         if result["success"]:
             success_count += 1
             for res_file in result["dumps"].values():
-                processed_files.append(str((out_subdir / res_file).relative_to(OUT_DIR)))
+                processed_files.append(
+                    str((out_subdir / res_file).relative_to(OUT_DIR)))
             print(f"  {GREEN}OK{RESET}")
         else:
             fail_count += 1
@@ -273,9 +278,10 @@ def main():
 
         for warn in result["warnings"]:
             print(f"  {YELLOW}WARNING: {warn}{RESET}")
-    
+
     print("=" * 50)
-    print(f"Done! {GREEN}Success: {success_count}{RESET}, {RED}Failed: {fail_count}{RESET}")
+    print(
+        f"Done! {GREEN}Success: {success_count}{RESET}, {RED}Failed: {fail_count}{RESET}")
     print(f"Output files saved to: {COLOR_PATH}{OUT_DIR}{RESET}")
 
     if LST_PATH is not None:
