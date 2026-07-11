@@ -6,10 +6,10 @@ TIMEOUT_ITERATIONS = 50000
 RF_DBG_NUM = 31
 
 TRACE_ENABLE = True
-TRACE_DIR = "trace"
+TRACE_DIRNAME = "trace"
 
 
-class Test_Result(Enum):
+class CpuTestResult(Enum):
     TEST_RUN = 0
     TEST_PASS = 1
     TEST_FAIL = 2

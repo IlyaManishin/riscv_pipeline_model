@@ -1,13 +1,14 @@
 from pathlib import Path
-from typing import Optional
+from typing import Iterator, Optional
 import pytest
 import csv
 
 from risc_v.single_cycle import cpu_system
-import tests.cpu.config as confs
+from bench_builder.build_paths import BUILD_DIR, ASM_DIRNAME
+from cpu_config import *
 
 
-TEST_DIR = Path(confs.ASM_TEST_DIR)
+TEST_DIR = BUILD_DIR / ASM_DIRNAME
 LIST_FILE = TEST_DIR / "ub.lst"
 
 
@@ -39,10 +40,10 @@ def load_hex_file(filename: str) -> list[int]:
 
 
 def create_trace_writer(text_file: str):
-    if not confs.TRACE_ENABLE:
+    if not TRACE_ENABLE:
         return None, None
 
-    trace_dir = Path(confs.TRACE_DIR)
+    trace_dir = Path(TRACE_DIRNAME)
     trace_dir.mkdir(parents=True, exist_ok=True)
 
     trace_file = trace_dir / (Path(text_file).stem + ".csv")
@@ -62,7 +63,7 @@ def run_program(
     cpu: cpu_system.CpuSystem,
     text_file: str,
     data_file: Optional[str],
-):
+) -> None:
     cpu.imem.load_program(load_hex_file(text_file))
 
     if data_file is not None:
@@ -71,9 +72,7 @@ def run_program(
     trace_file, trace = create_trace_writer(text_file)
 
     try:
-
-        for cycle in range(confs.TIMEOUT_ITERATIONS):
-
+        for cycle in range(TIMEOUT_ITERATIONS):
             cpu.step()
 
             if trace is not None:
@@ -82,61 +81,51 @@ def run_program(
                     cpu.cpu.pc_inst.read(),
                     cpu.cpu.rs1,
                     cpu.cpu.rs2,
-                    cpu.cpu.rd
+                    cpu.cpu.rd,
                 ]
-
                 for i in range(32):
                     row.append(cpu.cpu.rf_inst.read(i))
-
                 trace.writerow(row)
 
-            rf_dbg = cpu.cpu.rf_inst.read(confs.RF_DBG_NUM)
+            rf_dbg = cpu.cpu.rf_inst.read(RF_DBG_NUM)
 
-            if rf_dbg == confs.Test_Result.TEST_RUN.value:
+            if rf_dbg == CpuTestResult.TEST_RUN.value:
                 continue
 
-            if rf_dbg == confs.Test_Result.TEST_PASS.value:
+            if rf_dbg == CpuTestResult.TEST_PASS.value:
                 return
 
-            if rf_dbg == confs.Test_Result.TEST_FAIL.value:
+            if rf_dbg == CpuTestResult.TEST_FAIL.value:
                 pytest.fail("Program returned TEST_FAIL")
 
-            raise ValueError(
-                f"Invalid RF_DBG value: {rf_dbg:#x}"
-            )
+            raise ValueError(f"Invalid RF_DBG value: {rf_dbg:#x}")
 
-        pytest.fail(
-            f"Timeout ({confs.TIMEOUT_ITERATIONS} cycles)"
-        )
+        pytest.fail(f"Timeout ({TIMEOUT_ITERATIONS} cycles)")
 
     finally:
         if trace_file is not None:
             trace_file.close()
 
 
-def collect_tests():
-
+def collect_tests() -> list[tuple[str, Optional[str]]]:
     if not LIST_FILE.exists():
         raise FileNotFoundError(LIST_FILE)
 
-    result = []
+    result: list[tuple[str, Optional[str]]] = []
 
-    with open(LIST_FILE) as f:
+    with open(LIST_FILE, "r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
-
             if not line:
                 continue
 
-            text = TEST_DIR / line
-
-            data = text.parent / f"{text.stem}_data.hex"
+            text_path = TEST_DIR / line
+            data_path = text_path.parent / f"{text_path.stem}_data.hex"
 
             result.append(
-                pytest.param(
-                    str(text),
-                    str(data) if data.exists() else None,
-                    id=text.stem,
+                (
+                    str(text_path),
+                    str(data_path) if data_path.exists() else None,
                 )
             )
 
@@ -144,21 +133,17 @@ def collect_tests():
 
 
 @pytest.fixture
-def cpu():
+def cpu() -> cpu_system.CpuSystem:
     return cpu_system.CpuSystem()
 
 
 @pytest.mark.parametrize(
-    "text_file,data_file",
+    "text_file, data_file",
     collect_tests(),
 )
 def test_program(
-    cpu,
-    text_file,
-    data_file,
-):
-    run_program(
-        cpu,
-        text_file,
-        data_file,
-    )
+    cpu: cpu_system.CpuSystem,
+    text_file: str,
+    data_file: Optional[str],
+) -> None:
+    run_program(cpu, text_file, data_file)

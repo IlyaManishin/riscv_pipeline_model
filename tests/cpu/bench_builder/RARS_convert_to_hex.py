@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 from datetime import datetime
 
-from . import build_paths as bpaths
+import build_paths as bpaths
 
 # ============================================================
 # CONFIGURATION
