@@ -22,5 +22,5 @@ def test_sc_asm(
     text_file: str,
     data_file: Optional[str],
 ) -> None:
-    tracer = SingleCycleTracer(Path(text_file).stem)
+    tracer = SingleCycleTracer(sc_cpu, Path(text_file).stem)
     run_program(sc_cpu, tracer, text_file, data_file)

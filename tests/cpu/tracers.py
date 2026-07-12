@@ -26,7 +26,7 @@ class BaseTracer(ABC):
         pass
 
     @abstractmethod
-    def trace_cycle(self, cycle: int, cpu) -> None:
+    def trace_cycle(self, cycle: int) -> None:
         pass
 
     def close(self):
@@ -35,24 +35,28 @@ class BaseTracer(ABC):
 
 
 class SingleCycleTracer(BaseTracer):
+    def __init__(self, cpu: sc_cpu_system.CpuSystem, test_name):
+        super().__init__(test_name)
+        self.cpu = cpu
+        
     def _get_header(self) -> list[str]:
         header = ["cycle", "pc", "rs1", "rs2", "rd"]
         header.extend(f"x{i}" for i in range(REG_COUNT))
         return header
 
-    def trace_cycle(self, cycle: int, cpu: sc_cpu_system.CpuSystem) -> None:
+    def trace_cycle(self, cycle: int) -> None:
         if self.writer is None:
             return
 
         row = [
             cycle,
-            cpu._core.pc_inst.read(),
-            cpu._core.rs1,
-            cpu._core.rs2,
-            cpu._core.rd,
+            self.cpu._core.pc_inst.read(),
+            self.cpu._core.rs1,
+            self.cpu._core.rs2,
+            self.cpu._core.rd,
         ]
         for i in range(REG_COUNT):
-            row.append(cpu._core.rf_inst.read(i))
+            row.append(self.cpu._core.rf_inst.read(i))
 
         self.writer.writerow(row)
 

@@ -54,7 +54,7 @@ def execute_program(
         for cycle in range(TIMEOUT_ITERATIONS):
             cpu.step()
 
-            tracer.trace_cycle(cycle, cpu)
+            tracer.trace_cycle(cycle)
 
             rf_dbg = cpu.reg_file.read(RF_DBG_NUM)
 
