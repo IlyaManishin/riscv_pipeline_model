@@ -5,3 +5,4 @@ BUILD_DIR = BENCHES_DIR / "build"
 
 ASM_DIRNAME = "asm"
 C_DIRNAME = "C"
+TEST_LIST_NAME = "benches.lst"

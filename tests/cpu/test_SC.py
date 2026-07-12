@@ -4,12 +4,8 @@ import pytest
 import csv
 
 from risc_v.single_cycle import cpu_system
-from bench_builder.build_paths import BUILD_DIR, ASM_DIRNAME
+from bench_builder.build_paths import BUILD_DIR, ASM_DIRNAME, TEST_LIST_NAME
 from cpu_config import *
-
-
-TEST_DIR = BUILD_DIR / ASM_DIRNAME
-LIST_FILE = TEST_DIR / "ub.lst"
 
 
 def load_hex_file(filename: str) -> list[int]:
@@ -39,6 +35,59 @@ def load_hex_file(filename: str) -> list[int]:
     return result
 
 
+def load_program(
+    cpu: cpu_system.CpuSystem,
+    text_file: str,
+    data_file: Optional[str],
+) -> None:
+    cpu.imem.load_program(load_hex_file(text_file))
+
+    if data_file is not None:
+        cpu.dmem.load_data(load_hex_file(data_file))
+
+
+def execute_program(
+    cpu: cpu_system.CpuSystem,
+    text_file: str
+) -> None:
+    trace_file, trace = create_trace_writer(text_file)
+
+    try:
+        for cycle in range(TIMEOUT_ITERATIONS):
+            cpu.step()
+
+            if trace is not None:
+                row = [
+                    cycle,
+                    cpu.core.pc_inst.read(),
+                    cpu.core.rs1,
+                    cpu.core.rs2,
+                    cpu.core.rd,
+                ]
+                for i in range(REG_COUNT):
+                    row.append(cpu.core.rf_inst.read(i))
+                trace.writerow(row)
+
+            rf_dbg = cpu.core.rf_inst.read(RF_DBG_NUM)
+
+            if rf_dbg == CpuTestResult.TEST_RUN.value:
+                continue
+
+            if rf_dbg == CpuTestResult.TEST_PASS.value:
+                return
+
+            if rf_dbg == CpuTestResult.TEST_FAIL.value:
+                pytest.fail("Program returned TEST_FAIL")
+
+            raise ValueError(f"Invalid RF_DBG value: {rf_dbg:#x}")
+
+        pytest.fail(f"Timeout ({TIMEOUT_ITERATIONS} cycles)")
+
+    finally:
+        if trace_file is not None:
+            trace_file.close()
+
+
 def create_trace_writer(text_file: str):
     if not TRACE_ENABLE:
         return None, None
@@ -59,68 +108,21 @@ def create_trace_writer(text_file: str):
     return f, writer
 
 
-def run_program(
-    cpu: cpu_system.CpuSystem,
-    text_file: str,
-    data_file: Optional[str],
-) -> None:
-    cpu.imem.load_program(load_hex_file(text_file))
-
-    if data_file is not None:
-        cpu.dmem.load_data(load_hex_file(data_file))
-
-    trace_file, trace = create_trace_writer(text_file)
-
-    try:
-        for cycle in range(TIMEOUT_ITERATIONS):
-            cpu.step()
-
-            if trace is not None:
-                row = [
-                    cycle,
-                    cpu.cpu.pc_inst.read(),
-                    cpu.cpu.rs1,
-                    cpu.cpu.rs2,
-                    cpu.cpu.rd,
-                ]
-                for i in range(REG_COUNT):
-                    row.append(cpu.cpu.rf_inst.read(i))
-                trace.writerow(row)
-
-            rf_dbg = cpu.cpu.rf_inst.read(RF_DBG_NUM)
-
-            if rf_dbg == CpuTestResult.TEST_RUN.value:
-                continue
-
-            if rf_dbg == CpuTestResult.TEST_PASS.value:
-                return
-
-            if rf_dbg == CpuTestResult.TEST_FAIL.value:
-                pytest.fail("Program returned TEST_FAIL")
-
-            raise ValueError(f"Invalid RF_DBG value: {rf_dbg:#x}")
-
-        pytest.fail(f"Timeout ({TIMEOUT_ITERATIONS} cycles)")
-
-    finally:
-        if trace_file is not None:
-            trace_file.close()
-
-
-def collect_tests() -> list[tuple[str, Optional[str]]]:
-    if not LIST_FILE.exists():
-        raise FileNotFoundError(LIST_FILE)
+def collect_tests(tests_dir: Path) -> list[tuple[str, Optional[str]]]:
+    list_file = tests_dir / TEST_LIST_NAME
+    if not list_file.exists():
+        raise FileNotFoundError(list_file)
 
     result: list[tuple[str, Optional[str]]] = []
 
-    with open(LIST_FILE, "r", encoding="utf-8") as f:
+    with open(list_file, "r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line:
                 continue
 
-            text_path = TEST_DIR / line
-            data_path = text_path.parent / f"{text_path.stem}_data.hex"
+            text_path = tests_dir / line
+            data_path = text_path.parent / f"{text_path.stem}_data.hex" # add in rars_convert_to_hex
 
             result.append(
                 (
@@ -137,9 +139,17 @@ def cpu() -> cpu_system.CpuSystem:
     return cpu_system.CpuSystem()
 
 
+def run_program(
+    cpu: cpu_system.CpuSystem,
+    text_file: str,
+    data_file: Optional[str],
+) -> None:
+    load_program(cpu, text_file, data_file)
+    execute_program(cpu, text_file)
+
 @pytest.mark.parametrize(
     "text_file, data_file",
-    collect_tests(),
+    collect_tests(BUILD_DIR / ASM_DIRNAME),
 )
 def test_program(
     cpu: cpu_system.CpuSystem,

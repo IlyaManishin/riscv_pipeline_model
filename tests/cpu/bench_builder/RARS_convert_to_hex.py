@@ -23,8 +23,8 @@ RARS_PATH = Path("rars1_6.jar")
 
 # Path to lst file (list .hex files)
 # if = None, lst file not create
-LST_PATH = OUT_DIR / "ub.lst"
-# LST_PATH = Path("./uBench/hex/ub.lst")
+LST_PATH = OUT_DIR / bpaths.TEST_LIST_NAME
+
 LST_UNUSED = ['Deprecated']
 
 DUMP_CONFIG = {

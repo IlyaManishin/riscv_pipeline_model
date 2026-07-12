@@ -36,6 +36,8 @@ results.xml
 .$*.dtmp
 *.hex
 ub.lst
+**/riscv_linker/temps/*
+tmp.py
 
 #Test result
 trace/
