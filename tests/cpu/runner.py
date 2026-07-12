@@ -8,28 +8,17 @@ from cpu_config import *
 from bench_builder.build_paths import TEST_LIST_NAME
 
 
-def load_hex_file(filename: str) -> list[int]:
+def load_bin_file(filename: str) -> list[int]:
     result = []
 
-    with open(filename, "r") as f:
-        for line_num, line in enumerate(f, 1):
-            clean_line = line.strip().replace("0x", "").replace("0X", "").replace(" ", "")
-
-            if not clean_line:
-                continue
-
-            try:
-                value = int(clean_line, 16)
-            except ValueError as e:
-                raise ValueError(
-                    f"Invalid hex at line {line_num}: '{clean_line}'"
-                ) from e
-
-            if value > (1 << XLEN) - 1:
-                raise ValueError(
-                    f"Value 0x{value:X} exceeds {XLEN} bits at line {line_num}"
-                )
-
+    with open(filename, "rb") as f:
+        while True:
+            chunk = f.read(4)
+            if not chunk:
+                break
+            if len(chunk) < 4:
+                chunk = chunk.ljust(4, b'\x00')
+            value = int.from_bytes(chunk, byteorder="little")
             result.append(value)
 
     return result
@@ -40,10 +29,10 @@ def load_program(
     text_file: str,
     data_file: Optional[str],
 ) -> None:
-    cpu.imem.load_program(load_hex_file(text_file))
+    cpu.imem.load_program(load_bin_file(text_file))
 
     if data_file is not None:
-        cpu.dmem.load_data(load_hex_file(data_file))
+        cpu.dmem.load_data(load_bin_file(data_file))
 
 
 def execute_program(
