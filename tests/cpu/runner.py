@@ -87,13 +87,22 @@ def collect_tests(tests_dir: Path) -> list[tuple[str, Optional[str]]]:
             if not line:
                 continue
 
-            text_path = tests_dir / line
-            data_path = text_path.parent / f"{text_path.stem}_data.hex"
+            parts = line.split(",")
+            imem_path = tests_dir / parts[0].strip()
+            
+            dmem_path = None
+            if len(parts) > 1 and parts[1].strip():
+                dmem_path = tests_dir / parts[1].strip()
+
+            if not imem_path.exists():
+                raise FileNotFoundError(imem_path)
+            if dmem_path and not dmem_path.exists():
+                raise FileNotFoundError(dmem_path)
 
             result.append(
                 (
-                    str(text_path),
-                    str(data_path) if data_path.exists() else None,
+                    str(imem_path),
+                    str(dmem_path) if dmem_path is not None else None,
                 )
             )
 
