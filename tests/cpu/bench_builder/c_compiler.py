@@ -189,8 +189,18 @@ def main():
 
         if result["success"]:
             success_count += 1
-            # Record the path to imem.bin for the list file
-            processed_files.append(result["dumps"].get("imem"))
+            
+            # Extract both paths
+            imem_path = result["dumps"].get("imem")
+            dmem_path = result["dumps"].get("dmem")
+            
+            # Fallback if dmem wasn't recorded but exists in the output dir
+            if not dmem_path:
+                dmem_path = str((out_subdir / "dmem.bin").relative_to(OUT_DIR))
+                
+            # Format as "imem_path, dmem_path" and add to list
+            processed_files.append(f"{imem_path},{dmem_path}")
+            
             print(f"  {GREEN}OK{RESET}")
         else:
             fail_count += 1
@@ -209,7 +219,7 @@ def main():
         f"Done! {GREEN}Success: {success_count}{RESET}, {RED}Failed: {fail_count}{RESET}")
     print(f"Output files saved to: {COLOR_PATH}{OUT_DIR}{RESET}")
 
-    # Generate the list file containing all successfully compiled imem.bin paths
+    # Generate the list file containing both imem and dmem paths
     if LST_PATH is not None:
         with open(LST_PATH, "w", encoding="utf-8") as f:
             for item in processed_files:

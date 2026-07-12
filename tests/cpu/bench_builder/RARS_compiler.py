@@ -235,7 +235,7 @@ def main():
         print(f"No .s or .asm files found in {IN_DIR}")
         sys.exit(0)
 
-    print(f"Found {len(asm_files)} files to convert")
+    print(f"Found {len(asm_files)} files to compile")
     print("=" * 50)
 
     success_count = 0
