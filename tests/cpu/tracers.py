@@ -4,8 +4,7 @@ from abc import ABC, abstractmethod
 
 from cpu_config import TRACE_ENABLE, TRACE_DIRNAME, REG_COUNT
 
-from risc_v.single_cycle.cpu_core import Core as SC_Core
-from risc_v.single_cycle.cpu_system import CpuSystem as SC_CpuSystem
+import risc_v.single_cycle.cpu_system as sc_cpu_system
 
 
 class BaseTracer(ABC):
@@ -28,7 +27,6 @@ class BaseTracer(ABC):
 
     @abstractmethod
     def trace_cycle(self, cycle: int, cpu) -> None:
-        """Вызывается каждый такт. Решает сам, писать ли в лог."""
         pass
 
     def close(self):
@@ -42,19 +40,19 @@ class SingleCycleTracer(BaseTracer):
         header.extend(f"x{i}" for i in range(REG_COUNT))
         return header
 
-    def trace_cycle(self, cycle: int, cpu: SC_CpuSystem) -> None:
+    def trace_cycle(self, cycle: int, cpu: sc_cpu_system.CpuSystem) -> None:
         if self.writer is None:
             return
 
         row = [
             cycle,
-            cpu.core.pc_inst.read(),
-            cpu.core.rs1,
-            cpu.core.rs2,
-            cpu.core.rd,
+            cpu._core.pc_inst.read(),
+            cpu._core.rs1,
+            cpu._core.rs2,
+            cpu._core.rd,
         ]
         for i in range(REG_COUNT):
-            row.append(cpu.core.rf_inst.read(i))
+            row.append(cpu._core.rf_inst.read(i))
 
         self.writer.writerow(row)
 

@@ -1,11 +1,13 @@
 from pathlib import Path
 from typing import Optional
 import pytest
-import csv
 
-from risc_v.single_cycle import cpu_system
-from bench_builder.build_paths import BUILD_DIR, ASM_DIRNAME, TEST_LIST_NAME
+from risc_v.single_cycle import cpu_system as sc_cpu_system
+from risc_v.base.icpu_system import ICpuSystem
+
+from tracers import BaseTracer, SingleCycleTracer
 from cpu_config import *
+from bench_builder.build_paths import BUILD_DIR, ASM_DIRNAME, TEST_LIST_NAME
 
 
 def load_hex_file(filename: str) -> list[int]:
@@ -36,7 +38,7 @@ def load_hex_file(filename: str) -> list[int]:
 
 
 def load_program(
-    cpu: cpu_system.CpuSystem,
+    cpu: sc_cpu_system.CpuSystem,
     text_file: str,
     data_file: Optional[str],
 ) -> None:
@@ -47,28 +49,16 @@ def load_program(
 
 
 def execute_program(
-    cpu: cpu_system.CpuSystem,
-    text_file: str
+    cpu: ICpuSystem,
+    tracer: BaseTracer
 ) -> None:
-    trace_file, trace = create_trace_writer(text_file)
-
     try:
         for cycle in range(TIMEOUT_ITERATIONS):
             cpu.step()
 
-            if trace is not None:
-                row = [
-                    cycle,
-                    cpu.core.pc_inst.read(),
-                    cpu.core.rs1,
-                    cpu.core.rs2,
-                    cpu.core.rd,
-                ]
-                for i in range(REG_COUNT):
-                    row.append(cpu.core.rf_inst.read(i))
-                trace.writerow(row)
+            tracer.trace_cycle(cycle, cpu)
 
-            rf_dbg = cpu.core.rf_inst.read(RF_DBG_NUM)
+            rf_dbg = cpu.reg_file.read(RF_DBG_NUM)
 
             if rf_dbg == CpuTestResult.TEST_RUN.value:
                 continue
@@ -84,28 +74,7 @@ def execute_program(
         pytest.fail(f"Timeout ({TIMEOUT_ITERATIONS} cycles)")
 
     finally:
-        if trace_file is not None:
-            trace_file.close()
-
-
-def create_trace_writer(text_file: str):
-    if not TRACE_ENABLE:
-        return None, None
-
-    trace_dir = Path(TRACE_DIRNAME)
-    trace_dir.mkdir(parents=True, exist_ok=True)
-
-    trace_file = trace_dir / (Path(text_file).stem + ".csv")
-
-    f = open(trace_file, "w", newline="")
-    writer = csv.writer(f)
-
-    header = ["cycle", "pc", "rs1", "rs2", "rd"]
-    header.extend(f"x{i}" for i in range(REG_COUNT))
-
-    writer.writerow(header)
-
-    return f, writer
+        tracer.close()
 
 
 def collect_tests(tests_dir: Path) -> list[tuple[str, Optional[str]]]:
@@ -122,7 +91,7 @@ def collect_tests(tests_dir: Path) -> list[tuple[str, Optional[str]]]:
                 continue
 
             text_path = tests_dir / line
-            data_path = text_path.parent / f"{text_path.stem}_data.hex" # add in rars_convert_to_hex
+            data_path = text_path.parent / f"{text_path.stem}_data.hex"
 
             result.append(
                 (
@@ -135,25 +104,28 @@ def collect_tests(tests_dir: Path) -> list[tuple[str, Optional[str]]]:
 
 
 @pytest.fixture
-def cpu() -> cpu_system.CpuSystem:
-    return cpu_system.CpuSystem()
+def sc_cpu() -> sc_cpu_system.CpuSystem:
+    return sc_cpu_system.CpuSystem()
 
 
 def run_program(
-    cpu: cpu_system.CpuSystem,
+    cpu: ICpuSystem,
+    tracer: BaseTracer,
     text_file: str,
     data_file: Optional[str],
 ) -> None:
     load_program(cpu, text_file, data_file)
-    execute_program(cpu, text_file)
+    execute_program(cpu, tracer)
+
 
 @pytest.mark.parametrize(
     "text_file, data_file",
     collect_tests(BUILD_DIR / ASM_DIRNAME),
 )
-def test_program(
-    cpu: cpu_system.CpuSystem,
+def test_sc_asm(
+    sc_cpu: sc_cpu_system.CpuSystem,
     text_file: str,
     data_file: Optional[str],
 ) -> None:
-    run_program(cpu, text_file, data_file)
+    tracer = SingleCycleTracer(Path(text_file).stem)
+    run_program(sc_cpu, tracer, text_file, data_file)
