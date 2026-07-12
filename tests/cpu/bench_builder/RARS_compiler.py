@@ -3,6 +3,7 @@ import sys
 import subprocess
 from pathlib import Path
 from datetime import datetime
+from tqdm import tqdm
 
 import build_paths as bpaths
 
@@ -235,9 +236,6 @@ def main():
         print(f"No .s or .asm files found in {IN_DIR}")
         sys.exit(0)
 
-    print(f"Found {len(asm_files)} files to compile")
-    print("=" * 50)
-
     success_count = 0
     fail_count = 0
 
@@ -247,7 +245,7 @@ def main():
     YELLOW = '\033[33m'
     COLOR_PATH = '\033[96m'
 
-    for asm_file in asm_files:
+    for asm_file in tqdm(asm_files, desc="Converting ASM", unit="file"):
         rel_path = asm_file.relative_to(IN_DIR)
 
         if rel_path.parent == Path('.'):
@@ -255,24 +253,19 @@ def main():
         else:
             out_subdir = OUT_DIR / rel_path.parent
 
-        print(f"Converting: {COLOR_PATH}{rel_path}{RESET}:")
-
         result = create_memory_dump(asm_file, DUMP_CONFIG, out_subdir)
 
         if result["success"]:
             success_count += 1
             for res_file in result["dumps"].values():
                 processed_files.append(str((out_subdir / res_file).relative_to(OUT_DIR)))
-            print(f"  {GREEN}OK{RESET}")
         else:
             fail_count += 1
-            print(f"  {RED}FAILED{RESET}")
-
-        for err in result["errors"]:
-            print(f"  {RED}ERROR: {err}{RESET}")
-
-        for warn in result["warnings"]:
-            print(f"  {YELLOW}WARNING: {warn}{RESET}")
+            tqdm.write(f"  {COLOR_PATH}{rel_path}{RESET}")
+            for err in result["errors"]:
+                tqdm.write(f"    {RED}ERROR: {err}{RESET}")
+            for warn in result["warnings"]:
+                tqdm.write(f"    {YELLOW}WARNING: {warn}{RESET}")
 
     print("=" * 50)
     print(f"Done! {GREEN}Success: {success_count}{RESET}, {RED}Failed: {fail_count}{RESET}")

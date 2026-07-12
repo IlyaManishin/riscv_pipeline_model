@@ -3,6 +3,7 @@ import sys
 import subprocess
 import shutil
 from pathlib import Path
+from tqdm import tqdm
 
 import build_paths as bpaths
 
@@ -157,9 +158,6 @@ def main():
         print(f"No .c files found in {IN_DIR}")
         sys.exit(0)
 
-    print(f"Found {len(c_files)} files to compile")
-    print("=" * 50)
-
     # Counters for final summary
     success_count = 0
     fail_count = 0
@@ -172,7 +170,7 @@ def main():
     COLOR_PATH = '\033[96m'
 
     # Process each C file individually
-    for c_file in c_files:
+    for c_file in tqdm(c_files, desc="Compiling C", unit="file"):
         # Determine the relative path to preserve directory structure
         rel_path = c_file.relative_to(IN_DIR)
 
@@ -181,8 +179,6 @@ def main():
             out_subdir = OUT_DIR / c_file.stem
         else:
             out_subdir = OUT_DIR / rel_path.parent / c_file.stem
-
-        print(f"Compiling: {COLOR_PATH}{rel_path}{RESET}:")
 
         # Run the compilation process
         result = compile_c_file(c_file, MAKEFILE_DIR, out_subdir)
@@ -200,18 +196,13 @@ def main():
                 
             # Format as "imem_path, dmem_path" and add to list
             processed_files.append(f"{imem_path},{dmem_path}")
-            
-            print(f"  {GREEN}OK{RESET}")
         else:
             fail_count += 1
-            print(f"  {RED}FAILED{RESET}")
-
-        # Print any errors or warnings to the console
-        for err in result["errors"]:
-            print(f"  {RED}ERROR: {err}{RESET}")
-
-        for warn in result["warnings"]:
-            print(f"  {YELLOW}WARNING: {warn}{RESET}")
+            tqdm.write(f"  {COLOR_PATH}{rel_path}{RESET}")
+            for err in result["errors"]:
+                tqdm.write(f"    {RED}ERROR: {err}{RESET}")
+            for warn in result["warnings"]:
+                tqdm.write(f"    {YELLOW}WARNING: {warn}{RESET}")
 
     # Print final statistics
     print("=" * 50)
