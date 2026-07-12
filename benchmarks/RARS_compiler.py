@@ -85,7 +85,7 @@ def find_asm_files(directory: Path):
 
 
 def create_memory_dump(asm_file: Path, dump_config: dict, output_dir: Path) -> dict:
-    """Run RARS to convert .s/.asm file to multiple hex dumps based on config
+    """Run RARS to convert .s/.asm file to multiple bin dumps based on config
 
     Args:
         asm_file: Path to assembly file
@@ -245,7 +245,7 @@ def main():
     YELLOW = '\033[33m'
     COLOR_PATH = '\033[96m'
 
-    for asm_file in tqdm(asm_files, desc="Converting ASM", unit="file"):
+    for asm_file in tqdm(asm_files, desc="Compiling ASM", unit="file"):
         rel_path = asm_file.relative_to(IN_DIR)
 
         if rel_path.parent == Path('.'):

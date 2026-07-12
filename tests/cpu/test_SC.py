@@ -5,7 +5,7 @@ import pytest
 from risc_v.single_cycle import cpu_system as sc_cpu_system
 from tracers import SingleCycleTracer
 from runner import run_program, collect_tests
-from bench_builder.build_paths import BUILD_DIR, ASM_DIRNAME, C_DIRNAME
+from benchmarks.build_paths import BUILD_DIR, ASM_DIRNAME, C_DIRNAME
 
 
 @pytest.fixture

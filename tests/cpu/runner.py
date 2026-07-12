@@ -5,7 +5,7 @@ import pytest
 from risc_v.base.icpu_system import ICpuSystem
 from tracers import BaseTracer
 from cpu_config import *
-from bench_builder.build_paths import TEST_LIST_NAME
+from benchmarks.build_paths import TEST_LIST_NAME
 
 
 def load_bin_file(filename: str) -> list[int]:
