@@ -11,29 +11,13 @@ from risc_v.modules.mem.imem import InstrMem
 from risc_v.modules.mem.dmem import DataMem
 
 
-pc = PC()
-rf = RegFile()
-imem = InstrMem(conf.IMEM_ADDR_BYTE_WIDTH - conf.BYTE_ADDR_WIDTH)
-dmem = DataMem(conf.DMEM_ADDR_BYTE_WIDTH - conf.BYTE_ADDR_WIDTH)
+# Module-level singleton scaffolding (kept for reference; instances are
+# instead created and wired together in cpu_system.py).
+# pc = PC(...)
+# rf = RegFile()
+# imem = InstrMem(...)
+# dmem = DataMem(...)
 
-
-# if_id = IF_ID_Stage()
-# id_ex = ID_EX_Stage()
-# ex_mem = EX_MEM_Stage()
-# mem_wb = MEM_WB_Stage()
-
-# pipeline_triggers: list[ITrigger] = [
-#     pc.reg,
-#     rf,
-#     imem,
-#     dmem,
-#     *if_id.get_triggers(),
-#     *id_ex.get_triggers(),
-#     *ex_mem.get_triggers(),
-#     *mem_wb.get_triggers()
-# ]
-
-# Core.clk().add_triggers(pipeline_triggers)
 @dataclass
 class IF_ID_Stage:
     pc: Register = Register()
@@ -92,11 +76,12 @@ class EX_MEM_Stage:
     wb_sel: Register = Register()
     reg_wr: Register = Register()
     dmem_sel: Register = Register()
+    pc4: Register = Register()
 
     def get_triggers(self) -> list[ITrigger]:
         return [
             self.alu_out, self.rf_rd2, self.rd,
-            self.wb_sel, self.reg_wr, self.dmem_sel
+            self.wb_sel, self.reg_wr, self.dmem_sel, self.pc4
         ]
 
 
@@ -107,10 +92,11 @@ class MEM_WB_Stage:
     rd: Register = Register()
     wb_sel: Register = Register()
     reg_wr: Register = Register()
+    pc4: Register = Register()
 
     def get_triggers(self) -> list[ITrigger]:
         return [
             self.alu_out, self.dmem_data, self.rd,
-            self.wb_sel, self.reg_wr
+            self.wb_sel, self.reg_wr, self.pc4
         ]
 

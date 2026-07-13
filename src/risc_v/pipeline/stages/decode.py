@@ -39,7 +39,8 @@ class Decode:
         self.rf_rd2 = self.rf_inst.read(self.rs2)
         
         self.id_controls = Instruction_Decoder.decode(self.instr)
-        self.br_eq, self.br_lt = BranchUnit.compare()
+        self.br_eq, self.br_lt = BranchUnit.compare(
+            self.rf_rd1, self.rf_rd2, bool(self.id_controls.br_un))
         self.id_controls = Instruction_Decoder.decode(self.instr, self.br_eq, self.br_lt)
         
         self.imm = ImmGen.generate(self.instr, self.id_controls.imm_type)
@@ -51,10 +52,12 @@ class Decode:
         self.buff_id_ex.imm.set(self.imm)
         self.buff_id_ex.rs1.set(self.instr.rs1)
         self.buff_id_ex.rs2.set(self.instr.rs2)
-        self.buff_id_ex.rd.set(self.id_controls.alu_sel)
+        self.buff_id_ex.rd.set(self.rd)
+        self.buff_id_ex.alu_sel.set(self.id_controls.alu_sel.value)
         self.buff_id_ex.a_sel.set(self.id_controls.a_sel)
         self.buff_id_ex.b_sel.set(self.id_controls.b_sel)
         self.buff_id_ex.wb_sel.set(self.id_controls.wb_sel)
+        self.buff_id_ex.reg_wr.set(self.id_controls.reg_wr)
         self.buff_id_ex.dmem_sel.set(self.id_controls.dmem_sel.to_int())
         self.buff_id_ex.jfexe.set(self.id_controls.jf_exe)
         self.buff_id_ex.alushift_sel.set(self.id_controls.alushift_sel)
