@@ -4,6 +4,7 @@ import subprocess
 from pathlib import Path
 from datetime import datetime
 from tqdm import tqdm
+import shutil
 
 import build_paths as bpaths
 
@@ -54,7 +55,7 @@ DUMP_CONFIG = {
         #   './%date%/%name%_imem.hex'    -> hex_out/2024-01-15/add_test_01_imem.hex
         #   '../%name%_imem.hex'          -> ../add_test_01_imem.hex (outside output_dir)
         #   'C:/tests/%name%_imem.hex'    -> absolute path
-        'output_file_path': './%name%_imem.bin'
+        'output_file_path': './%name%/imem.bin'
     },
 }
 
@@ -197,7 +198,8 @@ def create_memory_dump(asm_file: Path, dump_config: dict, output_dir: Path) -> d
         all_valid = True
         for segment, output_file in dump_files.items():
             if not output_file.exists():
-                errors.append(f"{segment} dump file was not created: {output_file}")
+                errors.append(
+                    f"{segment} dump file was not created: {output_file}")
                 all_valid = False
             elif output_file.stat().st_size == 0:
                 warnings.append(f"{segment} dump file is empty: {output_file}")
@@ -229,9 +231,14 @@ def main():
         sys.exit(1)
 
     processed_files = []
+    
+    # Clear OUT_DIR
+    if OUT_DIR.exists():
+        shutil.rmtree(OUT_DIR)
+        print(f"REMOVE {OUT_DIR} directory")
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    asm_files = find_asm_files(IN_DIR)
 
+    asm_files = find_asm_files(IN_DIR)
     if not asm_files:
         print(f"No .s or .asm files found in {IN_DIR}")
         sys.exit(0)
@@ -257,8 +264,12 @@ def main():
 
         if result["success"]:
             success_count += 1
-            for res_file in result["dumps"].values():
-                processed_files.append(str((out_subdir / res_file).relative_to(OUT_DIR)))
+
+            name = asm_file.stem
+            imem_path = result["dumps"].get(".text", "")
+            dmem_path = result["dumps"].get(".data", "")
+
+            processed_files.append(f"{name},{imem_path},{dmem_path}")
         else:
             fail_count += 1
             tqdm.write(f"  {COLOR_PATH}{rel_path}{RESET}")
@@ -268,7 +279,8 @@ def main():
                 tqdm.write(f"    {YELLOW}WARNING: {warn}{RESET}")
 
     print("=" * 50)
-    print(f"Done! {GREEN}Success: {success_count}{RESET}, {RED}Failed: {fail_count}{RESET}")
+    print(
+        f"Done! {GREEN}Success: {success_count}{RESET}, {RED}Failed: {fail_count}{RESET}")
     print(f"Output files saved to: {COLOR_PATH}{OUT_DIR}{RESET}")
 
     if LST_PATH is not None:

@@ -74,12 +74,12 @@ def run_program(
     execute_program(cpu, tracer)
 
 
-def collect_tests(tests_dir: Path) -> list[tuple[str, Optional[str]]]:
+def collect_tests(tests_dir: Path) -> list[tuple[str, str, Optional[str]]]:
     list_file = tests_dir / TEST_LIST_NAME
     if not list_file.exists():
         raise FileNotFoundError(list_file)
 
-    result: list[tuple[str, Optional[str]]] = []
+    result = []
 
     with open(list_file, "r", encoding="utf-8") as f:
         for line in f:
@@ -87,12 +87,13 @@ def collect_tests(tests_dir: Path) -> list[tuple[str, Optional[str]]]:
             if not line:
                 continue
 
-            parts = line.split(",")
-            imem_path = tests_dir / parts[0].strip()
+            parts = [p.strip() for p in line.split(",")]
+            test_name = parts[0]
+            imem_path = tests_dir / parts[1]
             
             dmem_path = None
-            if len(parts) > 1 and parts[1].strip():
-                dmem_path = tests_dir / parts[1].strip()
+            if len(parts) > 2 and parts[2]:
+                dmem_path = tests_dir / parts[2]
 
             if not imem_path.exists():
                 raise FileNotFoundError(imem_path)
@@ -101,6 +102,7 @@ def collect_tests(tests_dir: Path) -> list[tuple[str, Optional[str]]]:
 
             result.append(
                 (
+                    test_name,
                     str(imem_path),
                     str(dmem_path) if dmem_path is not None else None,
                 )

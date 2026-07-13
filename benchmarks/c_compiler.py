@@ -4,6 +4,8 @@ import subprocess
 import shutil
 from pathlib import Path
 from tqdm import tqdm
+import shutil
+
 
 import build_paths as bpaths
 
@@ -148,7 +150,11 @@ def main():
 
     processed_files = []
 
-    # Ensure the base output directory exists
+    # Clear OUT_DIR
+    if OUT_DIR.exists():
+        shutil.rmtree(OUT_DIR)
+        print(f"REMOVE {OUT_DIR} directory")
+        
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     # Discover all C files to compile
@@ -185,17 +191,19 @@ def main():
 
         if result["success"]:
             success_count += 1
-            
+
+            name = c_file.stem
+
             # Extract both paths
             imem_path = result["dumps"].get("imem")
             dmem_path = result["dumps"].get("dmem")
-            
+
             # Fallback if dmem wasn't recorded but exists in the output dir
             if not dmem_path:
                 dmem_path = str((out_subdir / "dmem.bin").relative_to(OUT_DIR))
-                
-            # Format as "imem_path, dmem_path" and add to list
-            processed_files.append(f"{imem_path},{dmem_path}")
+
+            # Format as "name, imem_path, dmem_path" and add to list
+            processed_files.append(f"{name},{imem_path},{dmem_path}")
         else:
             fail_count += 1
             tqdm.write(f"  {COLOR_PATH}{rel_path}{RESET}")

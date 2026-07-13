@@ -19,12 +19,6 @@ def main():
     print("STARTING FULL TESTS BUILD")
     print("=" * 50)
 
-    # Clean the build directory before starting
-    if bpaths.BUILD_DIR.exists():
-        print(f"\n>>> Cleaning build directory: {bpaths.BUILD_DIR} <<<")
-        shutil.rmtree(bpaths.BUILD_DIR)
-        print("Cleaned successfully.")
-
     for script_name in BUILD_SCRIPTS:
         script_path = Path(__file__).parent / script_name
 
