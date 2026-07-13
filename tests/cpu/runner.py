@@ -8,6 +8,10 @@ from cpu_config import *
 from benchmarks.build_paths import TEST_LIST_NAME
 
 
+# ============================================================
+# BINARY UTILITIES
+# ============================================================
+
 def load_bin_file(filename: str) -> list[int]:
     result = []
 
@@ -16,6 +20,7 @@ def load_bin_file(filename: str) -> list[int]:
             chunk = f.read(4)
             if not chunk:
                 break
+            # Pad to 32-bit alignment
             if len(chunk) < 4:
                 chunk = chunk.ljust(4, b'\x00')
             value = int.from_bytes(chunk, byteorder="little")
@@ -35,16 +40,21 @@ def load_program(
         cpu.dmem.load_data(load_bin_file(data_file))
 
 
+# ============================================================
+# SIMULATION ENGINE
+# ============================================================
+
 def execute_program(
     cpu: ICpuSystem,
     tracer: BaseTracer
 ) -> None:
     try:
+        # Main clock cycle loop
         for cycle in range(TIMEOUT_ITERATIONS):
             cpu.step()
-
             tracer.trace_cycle(cycle)
 
+            # Check test signature
             rf_dbg = cpu.reg_file.read(RF_DBG_NUM)
 
             if rf_dbg == CpuTestResult.TEST_RUN.value:
@@ -74,6 +84,10 @@ def run_program(
     execute_program(cpu, tracer)
 
 
+# ============================================================
+# TEST DISCOVERY
+# ============================================================
+
 def collect_tests(tests_dir: Path) -> list[tuple[str, str, Optional[str]]]:
     list_file = tests_dir / TEST_LIST_NAME
     if not list_file.exists():
@@ -87,6 +101,7 @@ def collect_tests(tests_dir: Path) -> list[tuple[str, str, Optional[str]]]:
             if not line:
                 continue
 
+            # Parse structural record fields
             parts = [p.strip() for p in line.split(",")]
             test_name = parts[0]
             imem_path = tests_dir / parts[1]
