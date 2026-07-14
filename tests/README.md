@@ -116,3 +116,29 @@ python3 -m pytest -v tests/cpu/
 python3 -m pytest -v tests/modules/
 
 ```
+
+### VCD waveforms during normal tests
+
+The CPU runner creates a VCD automatically together with each existing CSV
+trace.  No separate waveform command is required.  For example, a pipeline
+assembly test produces both files in the same directory:
+
+```text
+trace/pl/asm_reg_trace/addi_test.csv
+trace/pl/asm_reg_trace/addi_test.vcd
+```
+
+VCD generation is enabled by default.  Disable only VCD generation with an
+environment variable:
+
+```powershell
+$env:VCD_TRACE_ENABLE = "0"
+python -m pytest
+```
+
+```bash
+VCD_TRACE_ENABLE=0 python3 -m pytest
+```
+
+Unset the variable or set it to `1` to enable VCD again.  CSV tracing remains
+controlled independently by `TRACE_ENABLE` in `tests/cpu/cpu_config.py`.

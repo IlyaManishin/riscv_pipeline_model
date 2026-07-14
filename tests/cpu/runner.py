@@ -4,6 +4,7 @@ import pytest
 
 from risc_v.base.icpu_system import ICpuSystem
 from tracers import BaseTracer
+from vcd_tracer import CpuVcdTracer
 from cpu_config import *
 from benchmarks.build_paths import TEST_LIST_NAME
 
@@ -48,32 +49,28 @@ def execute_program(
     cpu: ICpuSystem,
     tracers: list[BaseTracer]
 ) -> None:
-    try:
-        # Main clock cycle loop
-        for cycle in range(TIMEOUT_ITERATIONS):
-            cpu.step()
-            
-            for tracer in tracers:
-                tracer.trace_cycle(cycle)
+    # Main clock cycle loop
+    for cycle in range(TIMEOUT_ITERATIONS):
+        cpu.step()
 
-            # Check test signature
-            rf_dbg = cpu.reg_file.read(RF_DBG_NUM)
+        for tracer in tracers:
+            tracer.trace_cycle(cycle)
 
-            if rf_dbg == CpuTestResult.TEST_RUN.value:
-                continue
+        # Check test signature
+        rf_dbg = cpu.reg_file.read(RF_DBG_NUM)
 
-            if rf_dbg == CpuTestResult.TEST_PASS.value:
-                return
+        if rf_dbg == CpuTestResult.TEST_RUN.value:
+            continue
 
-            if rf_dbg == CpuTestResult.TEST_FAIL.value:
-                pytest.fail("Program returned TEST_FAIL")
+        if rf_dbg == CpuTestResult.TEST_PASS.value:
+            return
 
-            raise ValueError(f"Invalid RF_DBG value: {rf_dbg:#x}")
+        if rf_dbg == CpuTestResult.TEST_FAIL.value:
+            pytest.fail("Program returned TEST_FAIL")
 
-        pytest.fail(f"Timeout ({TIMEOUT_ITERATIONS} cycles)")
+        raise ValueError(f"Invalid RF_DBG value: {rf_dbg:#x}")
 
-    finally:
-        tracer.close()
+    pytest.fail(f"Timeout ({TIMEOUT_ITERATIONS} cycles)")
 
 def run_program(
     cpu: ICpuSystem,
@@ -84,15 +81,26 @@ def run_program(
 ) -> None:
     load_program(cpu, text_file, data_file)
 
-    for tracer in tracers:
+    active_tracers = list(tracers)
+    if VCD_TRACE_ENABLE:
+        tracer_name = tracers[0].tracer_name if tracers else "vcd"
+        active_tracers.append(
+            CpuVcdTracer(
+                cpu,
+                tracer_name,
+                clock_period_ns=VCD_CLOCK_PERIOD_NS,
+            )
+        )
+
+    for tracer in active_tracers:
         tracer.on_test_start(test_name)
     
     passed = False
     try:
-        execute_program(cpu, tracers)
+        execute_program(cpu, active_tracers)
         passed = True
     finally:
-        for tracer in tracers:
+        for tracer in active_tracers:
             tracer.on_test_end(test_name, passed)
 
 
