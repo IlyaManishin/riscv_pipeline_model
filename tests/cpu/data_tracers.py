@@ -44,7 +44,7 @@ class PipelineTracer(CsvTracer):
         super().__init__(test_name)
         self.cpu = cpu
 
-    def _get_header(self) -> list[str]:
+    def get_header(self) -> list[str]:
         header = ["cycle",
                   "pc", "stall_pc",
                   "jfexe", "jfid",
@@ -86,6 +86,6 @@ class PipelineTracer(CsvTracer):
         if not bool(valid):
             return "nop"
         instr = self.cpu.imem._memory[pc >> 2]
-        dis_instr = disasm(instr)
+        dis_instr = disasm.disasm(instr)
         # return ("!" + dis_instr if not bool(valid) else dis_instr)
         return dis_instr
