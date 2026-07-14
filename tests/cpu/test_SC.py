@@ -1,9 +1,8 @@
-from pathlib import Path
 from typing import Optional
 import pytest
 
 from risc_v.single_cycle import cpu_system as sc_cpu_system
-from tracers import RegisterTracer
+from data_tracers import RegisterTracer
 from runner import run_program, collect_tests
 from benchmarks.build_paths import BUILD_DIR, ASM_DIRNAME, C_DIRNAME
 
@@ -45,7 +44,7 @@ def test_sc_asm(
     dmem_path: Optional[str],
 ) -> None:
     tracers = [
-        RegisterTracer(sc_cpu, "asm_reg_trace")
+        RegisterTracer(sc_cpu, "sc/asm_reg_trace")
     ]
     run_program(sc_cpu, tracers, test_name, imem_path, dmem_path)
 
@@ -62,6 +61,6 @@ def test_sc_c(
     dmem_path: Optional[str],
 ) -> None:
     tracers = [
-        RegisterTracer(sc_cpu, "c_reg_trace")
+        RegisterTracer(sc_cpu, "sc/c_reg_trace")
     ]
     run_program(sc_cpu, tracers, test_name, imem_path, dmem_path)

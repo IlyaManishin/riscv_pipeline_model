@@ -78,4 +78,4 @@ class CpuSystem(ICpuSystem):
         self._clk.tick()
         
     def get_cur_pc(self):
-        return self._core.pc_inst.read()
+        return self._core.pc
