@@ -34,30 +34,34 @@ def sc_cpu() -> sc_cpu_system.CpuSystem:
 # ============================================================
 
 @pytest.mark.parametrize(
-    "test_name, text_file, data_file",
+    "test_name, imem_path, dmem_path",
     asm_tests,
     ids=asm_ids,
 )
 def test_sc_asm(
     sc_cpu: sc_cpu_system.CpuSystem,
     test_name: str,
-    text_file: str,
-    data_file: Optional[str],
+    imem_path: str,
+    dmem_path: Optional[str],
 ) -> None:
-    tracer = RegisterTracer(sc_cpu, test_name)
-    run_program(sc_cpu, tracer, text_file, data_file)
+    tracers = [
+        RegisterTracer(sc_cpu, "asm_reg_trace")
+    ]
+    run_program(sc_cpu, tracers, test_name, imem_path, dmem_path)
 
 
 @pytest.mark.parametrize(
-    "test_name, text_file, data_file",
+    "test_name, imem_path, dmem_path",
     c_tests,
     ids=c_ids,
 )
 def test_sc_c(
     sc_cpu: sc_cpu_system.CpuSystem,
     test_name: str,
-    text_file: str,
-    data_file: Optional[str],
+    imem_path: str,
+    dmem_path: Optional[str],
 ) -> None:
-    tracer = RegisterTracer(sc_cpu, test_name)
-    run_program(sc_cpu, tracer, text_file, data_file)
+    tracers = [
+        RegisterTracer(sc_cpu, "c_reg_trace")
+    ]
+    run_program(sc_cpu, tracers, test_name, imem_path, dmem_path)

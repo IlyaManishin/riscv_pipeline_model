@@ -46,13 +46,15 @@ def load_program(
 
 def execute_program(
     cpu: ICpuSystem,
-    tracer: BaseTracer
+    tracers: list[BaseTracer]
 ) -> None:
     try:
         # Main clock cycle loop
         for cycle in range(TIMEOUT_ITERATIONS):
             cpu.step()
-            tracer.trace_cycle(cycle)
+            
+            for tracer in tracers:
+                tracer.trace_cycle(cycle)
 
             # Check test signature
             rf_dbg = cpu.reg_file.read(RF_DBG_NUM)
@@ -73,15 +75,25 @@ def execute_program(
     finally:
         tracer.close()
 
-
 def run_program(
     cpu: ICpuSystem,
-    tracer: BaseTracer,
+    tracers: list[BaseTracer],
+    test_name: str,
     text_file: str,
     data_file: Optional[str],
 ) -> None:
     load_program(cpu, text_file, data_file)
-    execute_program(cpu, tracer)
+
+    for tracer in tracers:
+        tracer.on_test_start(test_name)
+    
+    passed = False
+    try:
+        execute_program(cpu, tracers)
+        passed = True
+    finally:
+        for tracer in tracers:
+            tracer.on_test_end(test_name, passed)
 
 
 # ============================================================
