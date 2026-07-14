@@ -3,20 +3,8 @@ import pytest
 
 from risc_v.single_cycle import cpu_system as sc_cpu_system
 from data_tracers import RegisterTracer
-from runner import run_program, collect_tests
-from benchmarks.build_paths import BUILD_DIR, ASM_DIRNAME, C_DIRNAME
-
-# ============================================================
-# TEST SUITE PREPARATION
-# ============================================================
-
-# Parse ASM tests
-asm_tests = collect_tests(BUILD_DIR / ASM_DIRNAME)
-asm_ids = [t[0] for t in asm_tests]
-
-# Parse C tests
-c_tests = collect_tests(BUILD_DIR / C_DIRNAME)
-c_ids = [t[0] for t in c_tests]
+from runner import run_program
+from tests_config import ASM_TESTS, ASM_IDS, C_TESTS, C_IDS
 
 
 # ============================================================
@@ -34,8 +22,8 @@ def sc_cpu() -> sc_cpu_system.CpuSystem:
 
 @pytest.mark.parametrize(
     "test_name, imem_path, dmem_path",
-    asm_tests,
-    ids=asm_ids,
+    ASM_TESTS,
+    ids=ASM_IDS,
 )
 def test_sc_asm(
     sc_cpu: sc_cpu_system.CpuSystem,
@@ -51,8 +39,8 @@ def test_sc_asm(
 
 @pytest.mark.parametrize(
     "test_name, imem_path, dmem_path",
-    c_tests,
-    ids=c_ids,
+    C_TESTS,
+    ids=C_IDS,
 )
 def test_sc_c(
     sc_cpu: sc_cpu_system.CpuSystem,

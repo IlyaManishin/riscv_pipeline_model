@@ -1,7 +1,8 @@
 from cpu_config import REG_COUNT
 from risc_v.base.icpu_system import ICpuSystem
+from risc_v.pipeline.cpu_system import CpuSystem as PL_CpuSystem
 
-from tests.cpu.tracers import CsvTracer
+from tracers import CsvTracer
 from tests.utils import disasm
 
 # ============================================================
@@ -39,7 +40,7 @@ def uint32_to_int32(value: int) -> int:
     return value if value < 0x80000000 else value - 0x100000000
 
 class PipelineTracer(CsvTracer):
-    def __init__(self, cpu, test_name):
+    def __init__(self, cpu: PL_CpuSystem, test_name):
         super().__init__(test_name)
         self.cpu = cpu
 
