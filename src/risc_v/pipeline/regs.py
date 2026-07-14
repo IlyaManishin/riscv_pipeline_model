@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+import risc_v.riscv_config as conf
+
 from sim_base.mem.register import Register
 from sim_base.mem.register import ITrigger
 
@@ -9,29 +11,13 @@ from risc_v.modules.mem.imem import InstrMem
 from risc_v.modules.mem.dmem import DataMem
 
 
-pc = PC()
-rf = RegFile()
-imem = InstrMem(size=4096)
-dmem = DataMem(size=4096)
+# Module-level singleton scaffolding (kept for reference; instances are
+# instead created and wired together in cpu_system.py).
+# pc = PC(...)
+# rf = RegFile()
+# imem = InstrMem(...)
+# dmem = DataMem(...)
 
-
-# if_id = IF_ID_Stage()
-# id_ex = ID_EX_Stage()
-# ex_mem = EX_MEM_Stage()
-# mem_wb = MEM_WB_Stage()
-
-# pipeline_triggers: list[ITrigger] = [
-#     pc.reg,
-#     rf,
-#     imem,
-#     dmem,
-#     *if_id.get_triggers(),
-#     *id_ex.get_triggers(),
-#     *ex_mem.get_triggers(),
-#     *mem_wb.get_triggers()
-# ]
-
-# Core.clk().add_triggers(pipeline_triggers)
 @dataclass
 class IF_ID_Stage:
     pc: Register = Register()
@@ -39,6 +25,12 @@ class IF_ID_Stage:
 
     def get_triggers(self) -> list[ITrigger]:
         return [self.pc, self.instr]
+    
+    def stall(self):
+        for r in self.get_triggers():
+            r.set(r.read())
+    def flush(self):
+        self.instr.set(0)
 
 
 @dataclass
@@ -55,14 +47,25 @@ class ID_EX_Stage:
     b_sel: Register = Register()
     wb_sel: Register = Register()
     reg_wr: Register = Register()
-    dmem_we: Register = Register()
+    dmem_sel: Register = Register()
+    jfexe: Register = Register()
+    alushift_sel: Register = Register()
 
     def get_triggers(self) -> list[ITrigger]:
         return [
             self.pc, self.rf_rd1, self.rf_rd2, self.imm,
             self.rs1, self.rs2, self.rd,
-            self.alu_sel, self.a_sel, self.b_sel, self.wb_sel, self.reg_wr, self.dmem_we
+            self.alu_sel, self.a_sel, self.b_sel, self.wb_sel, self.reg_wr, self.dmem_sel,
+            self.jfexe, self.alushift_sel
         ]
+    def stall(self):
+        for r in self.get_triggers():
+            r.set(r.read())
+    def flush(self):
+        self.jfexe.set(0)
+        self.reg_wr.set(0)
+        self.dmem_sel.set(0)
+        
 
 
 @dataclass
@@ -72,12 +75,13 @@ class EX_MEM_Stage:
     rd: Register = Register()
     wb_sel: Register = Register()
     reg_wr: Register = Register()
-    dmem_we: Register = Register()
+    dmem_sel: Register = Register()
+    pc4: Register = Register()
 
     def get_triggers(self) -> list[ITrigger]:
         return [
             self.alu_out, self.rf_rd2, self.rd,
-            self.wb_sel, self.reg_wr, self.dmem_we
+            self.wb_sel, self.reg_wr, self.dmem_sel, self.pc4
         ]
 
 
@@ -88,10 +92,11 @@ class MEM_WB_Stage:
     rd: Register = Register()
     wb_sel: Register = Register()
     reg_wr: Register = Register()
+    pc4: Register = Register()
 
     def get_triggers(self) -> list[ITrigger]:
         return [
             self.alu_out, self.dmem_data, self.rd,
-            self.wb_sel, self.reg_wr
+            self.wb_sel, self.reg_wr, self.pc4
         ]
 

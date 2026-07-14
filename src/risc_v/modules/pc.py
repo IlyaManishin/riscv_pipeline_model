@@ -28,4 +28,6 @@ class PC:
             next_pc = self._reg.read() + 4
 
         self._reg.set(next_pc & self.pc_mask)
-        
+    
+    def stall(self):
+        self._reg.set(self.read())
