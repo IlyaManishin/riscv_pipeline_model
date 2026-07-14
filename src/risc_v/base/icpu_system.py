@@ -24,3 +24,7 @@ class ICpuSystem(ABC):
     @abstractmethod
     def step(self) -> None:
         pass
+    
+    @abstractmethod
+    def get_cur_pc(self) -> int:
+        pass
