@@ -1,28 +1,21 @@
-from dataclasses import dataclass
-
 import risc_v.riscv_config as conf
-
 from sim_base.mem.register import Register
 from sim_base.mem.register import ITrigger
-
 from risc_v.modules.pc import PC
 from risc_v.modules.mem.reg_file import RegFile
 from risc_v.modules.mem.imem import InstrMem
 from risc_v.modules.mem.dmem import DataMem
 
 
-# Module-level singleton scaffolding (kept for reference; instances are
-# instead created and wired together in cpu_system.py).
-# pc = PC(...)
-# rf = RegFile()
-# imem = InstrMem(...)
-# dmem = DataMem(...)
-
-@dataclass
 class IF_ID_Stage:
-    pc: Register = Register()
-    instr: Register = Register()
-    valid: Register = Register()
+    pc: Register
+    instr: Register
+    valid: Register
+
+    def __init__(self):
+        self.pc = Register()
+        self.instr = Register()
+        self.valid = Register()
 
     def get_triggers(self) -> list[ITrigger]:
         return [self.pc, self.instr, self.valid]
@@ -30,30 +23,49 @@ class IF_ID_Stage:
     def stall(self):
         for r in self.get_triggers():
             r.set(r.read())
+
     def flush(self):
         self.instr.set(0)
         self.valid.set(0)
 
 
-@dataclass
 class ID_EX_Stage:
-    pc: Register = Register()
-    rf_rd1: Register = Register()
-    rf_rd2: Register = Register()
-    imm: Register = Register()
-    rs1: Register = Register()
-    rs2: Register = Register()
-    rd: Register = Register()
-    alu_sel: Register = Register()
-    shift_sel: Register = Register()
-    a_sel: Register = Register()
-    b_sel: Register = Register()
-    wb_sel: Register = Register()
-    reg_wr: Register = Register()
-    dmem_sel: Register = Register()
-    jfexe: Register = Register()
-    alushift_sel: Register = Register()
-    valid: Register = Register()
+    pc: Register
+    rf_rd1: Register
+    rf_rd2: Register
+    imm: Register
+    rs1: Register
+    rs2: Register
+    rd: Register
+    alu_sel: Register
+    shift_sel: Register
+    a_sel: Register
+    b_sel: Register
+    wb_sel: Register
+    reg_wr: Register
+    dmem_sel: Register
+    jfexe: Register
+    alushift_sel: Register
+    valid: Register
+
+    def __init__(self):
+        self.pc = Register()
+        self.rf_rd1 = Register()
+        self.rf_rd2 = Register()
+        self.imm = Register()
+        self.rs1 = Register()
+        self.rs2 = Register()
+        self.rd = Register()
+        self.alu_sel = Register()
+        self.shift_sel = Register()
+        self.a_sel = Register()
+        self.b_sel = Register()
+        self.wb_sel = Register()
+        self.reg_wr = Register()
+        self.dmem_sel = Register()
+        self.jfexe = Register()
+        self.alushift_sel = Register()
+        self.valid = Register()
 
     def get_triggers(self) -> list[ITrigger]:
         return [
@@ -62,9 +74,11 @@ class ID_EX_Stage:
             self.alu_sel, self.a_sel, self.b_sel, self.wb_sel, self.reg_wr, self.dmem_sel,
             self.jfexe, self.alushift_sel, self.valid, self.shift_sel
         ]
+
     def stall(self):
         for r in self.get_triggers():
             r.set(r.read())
+
     def flush(self):
         self.jfexe.set(0)
         self.reg_wr.set(0)
@@ -72,17 +86,25 @@ class ID_EX_Stage:
         self.valid.set(0)
         
 
-
-@dataclass
 class EX_MEM_Stage:
-    alu_out: Register = Register()
-    rf_rd2: Register = Register()
-    rd: Register = Register()
-    wb_sel: Register = Register()
-    reg_wr: Register = Register()
-    dmem_sel: Register = Register()
-    pc4: Register = Register()
-    valid: Register = Register()
+    alu_out: Register
+    rf_rd2: Register
+    rd: Register
+    wb_sel: Register
+    reg_wr: Register
+    dmem_sel: Register
+    pc4: Register
+    valid: Register
+
+    def __init__(self):
+        self.alu_out = Register()
+        self.rf_rd2 = Register()
+        self.rd = Register()
+        self.wb_sel = Register()
+        self.reg_wr = Register()
+        self.dmem_sel = Register()
+        self.pc4 = Register()
+        self.valid = Register()
 
     def get_triggers(self) -> list[ITrigger]:
         return [
@@ -91,19 +113,26 @@ class EX_MEM_Stage:
         ]
 
 
-@dataclass
 class MEM_WB_Stage:
-    alu_out: Register = Register()
-    dmem_data: Register = Register()
-    rd: Register = Register()
-    wb_sel: Register = Register()
-    reg_wr: Register = Register()
-    pc4: Register = Register()
-    valid: Register = Register()
+    alu_out: Register
+    dmem_data: Register
+    rd: Register
+    wb_sel: Register
+    reg_wr: Register
+    pc4: Register
+    valid: Register
+
+    def __init__(self):
+        self.alu_out = Register()
+        self.dmem_data = Register()
+        self.rd = Register()
+        self.wb_sel = Register()
+        self.reg_wr = Register()
+        self.pc4 = Register()
+        self.valid = Register()
 
     def get_triggers(self) -> list[ITrigger]:
         return [
             self.alu_out, self.dmem_data, self.rd,
             self.wb_sel, self.reg_wr, self.pc4, self.valid
         ]
-
