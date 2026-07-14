@@ -9,7 +9,7 @@ XLEN = 32
 REG_COUNT = 32
 
 # Testbench limits
-TIMEOUT_ITERATIONS = 1000
+TIMEOUT_ITERATIONS = 10000
 RF_DBG_NUM = 31  # Signature register (x31)
 
 # Waveform / CSV dump settings

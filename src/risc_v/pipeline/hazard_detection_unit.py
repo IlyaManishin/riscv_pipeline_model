@@ -47,7 +47,6 @@ class Hazard_Detection_Unit:
         self.stage_writeback = stage_writeback
 
     def update(self) -> None:
-        self.stage_fetch.unstall()
         # ===== Control Hazards =====
         # jalr
         if self.stage_decode.id_controls.jf_exe:

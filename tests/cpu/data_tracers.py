@@ -66,7 +66,7 @@ class PipelineTracer(CsvTracer):
             uint32_to_int32(self.cpu.stage_execute.alures),
             uint32_to_int32(self.cpu.stage_decode.imm_pc),
             self.disasm_stage(
-                self.cpu.stage_fetch.pc_instr.read(), self.cpu.stage_fetch.valid),
+                self.cpu.stage_fetch.pc, self.cpu.stage_fetch.valid),
             self.disasm_stage(self.cpu.stage_decode.pc,
                               self.cpu.stage_decode.valid),
             self.disasm_stage(self.cpu.stage_execute.pc4 - 4,
@@ -88,4 +88,4 @@ class PipelineTracer(CsvTracer):
         instr = self.cpu.imem._memory[pc >> 2]
         dis_instr = disasm.disasm(instr)
         # return ("!" + dis_instr if not bool(valid) else dis_instr)
-        return dis_instr
+        return f"{{{pc}}}{dis_instr}"
