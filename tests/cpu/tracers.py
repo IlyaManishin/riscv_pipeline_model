@@ -61,7 +61,7 @@ class RegisterTracer(BaseTracer):
             self.cpu.get_cur_pc()
         ]
         for i in range(REG_COUNT):
-            row.append(self.cpu._core.rf_inst.read(i))
+            row.append(self.cpu.reg_file.read(i))
 
         self.writer.writerow(row)
 
