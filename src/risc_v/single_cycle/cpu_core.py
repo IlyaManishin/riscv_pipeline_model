@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from sim_base.clock import Clock
 from sim_base.mem.register import Register
+
 from risc_v.modules.pc import PC
 from risc_v.modules.mem.reg_file import RegFile
 from risc_v.modules.decode import Instruction_Decoder
@@ -11,6 +12,7 @@ from risc_v.modules.shifter import Shifter
 from risc_v.modules.branch_unit import BranchUnit
 from risc_v.modules.dmem_wr_port import dmem_wr_port
 from risc_v.modules.dmem_rd_port import dmem_rd_port
+
 from risc_v.riscv_config import WB_sel_t
 import risc_v.riscv_config as conf
 
@@ -100,7 +102,7 @@ class Core:
         # Re-evaluate Branch Unit with exact signedness from decoder
         br_eq, br_lt = BranchUnit.compare(
             self.rf_rd1, self.rf_rd2, bool(self.id_controls.br_un))
-        
+
         self.id_controls = Instruction_Decoder.decode(
             self.instr, br_eq=br_eq, br_lt=br_lt)
 
@@ -117,7 +119,8 @@ class Core:
             self.id_controls.alu_sel, self.alu_in_a, self.alu_in_b)
 
         # Shifter Execution
-        self.shift_shamt = (self.rf_rd2 & 0x1F) if self.id_controls.b_sel else self.instr.shamt
+        self.shift_shamt = (
+            self.rf_rd2 & 0x1F) if self.id_controls.b_sel else self.instr.shamt
         self.shifter_out = Shifter.shift(
             self.rf_rd1, self.shift_shamt, self.id_controls.sh_sel)
 

@@ -15,6 +15,9 @@ class Instruction_Decoder:
             alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.ANY,
             imm_type=Instr_type_t.TYPE_ANY, illegal=1, jf_exe=0
         )
+        # Проверяем, что первые 2 бита opcode == 11
+        if instr.opcode & 0b11 != 0b11:
+            return default
 
         # ---------- LUI ----------
         if opcode == 0b01101:  # 13
@@ -226,7 +229,8 @@ class Instruction_Decoder:
                         reg_wr=1, dmem_sel = DMem_sel.NONE, a_sel=0, b_sel=0,
                         sh_sel=Shift_sel_t.SLL, br_un=0, pc_sel=1,
                         alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.SHIFTER_OUT,
-                        imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0
+                        imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0,
+                        alushift_sel=1
                     )
             if funct3 == 0b101:  # SRLI / SRAI
                 if funct7 == 0b0:
@@ -234,14 +238,16 @@ class Instruction_Decoder:
                         reg_wr=1, dmem_sel = DMem_sel.NONE, a_sel=0, b_sel=0,
                         sh_sel=Shift_sel_t.SRL, br_un=0, pc_sel=1,
                         alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.SHIFTER_OUT,
-                        imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0
+                        imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0,
+                        alushift_sel=1
                     )
                 if funct7 == 0b100000:   # 0b1 00000? У RISC-V SRAI имеет funct7[5]=1
                     return Id_controls_out(
                         reg_wr=1, dmem_sel = DMem_sel.NONE, a_sel=0, b_sel=0,
                         sh_sel=Shift_sel_t.SRA, br_un=0, pc_sel=1,
                         alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.SHIFTER_OUT,
-                        imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0
+                        imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0,
+                        alushift_sel=1
                     )
             return default
 
@@ -268,7 +274,8 @@ class Instruction_Decoder:
                         reg_wr=1, dmem_sel = DMem_sel.NONE, a_sel=0, b_sel=1,
                         sh_sel=Shift_sel_t.SLL, br_un=0, pc_sel=1,
                         alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.SHIFTER_OUT,
-                        imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0
+                        imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0,
+                        alushift_sel=1
                     )
             if funct3 == 0b010:  # SLT
                 if funct7 == 0b0:
@@ -300,14 +307,16 @@ class Instruction_Decoder:
                         reg_wr=1, dmem_sel = DMem_sel.NONE, a_sel=0, b_sel=1,
                         sh_sel=Shift_sel_t.SRL, br_un=0, pc_sel=1,
                         alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.SHIFTER_OUT,
-                        imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0
+                        imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0,
+                        alushift_sel=1
                     )
                 if funct7 == 0b100000:
                     return Id_controls_out(
                         reg_wr=1, dmem_sel = DMem_sel.NONE, a_sel=0, b_sel=1,
                         sh_sel=Shift_sel_t.SRA, br_un=0, pc_sel=1,
                         alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.SHIFTER_OUT,
-                        imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0
+                        imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0,
+                        alushift_sel=1
                     )
             if funct3 == 0b110:  # OR
                 if funct7 == 0b0:
