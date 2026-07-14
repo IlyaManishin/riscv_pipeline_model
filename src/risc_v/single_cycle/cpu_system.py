@@ -76,3 +76,6 @@ class CpuSystem(ICpuSystem):
 
         # 5. Commit all synchronous changes (Clock Tick)
         self._clk.tick()
+        
+    def get_cur_pc(self):
+        return self._core.pc_inst.read()
