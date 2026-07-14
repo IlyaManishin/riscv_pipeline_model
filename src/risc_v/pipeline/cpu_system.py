@@ -111,3 +111,6 @@ class CpuSystem(ICpuSystem):
     @property
     def reg_file(self) -> RegFile:
         return self._rf_inst
+
+    def get_cur_pc(self):
+        return self.pc_inst.read()

@@ -25,6 +25,7 @@ class Decode:
         self.imm = 0
         self.imm_pc = 0
         self.jfid = 0
+        self.valid = 0
         
     def update(self):
         self.instr = conf.Instruction(self.buff_if_id.instr.read())
@@ -61,8 +62,13 @@ class Decode:
         self.buff_id_ex.dmem_sel.set(self.id_controls.dmem_sel.to_int())
         self.buff_id_ex.jfexe.set(self.id_controls.jf_exe)
         self.buff_id_ex.alushift_sel.set(self.id_controls.alushift_sel)
+        self.buff_id_ex.shift_sel.set(self.id_controls.sh_sel)
         
-        self.jfid = self.id_controls.pc_sel
+        self.jfid =  not bool(self.id_controls.pc_sel)
+        
+        
+        self.valid = self.buff_if_id.valid.read()
+        self.buff_id_ex.valid.set(self.valid)
         
         
         

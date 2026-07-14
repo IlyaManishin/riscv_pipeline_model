@@ -15,11 +15,14 @@ class WriteBack:
 
         self.rf_wd3 = 0
         self.rf_we3 = False
+        self.valid = 0
+        self.pc4 = 0
 
     def update(self):
+        self.pc4 = self.buff_mem_wb.pc4.read()
         match conf.WB_sel_t(self.buff_mem_wb.wb_sel.read()):
             case conf.WB_sel_t.PC4_OUT:
-                self.rf_wd3 = self.buff_mem_wb.pc4.read()
+                self.rf_wd3 = self.pc4
             case conf.WB_sel_t.ALU_OUT:
                 self.rf_wd3 = self.buff_mem_wb.alu_out.read()
             case conf.WB_sel_t.SHIFTER_OUT:
@@ -32,3 +35,5 @@ class WriteBack:
         self.rf_we3 = bool(self.buff_mem_wb.reg_wr.read()) and not bool(self.rst_reg.read())
         if self.rf_we3:
             self.rf_inst.write(self.buff_mem_wb.rd.read(), self.rf_wd3)
+        
+        self.valid = self.buff_mem_wb.valid.read()

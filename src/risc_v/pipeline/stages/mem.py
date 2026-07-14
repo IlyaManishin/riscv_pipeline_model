@@ -21,6 +21,8 @@ class Memory:
         self.dmem_wdata = 0
         self.dmem_byte_we = 0
         self.dmem_rdata = 0
+        self.valid = 0
+        self.pc4 = 0
         
         self.rd = 0
         self.reg_wr = 0
@@ -57,4 +59,8 @@ class Memory:
         self.buff_mem_wb.wb_sel.set(self.buff_ex_mem.wb_sel.read())
         self.reg_wr = self.buff_ex_mem.reg_wr.read()
         self.buff_mem_wb.reg_wr.set(self.reg_wr)
-        self.buff_mem_wb.pc4.set(self.buff_ex_mem.pc4.read())
+        self.pc4 = self.buff_ex_mem.pc4.read()
+        self.buff_mem_wb.pc4.set(self.pc4)
+        
+        self.valid = self.buff_ex_mem.valid.read()
+        self.buff_mem_wb.valid.set(self.valid)

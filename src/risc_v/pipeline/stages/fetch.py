@@ -12,13 +12,18 @@ class Fetch:
         self.pc_instr = pc
         self.imem = imem
         self.stall_pc = 0
+        self.valid = 0
+        self.pc = 0
     def update(self, jfexe: int, jfid: int, alures: int,  imm_pc: int):
         self.buff_if_id.pc.set(self.pc_instr.read())
         self.buff_if_id.instr.set(self.imem.read(self.pc_instr.read() >> 2))
         
+        self.valid = 1
+        self.buff_if_id.valid.set(self.valid)
+        
+        self.pc = self.pc_instr.read()
         
         if self.stall_pc:
-            self.stall_pc == 0
             self.pc_instr.set_pc(True, self.pc_instr.read())
         elif jfid:
             self.pc_instr.set_pc(True, imm_pc)
@@ -29,3 +34,5 @@ class Fetch:
     
     def stall(self):
         self.stall_pc = 1
+    def unstall(self):
+        self.stall_pc = 0
