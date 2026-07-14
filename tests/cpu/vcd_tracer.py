@@ -1,12 +1,13 @@
 """VCD tracer integrated with the architectural test runner."""
 
 from pathlib import Path
-from typing import Any
+from typing import Any, TextIO
 
 from cpu_config import REG_COUNT, TRACE_DIRNAME, XLEN
 from risc_v.base.icpu_system import ICpuSystem
-from sim_base.vcd import VcdSignal, VcdWriter
 from tracers import BaseTracer
+from vcd import VCDWriter
+from vcd.writer import Variable
 
 
 class CpuVcdTracer(BaseTracer):
@@ -26,15 +27,23 @@ class CpuVcdTracer(BaseTracer):
         self.cpu = cpu
         self.clock_period_ns = clock_period_ns
         self.half_period_ns = clock_period_ns // 2
-        self.writer: VcdWriter | None = None
-        self.signals: dict[str, VcdSignal] = {}
+        self.writer: VCDWriter | None = None
+        self.stream: TextIO | None = None
+        self.signals: dict[str, Variable] = {}
+        self.widths: dict[str, int] = {}
         self.output: Path | None = None
         self._pipeline = hasattr(cpu, "stage_fetch")
 
     def on_test_start(self, test_name: str) -> None:
         trace_dir = Path(TRACE_DIRNAME) / self.tracer_name
         self.output = (trace_dir / f"{test_name}.vcd").resolve()
-        self.writer = VcdWriter(self.output, timescale="1 ns")
+        self.output.parent.mkdir(parents=True, exist_ok=True)
+        self.stream = self.output.open("w", encoding="utf-8", newline="\n")
+        self.writer = VCDWriter(
+            self.stream,
+            timescale="1 ns",
+            version="riscv_pipeline_model pytest tracer",
+        )
 
         self._define_common_signals()
         if self._pipeline:
@@ -42,10 +51,7 @@ class CpuVcdTracer(BaseTracer):
         else:
             self._define_single_cycle_signals()
 
-        self.writer.start()
-        self.writer.set_time(0)
-        self.writer.change(self.signals["clk"], 0, force=True)
-        self._sample(cycle=0, force=True)
+        self._sample(timestamp=0, cycle=0)
 
     def _add(
         self,
@@ -56,7 +62,14 @@ class CpuVcdTracer(BaseTracer):
     ) -> None:
         if self.writer is None:
             raise RuntimeError("VCD writer has not been started")
-        self.signals[key] = self.writer.register(scope, name, width)
+        self.signals[key] = self.writer.register_var(
+            scope,
+            name,
+            "wire",
+            size=width,
+            init=0,
+        )
+        self.widths[key] = width
 
     def _define_common_signals(self) -> None:
         self._add("clk", ("cpu",), "clk")
@@ -199,32 +212,40 @@ class CpuVcdTracer(BaseTracer):
             "sc_reg_wdata": core.rf_wd3,
         }
 
-    def _sample(self, cycle: int, *, force: bool = False) -> None:
+    def _change(self, key: str, timestamp: int, value: int | bool) -> None:
         if self.writer is None:
             return
+        width = self.widths[key]
+        masked = int(value) & ((1 << width) - 1)
+        self.writer.change(self.signals[key], timestamp, masked)
+
+    def _sample(self, timestamp: int, cycle: int) -> None:
         values = self._common_values(cycle)
         values.update(
             self._pipeline_values() if self._pipeline else self._single_cycle_values()
         )
         for key, value in values.items():
-            self.writer.change(self.signals[key], value, force=force)
+            self._change(key, timestamp, value)
 
     def trace_cycle(self, cycle: int) -> None:
         if self.writer is None:
             return
 
         rising_time = cycle * self.clock_period_ns + self.half_period_ns
-        self.writer.set_time(rising_time)
-        self.writer.change(self.signals["clk"], 1)
-        self._sample(cycle=cycle + 1)
+        self._change("clk", rising_time, 1)
+        self._sample(timestamp=rising_time, cycle=cycle + 1)
 
-        self.writer.set_time((cycle + 1) * self.clock_period_ns)
-        self.writer.change(self.signals["clk"], 0)
+        self._change("clk", (cycle + 1) * self.clock_period_ns, 0)
 
     def on_test_end(self, test_name: str, passed: bool) -> None:
         self.close()
 
     def close(self) -> None:
         if self.writer is not None:
-            self.writer.close()
-            self.writer = None
+            try:
+                self.writer.close()
+            finally:
+                self.writer = None
+                if self.stream is not None:
+                    self.stream.close()
+                    self.stream = None

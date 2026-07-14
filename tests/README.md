@@ -128,6 +128,15 @@ trace/pl/asm_reg_trace/addi_test.csv
 trace/pl/asm_reg_trace/addi_test.vcd
 ```
 
+VCD serialization uses the `pyvcd` project dependency; the local tracer only
+maps CPU state and pipeline stages to VCD signals.
+
+Install the dependency once before running the tests:
+
+```powershell
+python -m pip install "pyvcd>=0.4.1,<0.5"
+```
+
 VCD generation is enabled by default.  Disable only VCD generation with an
 environment variable:
 
