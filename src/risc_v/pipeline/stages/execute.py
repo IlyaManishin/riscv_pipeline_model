@@ -20,6 +20,8 @@ class Execute:
         self.alu_in_b = 0
         self.shift_shamt = 0
         self.rd = 0
+        self.valid = 0
+        self.pc4 = 0
     
     def update(self):
         self.rd1 = self.buff_id_ex.rf_rd1.read()
@@ -32,7 +34,7 @@ class Execute:
                                   self.alu_in_a, self.alu_in_b)
 
         self.shift_shamt = (self.rd2 & 0x1F) if self.buff_id_ex.b_sel.read() else (self.buff_id_ex.rs2.read() & 0x1F)
-        self.shres = Shifter.shift(sel = Shift_sel_t(self.buff_id_ex.alu_sel.read()),
+        self.shres = Shifter.shift(sel = Shift_sel_t(self.buff_id_ex.shift_sel.read()),
                                    data = self.alu_in_a,
                                    shamt = self.shift_shamt)
 
@@ -47,5 +49,9 @@ class Execute:
         self.buff_ex_mem.reg_wr.set(self.reg_wr)
         
         self.buff_ex_mem.dmem_sel.set(self.buff_id_ex.dmem_sel.read())
-        self.buff_ex_mem.pc4.set(self.buff_id_ex.pc.read() + 4)
+        self.pc4 = self.buff_id_ex.pc.read() + 4
+        self.buff_ex_mem.pc4.set(self.pc4)
         self.jfexe = self.buff_id_ex.jfexe.read()
+        
+        self.valid = self.buff_id_ex.valid.read()
+        self.buff_ex_mem.valid.set(self.valid)
