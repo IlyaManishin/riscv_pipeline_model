@@ -78,6 +78,16 @@ class Hazard_Detection_Unit:
             self.stage_fetch.stall()
             self.buff_if_id.stall()
             self.buff_id_ex.flush()
+        
+        if self.stage_writeback.reg_wr and (
+            self.stage_writeback.rd == self.stage_decode.rs1 or
+            self.stage_writeback.rd == self.stage_decode.rs2
+        ):
+            self.stage_fetch.stall()
+            self.buff_if_id.stall()
+            self.buff_id_ex.flush()
+            
+        
             
             
 

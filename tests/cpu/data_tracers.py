@@ -49,7 +49,7 @@ class PipelineTracer(CsvTracer):
                   "pc", "stall_pc",
                   "jfexe", "jfid",
                   "alures", "imm_pc",
-                  "disasm fetch", "disasm decoder", "disasm execute", "disasm memory", "disasm wb"]
+                  "disasm fetch", "disasm decoder", "disasm execute", "disasm memory", "dmemsel", "disasm wb"]
         header.extend(f"x{i}" for i in range(REG_COUNT))
         return header
 
@@ -73,6 +73,7 @@ class PipelineTracer(CsvTracer):
                               self.cpu.stage_execute.valid),
             self.disasm_stage(self.cpu.stage_memory.pc4 - 4,
                               self.cpu.stage_memory.valid),
+            bin(self.cpu.stage_memory.dmem_sel.to_int()),
             self.disasm_stage(self.cpu.stage_writeback.pc4 - 4,
                               self.cpu.stage_writeback.valid)
 

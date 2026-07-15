@@ -17,4 +17,4 @@ class InstrMem(BlockMem):
             raise ValueError(
                 "Program size exceeds Instruction Memory capacity")
         for addr, instr in enumerate(program_code):
-            self._memory[addr*5] = instr & self._cell_mask
+            self._memory[addr] = instr & self._cell_mask
