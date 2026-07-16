@@ -1,3 +1,4 @@
+import os
 from enum import Enum
 
 
@@ -15,6 +16,10 @@ RF_DBG_NUM = 31  # Signature register (x31)
 # Waveform / CSV dump settings
 TRACE_ENABLE = True
 TRACE_DIRNAME = "trace"
+VCD_TRACE_ENABLE = os.getenv("VCD_TRACE_ENABLE", "1").strip().lower() not in {
+    "0", "false", "no", "off",
+}
+VCD_CLOCK_PERIOD_NS = 10
 
 
 # ============================================================
