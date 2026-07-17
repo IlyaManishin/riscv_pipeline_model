@@ -23,9 +23,7 @@ class Fetch:
         
         self.pc = self.pc_instr.read()
         
-        if self.stall_pc:
-            self.pc_instr.set_pc(True, self.pc_instr.read())
-        elif jfid:
+        if jfid:
             self.pc_instr.set_pc(True, imm_pc)
         elif jfexe:
             self.pc_instr.set_pc(True, alures)
@@ -33,6 +31,4 @@ class Fetch:
             self.pc_instr.set_pc(False, 0)
     
     def stall(self):
-        self.stall_pc = 1
-    def unstall(self):
-        self.stall_pc = 0
+        self.pc_instr.set_pc(True, self.pc_instr.read())

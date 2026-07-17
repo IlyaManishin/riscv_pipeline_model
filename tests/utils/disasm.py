@@ -48,6 +48,10 @@ def disasm(instr: int) -> str:
         (bits(30, 21) << 1),
         21
     )
+    
+    # invalid full opcode
+    if bits(1, 0) != 0b11:
+        return "nop"
 
     # U-type instructions
     if opcode == 0b01101:

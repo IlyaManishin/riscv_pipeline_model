@@ -47,7 +47,6 @@ class Hazard_Detection_Unit:
         self.stage_writeback = stage_writeback
 
     def update(self) -> None:
-        self.stage_fetch.unstall()
         # ===== Control Hazards =====
         # jalr
         if self.stage_decode.id_controls.jf_exe:
@@ -64,7 +63,7 @@ class Hazard_Detection_Unit:
         # ===== Data Hazards =====
         
         #RAW 
-        if self.stage_execute.reg_wr and (
+        if self.stage_execute.reg_wr and self.stage_execute.rd!=0 and (
             self.stage_execute.rd == self.stage_decode.rs1 or
             self.stage_execute.rd == self.stage_decode.rs2
         ):
@@ -72,13 +71,23 @@ class Hazard_Detection_Unit:
             self.buff_if_id.stall()
             self.buff_id_ex.flush()
         
-        if self.stage_memory.reg_wr and (
+        if self.stage_memory.reg_wr and self.stage_memory.rd!=0 and (
             self.stage_memory.rd == self.stage_decode.rs1 or
             self.stage_memory.rd == self.stage_decode.rs2
         ):
             self.stage_fetch.stall()
             self.buff_if_id.stall()
             self.buff_id_ex.flush()
+        
+        if self.stage_writeback.reg_wr and self.stage_writeback.rd!=0 and (
+            self.stage_writeback.rd == self.stage_decode.rs1 or
+            self.stage_writeback.rd == self.stage_decode.rs2
+        ):
+            self.stage_fetch.stall()
+            self.buff_if_id.stall()
+            self.buff_id_ex.flush()
+            
+        
             
             
 

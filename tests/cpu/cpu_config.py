@@ -15,6 +15,7 @@ RF_DBG_NUM = 31  # Signature register (x31)
 # Waveform / CSV dump settings
 TRACE_ENABLE = True
 TRACE_DIRNAME = "trace"
+VCD_CLOCK_PERIOD_NS = 10
 
 
 # ============================================================
