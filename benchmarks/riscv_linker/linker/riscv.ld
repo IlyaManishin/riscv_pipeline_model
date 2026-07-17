@@ -7,7 +7,7 @@ MEMORY
 
 ENTRY( _start)
 
-STACK_SIZE    = 128;
+STACK_SIZE    = 2048;
 __stack_start = ORIGIN(dmem) + LENGTH(dmem) - STACK_SIZE;
 
 SECTIONS

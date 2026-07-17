@@ -51,6 +51,7 @@ def compile_c_file(c_file: Path, makefile_dir: Path, final_out_dir: Path) -> dic
     local_result_dir = makefile_dir / "result"
     local_imem = local_result_dir / "imem.bin"
     local_dmem = local_result_dir / "dmem.bin"
+    local_elf = local_result_dir / "res"
 
     # Step 1: Clean previous build artifacts in the Makefile directory
     try:
@@ -111,9 +112,11 @@ def compile_c_file(c_file: Path, makefile_dir: Path, final_out_dir: Path) -> dic
 
         final_imem = final_out_dir / "imem.bin"
         final_dmem = final_out_dir / "dmem.bin"
+        final_elf = final_out_dir / "res.bin"
 
-        # Move instruction memory binary
+        # Move instruction memory binary and elf
         shutil.move(str(local_imem), str(final_imem))
+        shutil.move(str(local_elf), str(final_elf))
 
         # Move data memory binary if it was generated (might be missing if .data is empty)
         if local_dmem.exists():
