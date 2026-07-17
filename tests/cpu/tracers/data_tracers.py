@@ -2,7 +2,7 @@ from cpu_config import REG_COUNT
 from risc_v.base.icpu_system import ICpuSystem
 from risc_v.pipeline.cpu_system import CpuSystem as PL_CpuSystem
 
-from tracers import CsvTracer
+from .base_tracers import CsvTracer
 from tests.utils import disasm
 
 # ============================================================

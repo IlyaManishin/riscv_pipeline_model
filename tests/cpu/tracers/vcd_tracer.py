@@ -5,7 +5,7 @@ from typing import Any, TextIO
 
 from cpu_config import REG_COUNT, TRACE_DIRNAME, XLEN
 from risc_v.base.icpu_system import ICpuSystem
-from tracers import BaseTracer
+from .base_tracers import BaseTracer
 from vcd import VCDWriter
 from vcd.writer import Variable
 

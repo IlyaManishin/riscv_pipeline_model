@@ -3,7 +3,7 @@ from typing import Optional
 import pytest
 
 from risc_v.base.icpu_system import ICpuSystem
-from tracers import BaseTracer
+from tracers.base_tracers import BaseTracer
 from cpu_config import *
 from benchmarks.build_paths import TEST_LIST_NAME
 
