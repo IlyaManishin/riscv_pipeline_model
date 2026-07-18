@@ -1,7 +1,7 @@
 import pytest
 from pathlib import Path
 from tests_config import *
-from tracers.report_gen import generate_global_performance_report
+from reports.report_gen import generate_global_performance_report
 
 
 @pytest.hookimpl(trylast=True)
