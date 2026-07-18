@@ -27,7 +27,6 @@ class BaseTracer(ABC):
         return BASE_TRACE_ENABLE
 
 
-
 # ============================================================
 # CSV_TRACER
 # ============================================================
@@ -82,6 +81,10 @@ class BasePerfTracer(BaseTracer):
         self.current_test_name = None
         self.current_group_name = None
 
+        self.summary_path = Path(trace_dir) / f"{tracer_name}_summary.csv"
+        if self.summary_path.exists():
+            self.summary_path.unlink()
+
     @abstractmethod
     def get_header(self) -> list[str]:
         pass
@@ -120,15 +123,13 @@ class BasePerfTracer(BaseTracer):
         if self.writer is not None and self.current_test_name is not None:
             row = self.format_test_row(self.current_test_name, passed)
             self.writer.writerow(row)
-            
-            summary_path = Path(self.trace_dir) / f"{self.tracer_name}_summary.csv"
-            file_exists = summary_path.exists()
-            with open(summary_path, "a", newline="", encoding="utf-8") as f:
+            summary_exists = self.summary_path.exists()
+            with open(self.summary_path, "a", newline="", encoding="utf-8") as f:
                 s_writer = csv.writer(f)
-                if not file_exists:
+                if not summary_exists:
                     s_writer.writerow(["group"] + self.get_header())
                 s_writer.writerow([self.current_group_name] + row)
-                
+
         self.current_test_name = None
 
     def close(self) -> None:
