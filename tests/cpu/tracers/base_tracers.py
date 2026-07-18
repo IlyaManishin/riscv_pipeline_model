@@ -2,7 +2,7 @@ import csv
 from pathlib import Path
 from abc import ABC, abstractmethod
 
-from tests_config import BASE_TRACE_ENABLE
+from tests_config import BASE_TRACE_ENABLE, PERF_SUMMARY_NAME
 
 
 # ============================================================
@@ -72,7 +72,6 @@ class CsvTracer(BaseTracer):
 # CPU_PERFORMANCE_TRACER
 # ============================================================
 
-
 class BasePerfTracer(BaseTracer):
     def __init__(self, trace_dir: str | Path, tracer_name: str):
         super().__init__(trace_dir, tracer_name)
@@ -81,7 +80,7 @@ class BasePerfTracer(BaseTracer):
         self.current_test_name = None
         self.current_group_name = None
 
-        self.summary_path = Path(trace_dir) / f"{tracer_name}_summary.csv"
+        self.summary_path = Path(trace_dir) / PERF_SUMMARY_NAME
         if self.summary_path.exists():
             self.summary_path.unlink()
 
