@@ -94,7 +94,7 @@ def run_program(
         passed = True
     finally:
         for tracer in tracers:
-            tracer.on_test_end(test_name, passed)
+            tracer.on_test_end(passed)
 
 
 # ============================================================

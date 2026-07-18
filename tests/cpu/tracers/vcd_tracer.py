@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Any, TextIO
 
-from tests.cpu.tests_config import REG_COUNT, TRACE_DIRNAME, XLEN
+from tests.cpu.tests_config import REG_COUNT, XLEN, BASE_TRACE_ENABLE
 from risc_v.base.icpu_system import ICpuSystem
 from .base_tracers import BaseTracer
 from vcd import VCDWriter
@@ -36,6 +36,9 @@ class CpuVcdTracer(BaseTracer):
         self._pipeline = hasattr(cpu, "stage_fetch")
 
     def on_test_start(self, test_name: str) -> None:
+        if self._is_trace():
+            return
+        
         trace_dir = Path(self.trace_dir) / test_name
         self.output = (trace_dir / f"{self.tracer_name}.vcd").resolve()
         self.output.parent.mkdir(parents=True, exist_ok=True)
@@ -45,6 +48,8 @@ class CpuVcdTracer(BaseTracer):
             timescale="1 ns",
             version="riscv_pipeline_model pytest tracer",
         )
+        if self.writer is None:
+            raise RuntimeError("VCD writer has not been started")
 
         self._define_common_signals()
         if self._pipeline:
@@ -61,8 +66,7 @@ class CpuVcdTracer(BaseTracer):
         name: str,
         width: int = 1,
     ) -> None:
-        if self.writer is None:
-            raise RuntimeError("VCD writer has not been started")
+        
         self.signals[key] = self.writer.register_var(
             scope,
             name,
@@ -238,7 +242,7 @@ class CpuVcdTracer(BaseTracer):
 
         self._change("clk", (cycle + 1) * self.clock_period_ns, 0)
 
-    def on_test_end(self, test_name: str, passed: bool) -> None:
+    def on_test_end(self, passed: bool) -> None:
         self.close()
 
     def close(self) -> None:
