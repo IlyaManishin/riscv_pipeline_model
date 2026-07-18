@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Any, TextIO
 
-from tests.cpu.tests_config import REG_COUNT, XLEN, BASE_TRACE_ENABLE
+from tests.cpu.tests_config import REG_COUNT, XLEN, CVD_TRACE_ENABLE
 from risc_v.base.icpu_system import ICpuSystem
 from .base_tracers import BaseTracer
 from vcd import VCDWriter
@@ -36,7 +36,7 @@ class CpuVcdTracer(BaseTracer):
         self._pipeline = hasattr(cpu, "stage_fetch")
 
     def on_test_start(self, test_name: str) -> None:
-        if self._is_trace():
+        if not self._is_trace():
             return
         
         trace_dir = Path(self.trace_dir) / test_name
@@ -254,3 +254,7 @@ class CpuVcdTracer(BaseTracer):
                 if self.stream is not None:
                     self.stream.close()
                     self.stream = None
+    def _is_trace(self):
+        if not CVD_TRACE_ENABLE:
+            return False
+        return super()._is_trace()

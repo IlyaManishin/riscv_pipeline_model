@@ -48,7 +48,7 @@ class CsvTracer(BaseTracer):
         test_trace_dir = Path(self.trace_dir) / test_name
         test_trace_dir.mkdir(parents=True, exist_ok=True)
 
-        filepath = test_trace_dir / f"{self.tracer_name}.csv"
+        filepath = test_trace_dir / f"{test_name}.csv"
         self.file = open(filepath, "w", newline="")
 
         self.writer = csv.writer(self.file)
