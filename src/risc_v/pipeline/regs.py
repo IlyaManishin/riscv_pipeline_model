@@ -19,7 +19,7 @@ class IF_ID_Stage:
 
     def get_triggers(self) -> list[ITrigger]:
         return [self.pc, self.instr, self.valid]
-    
+
     def stall(self):
         for r in self.get_triggers():
             r.set(r.read())
@@ -84,7 +84,7 @@ class ID_EX_Stage:
         self.reg_wr.set(0)
         self.dmem_sel.set(0)
         self.valid.set(0)
-        
+
 
 class EX_MEM_Stage:
     alu_out: Register

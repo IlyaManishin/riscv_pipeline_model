@@ -39,5 +39,5 @@ class WriteBack:
         self.rf_we3 = bool(self.reg_wr) and not bool(self.rst_reg.read())
         if self.rf_we3:
             self.rf_inst.write(self.rd, self.rf_wd3)
-        
+
         self.valid = self.buff_mem_wb.valid.read()
