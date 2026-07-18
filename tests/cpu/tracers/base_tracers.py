@@ -2,7 +2,7 @@ import csv
 from pathlib import Path
 from abc import ABC, abstractmethod
 
-from cpu_config import TRACE_ENABLE, TRACE_DIRNAME
+from tests_config import TRACE_ENABLE
 
 
 # ============================================================
@@ -10,8 +10,9 @@ from cpu_config import TRACE_ENABLE, TRACE_DIRNAME
 # ============================================================
 
 class BaseTracer(ABC):
-    def __init__(self, tracer_name: str):
+    def __init__(self, trace_dir: str | Path, tracer_name: str):
         self.tracer_name = tracer_name
+        self.trace_dir = trace_dir
 
     def on_group_start(self, group_name: str) -> None:
         pass
@@ -35,8 +36,8 @@ class BaseTracer(ABC):
 # ============================================================
 
 class CsvTracer(BaseTracer):
-    def __init__(self, tracer_name: str):
-        super().__init__(tracer_name)
+    def __init__(self, trace_dir: str | Path, tracer_name: str):
+        super().__init__(trace_dir, tracer_name)
         self.file = None
         self.writer = None
 
@@ -46,10 +47,10 @@ class CsvTracer(BaseTracer):
 
     def on_test_start(self, test_name: str) -> None:
         if TRACE_ENABLE:
-            trace_dir = Path(TRACE_DIRNAME) / self.tracer_name
+            trace_dir = Path(self.trace_dir) / test_name
             trace_dir.mkdir(parents=True, exist_ok=True)
 
-            filepath = trace_dir / f"{test_name}.csv"
+            filepath = trace_dir / f"{self.tracer_name}.csv"
             self.file = open(filepath, "w", newline="")
 
             self.writer = csv.writer(self.file)

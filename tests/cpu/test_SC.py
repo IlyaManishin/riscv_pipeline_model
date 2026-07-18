@@ -5,8 +5,8 @@ from risc_v.single_cycle import cpu_system as sc_cpu_system
 from tracers.data_tracers import RegisterTracer
 from tracers.vcd_tracer import CpuVcdTracer
 from runner import run_program
-from tests_config import ASM_TESTS, ASM_IDS, C_TESTS, C_IDS
-
+from benches import *
+from tests_config import SC_TRACE_DIR
 
 # ============================================================
 # FIXTURES
@@ -33,9 +33,8 @@ def test_sc_asm(
     dmem_path: Optional[str],
 ) -> None:
     tracers = [
-        RegisterTracer(sc_cpu, "sc/asm_reg_trace"),
-        CpuVcdTracer(sc_cpu, "sc/asm_vcd_trace"),
-        
+        RegisterTracer(sc_cpu, SC_TRACE_DIR / "asm"),
+        CpuVcdTracer(sc_cpu, SC_TRACE_DIR / "asm"),
     ]
     run_program(sc_cpu, tracers, test_name, imem_path, dmem_path)
 
@@ -52,7 +51,7 @@ def test_sc_c(
     dmem_path: Optional[str],
 ) -> None:
     tracers = [
-        RegisterTracer(sc_cpu, "sc/c_reg_trace"),
-        CpuVcdTracer(sc_cpu, "sc/c_vcd_trace"),
+        RegisterTracer(sc_cpu, SC_TRACE_DIR / "C"),
+        CpuVcdTracer(sc_cpu, SC_TRACE_DIR / "C"),
     ]
     run_program(sc_cpu, tracers, test_name, imem_path, dmem_path)

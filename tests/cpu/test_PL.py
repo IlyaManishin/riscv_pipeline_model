@@ -5,7 +5,8 @@ from risc_v.pipeline import cpu_system as pl_cpu_system
 from tracers.data_tracers import PipelineTracer
 from tracers.vcd_tracer import CpuVcdTracer
 from runner import run_program
-from tests_config import ASM_TESTS, ASM_IDS, C_TESTS, C_IDS
+from benches import *
+from tests_config import PL_TRACE_DIR
 
 
 @pytest.fixture
@@ -25,8 +26,8 @@ def test_pipeline_asm(
     dmem_path: Optional[str],
 ) -> None:
     tracers = [
-        PipelineTracer(pl_cpu, "pl/asm_reg_trace"),
-        CpuVcdTracer(pl_cpu, "pl/asm_vcd_trace")
+        PipelineTracer(pl_cpu, PL_TRACE_DIR / "asm"),
+        CpuVcdTracer(pl_cpu, PL_TRACE_DIR / "asm")
     ]
     run_program(pl_cpu, tracers, test_name, imem_path, dmem_path)
 
@@ -43,7 +44,7 @@ def test_pipeline_c(
     dmem_path: Optional[str],
 ) -> None:
     tracers = [
-        PipelineTracer(pl_cpu, "pl/c_reg_trace"),
-        CpuVcdTracer(pl_cpu, "pl/c_vcd_trace"),
+        PipelineTracer(pl_cpu, PL_TRACE_DIR / "C"),
+        CpuVcdTracer(pl_cpu, PL_TRACE_DIR / "C"),
     ]
     run_program(pl_cpu, tracers, test_name, imem_path, dmem_path)

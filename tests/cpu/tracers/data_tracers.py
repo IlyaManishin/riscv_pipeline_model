@@ -1,7 +1,9 @@
-from cpu_config import REG_COUNT
+from pathlib import Path
+
 from risc_v.base.icpu_system import ICpuSystem
 from risc_v.pipeline.cpu_system import CpuSystem as PL_CpuSystem
 
+from tests.cpu.tests_config import REG_COUNT
 from .base_tracers import CsvTracer
 from tests.utils import disasm
 
@@ -11,8 +13,8 @@ from tests.utils import disasm
 
 
 class RegisterTracer(CsvTracer):
-    def __init__(self, cpu: ICpuSystem = None, tracer_name: str = "register_trace"):
-        super().__init__(tracer_name)
+    def __init__(self, cpu: ICpuSystem, trace_dir: str | Path, tracer_name: str = "reg"):
+        super().__init__(trace_dir, tracer_name)
         self.cpu = cpu
 
     def get_header(self) -> list[str]:
@@ -40,8 +42,8 @@ def uint32_to_int32(value: int) -> int:
     return value if value < 0x80000000 else value - 0x100000000
 
 class PipelineTracer(CsvTracer):
-    def __init__(self, cpu: PL_CpuSystem, test_name):
-        super().__init__(test_name)
+    def __init__(self, cpu: PL_CpuSystem, trace_dir: str | Path, tracer_name: str = "pipeline"):
+        super().__init__(trace_dir, tracer_name)
         self.cpu = cpu
 
     def get_header(self) -> list[str]:

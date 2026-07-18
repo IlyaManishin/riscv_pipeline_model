@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Any, TextIO
 
-from cpu_config import REG_COUNT, TRACE_DIRNAME, XLEN
+from tests.cpu.tests_config import REG_COUNT, TRACE_DIRNAME, XLEN
 from risc_v.base.icpu_system import ICpuSystem
 from .base_tracers import BaseTracer
 from vcd import VCDWriter
@@ -16,11 +16,12 @@ class CpuVcdTracer(BaseTracer):
     def __init__(
         self,
         cpu: ICpuSystem,
-        tracer_name: str,
+        trace_dir: str | Path,
+        tracer_name: str = "vcd",
         *,
         clock_period_ns: int = 10,
     ) -> None:
-        super().__init__(tracer_name)
+        super().__init__(trace_dir, tracer_name)
         if clock_period_ns < 2:
             raise ValueError("clock_period_ns must be at least 2")
 
@@ -35,8 +36,8 @@ class CpuVcdTracer(BaseTracer):
         self._pipeline = hasattr(cpu, "stage_fetch")
 
     def on_test_start(self, test_name: str) -> None:
-        trace_dir = Path(TRACE_DIRNAME) / self.tracer_name
-        self.output = (trace_dir / f"{test_name}.vcd").resolve()
+        trace_dir = Path(self.trace_dir) / test_name
+        self.output = (trace_dir / f"{self.tracer_name}.vcd").resolve()
         self.output.parent.mkdir(parents=True, exist_ok=True)
         self.stream = self.output.open("w", encoding="utf-8", newline="\n")
         self.writer = VCDWriter(
@@ -52,7 +53,7 @@ class CpuVcdTracer(BaseTracer):
             self._define_single_cycle_signals()
 
         self._sample(timestamp=0, cycle=0)
-
+        
     def _add(
         self,
         key: str,
