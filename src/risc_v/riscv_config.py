@@ -57,7 +57,7 @@ class DMem_sel(enum.Enum):
     SH  = 0b1001
     SW  = 0b1010
 
-    # ---------- Фабричные методы (возвращают DMem_sel) ----------
+    # ---------- Factory methods (return DMem_sel) ----------
 
     @staticmethod
     def from_load_funct3(funct3: int) -> 'DMem_sel':
@@ -79,13 +79,12 @@ class DMem_sel(enum.Enum):
 
     @staticmethod
     def from_int(value: int) -> 'DMem_sel':
-        """Конвертирует int в DMem_sel, если такое значение существует."""
+        """int convert to DMem_sel, if value exists."""
         for member in DMem_sel:
             if member.value == value:
                 return member
         raise ValueError(f"Invalid DMem_sel value: {value:#x}")
 
-    # ---------- Методы экземпляра ----------
 
     def funct3(self) -> int:
         return self.value & 0b111
@@ -146,7 +145,6 @@ class Instruction:
         )
 
     def __str__(self) -> str:
-        """Более компактный вариант для print()."""
         return (
             f"0x{self.raw:08X} | "
             f"op={self.opcode:05b} "

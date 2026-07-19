@@ -1,9 +1,7 @@
 import subprocess
 import sys
-import shutil
 from pathlib import Path
 
-import build_paths as bpaths
 
 # Master build script to orchestrate ASM and C test compilation
 

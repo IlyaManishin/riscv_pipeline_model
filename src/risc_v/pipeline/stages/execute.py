@@ -39,7 +39,7 @@ class Execute:
                                    data=self.alu_in_a,
                                    shamt=self.shift_shamt)
 
-        # Запись результатов в буфер EX/MEM
+
         self.buff_ex_mem.alu_out.set(
             self.shres if self.buff_id_ex.alushift_sel.read() else self.alures)
         self.buff_ex_mem.rf_rd2.set(self.rd2)

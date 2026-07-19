@@ -2,12 +2,13 @@
 
 from pathlib import Path
 from typing import Any, TextIO
-
-from tests.cpu.tests_config import REG_COUNT, XLEN, CVD_TRACE_ENABLE
-from risc_v.base.icpu_system import ICpuSystem
-from .base_tracers import BaseTracer
 from vcd import VCDWriter
 from vcd.writer import Variable
+
+from risc_v.single_cycle.cpu_system import CpuSystem as SC_CpuSystem
+from risc_v.pipeline.cpu_system import CpuSystem as PL_CpuSystem
+from tests.cpu.tests_config import REG_COUNT, XLEN, CVD_TRACE_ENABLE
+from .base_tracers import BaseTracer
 
 
 class CpuVcdTracer(BaseTracer):
@@ -15,7 +16,7 @@ class CpuVcdTracer(BaseTracer):
 
     def __init__(
         self,
-        cpu: ICpuSystem,
+        cpu: SC_CpuSystem | PL_CpuSystem,
         trace_dir: str | Path,
         tracer_name: str = "vcd",
         *,
@@ -38,7 +39,7 @@ class CpuVcdTracer(BaseTracer):
     def on_test_start(self, test_name: str) -> None:
         if not self._is_trace():
             return
-        
+
         trace_dir = Path(self.trace_dir) / test_name
         self.output = (trace_dir / f"{self.tracer_name}.vcd").resolve()
         self.output.parent.mkdir(parents=True, exist_ok=True)
@@ -58,7 +59,7 @@ class CpuVcdTracer(BaseTracer):
             self._define_single_cycle_signals()
 
         self._sample(timestamp=0, cycle=0)
-        
+
     def _add(
         self,
         key: str,
@@ -66,7 +67,7 @@ class CpuVcdTracer(BaseTracer):
         name: str,
         width: int = 1,
     ) -> None:
-        
+
         self.signals[key] = self.writer.register_var(
             scope,
             name,
@@ -108,7 +109,8 @@ class CpuVcdTracer(BaseTracer):
         }
         for stage, stage_specs in specs.items():
             for name, width in stage_specs:
-                self._add(f"{stage}_{name}", ("cpu", "pipeline", stage), name, width)
+                self._add(f"{stage}_{name}",
+                          ("cpu", "pipeline", stage), name, width)
 
     def _define_single_cycle_signals(self) -> None:
         specs = (
@@ -136,12 +138,13 @@ class CpuVcdTracer(BaseTracer):
     def _common_values(self, cycle: int) -> dict[str, int]:
         values = {"cycle": cycle, "pc": self.cpu.get_cur_pc()}
         values.update(
-            {f"x{index}": self.cpu.reg_file.read(index) for index in range(REG_COUNT)}
+            {f"x{index}": self.cpu.reg_file.read(
+                index) for index in range(REG_COUNT)}
         )
         return values
 
     def _pipeline_values(self) -> dict[str, int]:
-        cpu: Any = self.cpu
+        cpu = self.cpu
         fetch = cpu.stage_fetch
         decode = cpu.stage_decode
         execute = cpu.stage_execute
@@ -197,7 +200,7 @@ class CpuVcdTracer(BaseTracer):
         }
 
     def _single_cycle_values(self) -> dict[str, int]:
-        core: Any = getattr(self.cpu, "_core")
+        core = self.cpu._core
         return {
             "sc_instr": core.instr.raw if core.instr is not None else 0,
             "sc_rs1": core.rs1,
@@ -254,6 +257,7 @@ class CpuVcdTracer(BaseTracer):
                 if self.stream is not None:
                     self.stream.close()
                     self.stream = None
+
     def _is_trace(self):
         if not CVD_TRACE_ENABLE:
             return False

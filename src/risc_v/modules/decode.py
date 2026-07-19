@@ -8,14 +8,14 @@ class Instruction_Decoder:
         funct3 = instr.funct3
         funct7 = instr.funct7
 
-        # Сигналы по умолчанию (illegal=1)
+        # default signals (illegal=1)
         default = Id_controls_out(
             reg_wr=0, dmem_sel = DMem_sel.NONE, a_sel=0, b_sel=0,
             sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1,
             alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.ANY,
             imm_type=Instr_type_t.TYPE_ANY, illegal=1, jf_exe=0
         )
-        # Проверяем, что первые 2 бита opcode == 11
+        # check first bits of opcode == 11
         if instr.opcode & 0b11 != 0b11:
             return default
 
@@ -52,7 +52,7 @@ class Instruction_Decoder:
                 reg_wr=1, dmem_sel = DMem_sel.NONE, a_sel=1, b_sel=0,
                 sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=0,
                 alu_sel=Alu_sel_t.JALR, wb_sel=WB_sel_t.PC4_OUT,
-                imm_type=Instr_type_t.TYPE_I, illegal=0, jf_exe=1  # <-- ТОЛЬКО ДЛЯ JALR
+                imm_type=Instr_type_t.TYPE_I, illegal=0, jf_exe=1  # <-- ONLY FOR JALR
             )
 
         # ---------- Branch instructions ----------
@@ -241,7 +241,7 @@ class Instruction_Decoder:
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0,
                         alushift_sel=1
                     )
-                if funct7 == 0b100000:   # 0b1 00000? У RISC-V SRAI имеет funct7[5]=1
+                if funct7 == 0b100000:   # 0b1 00000? RISC-V SRAI has funct7[5]=1
                     return Id_controls_out(
                         reg_wr=1, dmem_sel = DMem_sel.NONE, a_sel=1, b_sel=0,
                         sh_sel=Shift_sel_t.SRA, br_un=0, pc_sel=1,
@@ -354,5 +354,5 @@ class Instruction_Decoder:
                 imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0
             )
 
-        # нераспознанная инструкция
+        # undefined instruction
         return default
