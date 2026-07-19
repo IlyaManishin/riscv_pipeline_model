@@ -62,26 +62,45 @@ class Hazard_Detection_Unit:
 
         # ===== Data Hazards =====
 
-        # RAW
+        # RAW (Register after write hazard)
+        opcode = self.stage_decode.instr.opcode >> 2
+        uses_rs1 = opcode in (
+            0b11001,  # JALR
+            0b11000,  # Branch (BEQ, BNE, etc.)
+            0b00000,  # Load
+            0b01000,  # Store
+            0b00100,  # Immediate ALU (ADDI, etc.)
+            0b01100   # Register ALU (ADD, SUB, etc.)
+        )
+
+        uses_rs2 = opcode in (
+            0b11000,  # Branch
+            0b01000,  # Store
+            0b01100   # Register ALU
+        )
+
+        # Decode-Execute Hazard
         if self.stage_execute.reg_wr and self.stage_execute.rd != 0 and (
-            self.stage_execute.rd == self.stage_decode.rs1 or
-            self.stage_execute.rd == self.stage_decode.rs2
+            (uses_rs1 and self.stage_execute.rd == self.stage_decode.rs1) or
+            (uses_rs2 and self.stage_execute.rd == self.stage_decode.rs2)
         ):
             self.stage_fetch.stall()
             self.buff_if_id.stall()
             self.buff_id_ex.flush()
 
+        # Decode-Memory Hazard
         if self.stage_memory.reg_wr and self.stage_memory.rd != 0 and (
-            self.stage_memory.rd == self.stage_decode.rs1 or
-            self.stage_memory.rd == self.stage_decode.rs2
+            (uses_rs1 and self.stage_memory.rd == self.stage_decode.rs1) or
+            (uses_rs2 and self.stage_memory.rd == self.stage_decode.rs2)
         ):
             self.stage_fetch.stall()
             self.buff_if_id.stall()
             self.buff_id_ex.flush()
 
+        # Decode-Writeback Hazard
         if self.stage_writeback.reg_wr and self.stage_writeback.rd != 0 and (
-            self.stage_writeback.rd == self.stage_decode.rs1 or
-            self.stage_writeback.rd == self.stage_decode.rs2
+            (uses_rs1 and self.stage_writeback.rd == self.stage_decode.rs1) or
+            (uses_rs2 and self.stage_writeback.rd == self.stage_decode.rs2)
         ):
             self.stage_fetch.stall()
             self.buff_if_id.stall()
