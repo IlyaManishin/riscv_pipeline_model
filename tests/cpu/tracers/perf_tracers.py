@@ -53,7 +53,6 @@ class PipelinePerfTracer(BasePerfTracer):
         self.cycles = 0
         self.instructions = 0
         self.stalls = 0
-        self.flushes = 0
         self.jumps = 0
 
     def set_cpu(self, cpu: PL_CpuSystem) -> None:
@@ -63,11 +62,10 @@ class PipelinePerfTracer(BasePerfTracer):
         self.cycles = 0
         self.instructions = 0
         self.stalls = 0
-        self.flushes = 0
         self.jumps = 0
 
     def get_header(self) -> list[str]:
-        return ["test_name", "cycles", "instructions", "cpi", "stalls", "flushes", "jumps", "jpi", "status"]
+        return ["test_name", "cycles", "instructions", "cpi", "stalls", "jumps", "jpi", "status"]
 
     def format_test_row(self, test_name: str, passed: bool) -> list:
         cpi = round(self.cycles / self.instructions,
@@ -75,7 +73,7 @@ class PipelinePerfTracer(BasePerfTracer):
         jpi = round(self.jumps / self.instructions,
                     3) if self.instructions > 0 else 0
         status = "PASSED" if passed else "FAILED"
-        return [test_name, self.cycles, self.instructions, cpi, self.stalls, self.flushes, self.jumps, jpi, status]
+        return [test_name, self.cycles, self.instructions, cpi, self.stalls, self.jumps, jpi, status]
 
     def trace_cycle(self, cycle: int) -> None:
         if self.cpu is None:
@@ -83,29 +81,17 @@ class PipelinePerfTracer(BasePerfTracer):
 
         self.cycles += 1
 
-        sd = self.cpu.stage_decode
-        se = self.cpu.stage_execute
-        sm = self.cpu.stage_memory
-        sw = self.cpu.stage_writeback
+        core = self.cpu.core
+        hdu = core.hdu
+        sd = core.stage_decode
+        se = core.stage_execute
+        sw = core.stage_writeback
 
         if bool(sw.valid):
             self.instructions += 1
 
-        decode_jf_exe = bool(
-            sd.id_controls.jf_exe) if sd.id_controls is not None else False
-
-        raw_ex = bool(se.reg_wr and se.rd != 0 and (
-            se.rd == sd.rs1 or se.rd == sd.rs2))
-        raw_mem = bool(sm.reg_wr and sm.rd != 0 and (
-            sm.rd == sd.rs1 or sm.rd == sd.rs2))
-        raw_wb = bool(sw.reg_wr and sw.rd != 0 and (
-            sw.rd == sd.rs1 or sw.rd == sd.rs2))
-
-        if decode_jf_exe or raw_ex or raw_mem or raw_wb:
+        if hdu.is_id_ex_raw_hazard or hdu.is_id_mem_raw_hazard or hdu.is_id_wb_raw_hazard:
             self.stalls += 1
-
-        if decode_jf_exe or bool(se.jfexe) or bool(sd.jfid) or raw_ex or raw_mem or raw_wb:
-            self.flushes += 1
 
         if bool(se.jfexe) or bool(sd.jfid):
             self.jumps += 1

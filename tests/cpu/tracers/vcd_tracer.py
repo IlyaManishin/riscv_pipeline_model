@@ -34,7 +34,7 @@ class CpuVcdTracer(BaseTracer):
         self.signals: dict[str, Variable] = {}
         self.widths: dict[str, int] = {}
         self.output: Path | None = None
-        self._pipeline = hasattr(cpu, "stage_fetch")
+        self._pipeline = hasattr(cpu, "core") and hasattr(cpu.core, "stage_fetch")
 
     def on_test_start(self, test_name: str) -> None:
         if not self._is_trace():
@@ -144,12 +144,12 @@ class CpuVcdTracer(BaseTracer):
         return values
 
     def _pipeline_values(self) -> dict[str, int]:
-        cpu = self.cpu
-        fetch = cpu.stage_fetch
-        decode = cpu.stage_decode
-        execute = cpu.stage_execute
-        memory = cpu.stage_memory
-        writeback = cpu.stage_writeback
+        core = self.cpu.core
+        fetch = core.stage_fetch
+        decode = core.stage_decode
+        execute = core.stage_execute
+        memory = core.stage_memory
+        writeback = core.stage_writeback
 
         fetch_pc = int(fetch.pc)
         decode_pc = int(decode.pc) if decode.valid else 0
@@ -194,7 +194,7 @@ class CpuVcdTracer(BaseTracer):
             "wb_valid": writeback.valid,
             "wb_pc": writeback_pc,
             "wb_instr": self._instr_at(writeback_pc, writeback.valid),
-            "wb_rd": cpu.buff_mem_wb.rd.read(),
+            "wb_rd": core.buff_mem_wb.rd.read(),
             "wb_reg_we": writeback.rf_we3,
             "wb_reg_wdata": writeback.rf_wd3,
         }

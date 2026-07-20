@@ -1,65 +1,77 @@
+```markdown
 # `risc_v/pipeline/stages/` – Pipeline Stage Logic
 
-Each file contains one stage class. A stage reads the *current* values from its
-input pipeline buffer(s) and writes the *next* values into its output buffer(s)
-during `update()`. All writes are committed when the parent `CpuSystem` calls
-`Clock.tick()`.
+Each stage is implemented as an autonomous processing unit. During `update()`, a stage reads the current combinational state from its **upstream input pipeline buffer** and writes the calculated next-state values into its **downstream output pipeline buffer**. All inter-stage register transfers commit synchronously on `Clock.tick()`.
 
-The pipeline registers are defined in [`../regs.py`](../regs.py); the shared
-control dataclasses/enums are in `risc_v/riscv_config.py`.
+## Architectural Rules & Memory Invariants
+
+1. **Unidirectional Buffer Ownership (Producer/Consumer Architecture):**
+   - Each stage exclusively **owns and writes to its downstream (output) pipeline buffer** (e.g., `Fetch` controls `IF_ID_Stage`, `Decode` controls `ID_EX_Stage`).
+   - A stage only **reads from its upstream (input) pipeline buffer** filled by the preceding stage.
+   - Pipeline register buffers do not drive control flow autonomously; pipeline control actions (`stall`, `flush`) are strictly encapsulated within and exposed by the managing stage interface.
+
+2. **Strict Type Annotations & Clean State Initialization:**
+   - Structural stage attributes are clearly compartmentalized into **Dependencies**, **Control Signals**, and **Data Path** fields.
+
+---
 
 ## `fetch.py` – `Fetch` (IF)
 
-- Inputs: `PC`, `InstrMem`, `IF_ID_Stage`.
-- `update(jfexe, jfid, alures, imm_pc)` reads the instruction at the current PC
-  into `IF_ID.instr`, sets `IF_ID.pc` and `IF_ID.valid=1`.
-- Next-PC selection: if `jfid` (branch/JAL resolved in Decode) jump to
-  `imm_pc`; elif `jfexe` (JALR resolved in Execute) jump to `alures`; else
-  PC+4. Uses `PC.set_pc`.
-- `stall()` holds the PC for one cycle (redirects PC to its current value).
+- **Input Interfacing:** `PC`, `InstrMem`.
+- **Managed Output Buffer:** `IF_ID_Stage` (upstream producer).
+- `update(jfexe, jfid, alures, imm_pc)`: Fetches instruction at the current PC into `IF_ID.instr`, asserts `IF_ID.valid = True`, and updates internal data path state. Resolves next-PC selection via branch/jump signals (`jfid` or `jfexe`).
+- **Control Interface:**
+  - `stall()`: Holds current PC state and delegates pipeline register hold to `IF_ID.stall()`.
+  - `flush()`: Delegates instruction squashing to `IF_ID.flush()`.
 
 ## `decode.py` – `Decode` (ID)
 
-- Inputs: `RegFile`, `IF_ID_Stage`, `ID_EX_Stage`.
-- `update()` decodes `IF_ID.instr` via `Instruction_Decoder` (two passes, with
-  `BranchUnit` comparison for branch resolution), generates the immediate via
-  `ImmGen`, reads `rs1`/`rs2`, and writes every decoded control field into
-  `ID_EX_Stage`.
-- Computes `imm_pc = pc + imm` and the `jfid` (taken-branch/JAL) signal used by
-  Fetch. Propagates `valid` from IF/ID.
+- **Input Interfacing:** `RegFile`, `IF_ID_Stage` (downstream consumer).
+- **Managed Output Buffer:** `ID_EX_Stage` (upstream producer).
+- `update()`: Decodes `IF_ID.instr` via `Instruction_Decoder`, generates immediates via `ImmGen`, evaluates branch conditions via `BranchUnit`, and combinationally populates all decoded execution signals into `ID_EX_Stage`.
+- **Control Interface:**
+  - `stall()`: Delegates pipeline hold to `ID_EX.stall()`.
+  - `flush()`: Squashes decoded control signals via `ID_EX.flush()`.
 
 ## `execute.py` – `Execute` (EX)
 
-- Inputs: `ID_EX_Stage`, `EX_MEM_Stage`.
-- `update()` selects ALU operands (`a_sel`/`b_sel` choose register vs PC/imm),
-  runs `Alu.execute`, runs `Shifter.shift` for shift ops, and chooses the ALU
-  vs shifter result via `alushift_sel`.
-- Writes `alu_out`, `rf_rd2` (store data), `rd`, `wb_sel`, `reg_wr`,
-  `dmem_sel`, `pc4`, and the `jfexe` (JALR) flag into `EX_MEM_Stage`.
+- **Input Interfacing:** `ID_EX_Stage` (downstream consumer).
+- **Managed Output Buffer:** `EX_MEM_Stage` (upstream producer).
+- `update()`: Selects ALU/Shifter operands based on control vectors, executes arithmetic/logic and shift operations, and writes the execution context (`alu_out`, `rf_rd2`, `rd`, control flags) into `EX_MEM_Stage`.
 
 ## `mem.py` – `Memory` (MEM)
 
-- Inputs: `DataMem`, `EX_MEM_Stage`, `MEM_WB_Stage`.
-- `update()` reconstructs the `DMem_sel` from `dmem_sel`, computes the byte
-  offset, formats the store word via `dmem_wr_port`, performs the (byte-masked)
-  write, reads the word back, formats the load result via `dmem_rd_port`, and
-  forwards `alu_out`, `dmem_data`, `rd`, `wb_sel`, `reg_wr`, `pc4` to
-  `MEM_WB_Stage`.
+- **Input Interfacing:** `DataMem`, `EX_MEM_Stage` (downstream consumer).
+- **Managed Output Buffer:** `MEM_WB_Stage` (upstream producer).
+- `update()`: Reconstructs memory transaction parameters via `DMem_sel`, executes byte/halfword/word store/load routines via `dmem_wr_port` / `dmem_rd_port`, and passes result vectors down to `MEM_WB_Stage`.
 
 ## `writeback.py` – `WriteBack` (WB)
 
-- Inputs: `RegFile`, `MEM_WB_Stage`, reset `Register`.
-- `update()` selects the write-back source via `WB_sel_t`
-  (PC4_OUT / ALU_OUT / SHIFTER_OUT / DMEM_OUT), and writes `rd` in `RegFile`
-  when `reg_wr` is set **and** reset is not active (`rf_we3` gate).
+- **Input Interfacing:** `RegFile`, `MEM_WB_Stage` (downstream consumer), reset `Register`.
+- **Managed Output Buffer:** None (Architectural State Commit Stage).
+- `update()`: Selects write-back payload source via `WB_sel_t` and commits write payload to `RegFile` at index `rd` when `reg_wr` is active and hardware reset is inactive (`rf_we3`).
 
-## Data Flow Summary
+---
+
+## Pipeline Control & Hazard Detection Interface
+
+The `Hazard_Detection_Unit` resolves hazards purely through high-level stage control interfaces (`Fetch`, `Decode`) rather than directly manipulating raw pipeline buffers.
 
 ```text
-      PC ─┐
-          ▼
-   [ Fetch ]──IF/ID──▶[ Decode ]──ID/EX──▶[ Execute ]──EX/MEM──▶[ Memory ]──MEM/WB──▶[ WriteBack ]
-          ▲                                   │                  │                     │
-          └──── next-PC (jfid/jfexe) ──────────┘                  ▼                     ▼
-                                                     DataMem ◀──▶ RegFile
+               Control / Flush / Stall Trigger Path
+  ┌─────────────────────────────────────────────────────────────┐
+  │                   Hazard Detection Unit                     │
+  └───────┬──────────────────────┬──────────────────────┬───────┘
+          │ (stall/flush)        │ (flush)              │ (debug signals)
+          ▼                      ▼                      ▼
+     [ Fetch ]              [ Decode ]             [ Debug Flags ]
+         │                      │                  • is_id_ex_raw_hazard
+         │ (writes next)        │ (writes next)    • is_id_mem_raw_hazard
+         ▼                      ▼                  • is_id_wb_raw_hazard
+    [ IF/ID Reg ]          [ ID/EX Reg ]
+
+```
+
+* **Debug Interface:** The hazard unit provides runtime diagnostic flags (`is_id_ex_raw_hazard`, `is_id_mem_raw_hazard`, `is_id_wb_raw_hazard`), which are automatically cleared via `reset_debug_state()` at the start of each evaluation cycle.
+
 ```

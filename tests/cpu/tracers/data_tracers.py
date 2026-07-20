@@ -62,29 +62,31 @@ class PipelineTracer(CsvTracer):
     def trace_cycle(self, cycle: int) -> None:
         if self.writer is None:
             return
-            
-        is_jump = bool(self.cpu.stage_execute.jfexe) or bool(self.cpu.stage_decode.jfid)
+
+        core = self.cpu.core
+        is_jump = bool(core.stage_execute.jfexe) or bool(
+            core.stage_decode.jfid)
 
         row = [
             cycle,
             self.cpu.get_cur_pc(),
             is_jump,
-            self.cpu.stage_fetch.stall_pc,
-            self.cpu.stage_execute.jfexe,
-            self.cpu.stage_decode.jfid,
-            uint32_to_int32(self.cpu.stage_execute.alures),
-            uint32_to_int32(self.cpu.stage_decode.imm_pc),
+            core.stage_fetch.stall_pc,
+            core.stage_execute.jfexe,
+            core.stage_decode.jfid,
+            uint32_to_int32(core.stage_execute.alures),
+            uint32_to_int32(core.stage_decode.imm_pc),
             self.disasm_instr(
-                self.cpu.stage_fetch.pc, self.cpu.stage_fetch.valid),
-            self.disasm_instr(self.cpu.stage_decode.pc,
-                              self.cpu.stage_decode.valid),
-            self.disasm_instr(self.cpu.stage_execute.pc4 - 4,
-                              self.cpu.stage_execute.valid),
-            self.disasm_instr(self.cpu.stage_memory.pc4 - 4,
-                              self.cpu.stage_memory.valid),
-            bin(self.cpu.stage_memory.dmem_sel.to_int()),
-            self.disasm_instr(self.cpu.stage_writeback.pc4 - 4,
-                              self.cpu.stage_writeback.valid)
+                core.stage_fetch.pc, core.stage_fetch.valid),
+            self.disasm_instr(core.stage_decode.pc,
+                              core.stage_decode.valid),
+            self.disasm_instr(core.stage_execute.pc4 - 4,
+                              core.stage_execute.valid),
+            self.disasm_instr(core.stage_memory.pc4 - 4,
+                              core.stage_memory.valid),
+            bin(core.stage_memory.dmem_sel.to_int()),
+            self.disasm_instr(core.stage_writeback.pc4 - 4,
+                              core.stage_writeback.valid)
         ]
         for i in range(REG_COUNT):
             row.append(self.cpu.reg_file.read(i))
@@ -95,5 +97,4 @@ class PipelineTracer(CsvTracer):
             return "nop"
         instr = self.cpu.imem._memory[pc >> 2]
         dis_instr = disasm.disasm(instr)
-        # return ("!" + dis_instr if not bool(valid) else dis_instr)
         return f"{{{pc}}}{dis_instr}"

@@ -1,10 +1,11 @@
-import risc_v.riscv_config as conf
-import risc_v.pipeline.regs as regs
+# -------------import pipeline stages-----------------
 from risc_v.pipeline.stages.fetch import Fetch
 from risc_v.pipeline.stages.decode import Decode
 from risc_v.pipeline.stages.execute import Execute
 from risc_v.pipeline.stages.mem import Memory
 from risc_v.pipeline.stages.writeback import WriteBack
+
+import risc_v.pipeline.regs as regs
 
 
 class Hazard_Detection_Unit:
@@ -46,19 +47,26 @@ class Hazard_Detection_Unit:
         self.stage_memory = stage_memory
         self.stage_writeback = stage_writeback
 
+        # --- Debug Flags ---
+        self.is_id_ex_raw_hazard: bool = False
+        self.is_id_mem_raw_hazard: bool = False
+        self.is_id_wb_raw_hazard: bool = False
+
     def update(self) -> None:
+        self.reset_debug_state()
+
         # ===== Control Hazards =====
         # jalr
         if self.stage_decode.id_controls.jf_exe:
-            self.stage_fetch.stall()  # fetch stall
-            self.buff_if_id.flush()  # decoder flush
+            self.stage_fetch.stall()
+            self.stage_fetch.flush()
         if self.stage_execute.jfexe:
-            self.buff_if_id.flush()  # decoder flush
-            self.buff_id_ex.flush()  # execute flush
+            self.stage_fetch.flush()
+            self.stage_decode.flush()
 
         # branch and jal
         if self.stage_decode.jfid:
-            self.buff_if_id.flush()
+            self.stage_fetch.flush()
 
         # ===== Data Hazards =====
 
@@ -85,8 +93,9 @@ class Hazard_Detection_Unit:
             (uses_rs2 and self.stage_execute.rd == self.stage_decode.rs2)
         ):
             self.stage_fetch.stall()
-            self.buff_if_id.stall()
-            self.buff_id_ex.flush()
+            self.stage_decode.flush()
+
+            self.is_id_ex_raw_hazard = True
 
         # Decode-Memory Hazard
         if self.stage_memory.reg_wr and self.stage_memory.rd != 0 and (
@@ -94,8 +103,9 @@ class Hazard_Detection_Unit:
             (uses_rs2 and self.stage_memory.rd == self.stage_decode.rs2)
         ):
             self.stage_fetch.stall()
-            self.buff_if_id.stall()
-            self.buff_id_ex.flush()
+            self.stage_decode.flush()
+
+            self.is_id_mem_raw_hazard = True
 
         # Decode-Writeback Hazard
         if self.stage_writeback.reg_wr and self.stage_writeback.rd != 0 and (
@@ -103,5 +113,11 @@ class Hazard_Detection_Unit:
             (uses_rs2 and self.stage_writeback.rd == self.stage_decode.rs2)
         ):
             self.stage_fetch.stall()
-            self.buff_if_id.stall()
-            self.buff_id_ex.flush()
+            self.stage_decode.flush()
+
+            self.is_id_wb_raw_hazard = True
+
+    def reset_debug_state(self) -> None:
+        self.is_id_ex_raw_hazard = False
+        self.is_id_mem_raw_hazard = False
+        self.is_id_wb_raw_hazard = False

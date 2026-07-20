@@ -7,25 +7,27 @@ from risc_v.modules.dmem_rd_port import dmem_rd_port
 
 
 class Memory:
-
     def __init__(self, dmem: DataMem, buff_ex_mem: regs.EX_MEM_Stage, buff_mem_wb: regs.MEM_WB_Stage):
-        self.dmem = dmem
-        self.buff_ex_mem = buff_ex_mem
-        self.buff_mem_wb = buff_mem_wb
+        # --- Dependencies ---
+        self.dmem: DataMem = dmem
+        self.buff_ex_mem: regs.EX_MEM_Stage = buff_ex_mem
+        self.buff_mem_wb: regs.MEM_WB_Stage = buff_mem_wb
 
-        self.dmem_addr = 0
-        self.dmem_sel = conf.DMem_sel.NONE
-        self.dmem_we = False
-        self.dmem_funct3 = 0
-        self.dmem_byte_off = 0
-        self.dmem_wdata = 0
-        self.dmem_byte_we = 0
-        self.dmem_rdata = 0
-        self.valid = 0
-        self.pc4 = 0
+        # --- Control Signals ---
+        self.dmem_sel: conf.DMem_sel = conf.DMem_sel.NONE
+        self.dmem_we: bool = False
+        self.valid: bool = False
+        self.reg_wr: bool = False
 
-        self.rd = 0
-        self.reg_wr = 0
+        # --- Data Path ---
+        self.dmem_addr: int = 0
+        self.dmem_funct3: int = 0
+        self.dmem_byte_off: int = 0
+        self.dmem_wdata: int = 0
+        self.dmem_byte_we: int = 0
+        self.dmem_rdata: int = 0
+        self.pc4: int = 0
+        self.rd: int = 0
 
     def update(self):
         self.dmem_addr = self.buff_ex_mem.alu_out.read()
@@ -59,10 +61,10 @@ class Memory:
         self.rd = self.buff_ex_mem.rd.read()
         self.buff_mem_wb.rd.set(self.rd)
         self.buff_mem_wb.wb_sel.set(self.buff_ex_mem.wb_sel.read())
-        self.reg_wr = self.buff_ex_mem.reg_wr.read()
+        self.reg_wr = bool(self.buff_ex_mem.reg_wr.read())
         self.buff_mem_wb.reg_wr.set(self.reg_wr)
         self.pc4 = self.buff_ex_mem.pc4.read()
         self.buff_mem_wb.pc4.set(self.pc4)
 
-        self.valid = self.buff_ex_mem.valid.read()
+        self.valid = bool(self.buff_ex_mem.valid.read())
         self.buff_mem_wb.valid.set(self.valid)
