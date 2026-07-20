@@ -6,6 +6,9 @@ from tests.cpu.reports.perf_reports import gen_compare_performance_report
 
 @pytest.hookimpl(trylast=True)
 def pytest_sessionfinish(session, exitstatus):
+    if not BASE_TRACE_ENABLE:
+        return
+    
     summary_inputs = {
         "sc": Path(SC_TRACE_DIR) / PERF_SUMMARY_NAME,
         "pl": Path(PL_TRACE_DIR) / PERF_SUMMARY_NAME,

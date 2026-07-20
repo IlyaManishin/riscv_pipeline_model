@@ -1,3 +1,6 @@
+#fix cyclic import
+from __future__ import annotations
+
 from ..core.itrigger import ITrigger
 
 class Register(ITrigger):

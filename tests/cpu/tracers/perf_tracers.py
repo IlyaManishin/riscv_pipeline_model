@@ -83,10 +83,11 @@ class PipelinePerfTracer(BasePerfTracer):
 
         self.cycles += 1
 
-        sd = self.cpu.stage_decode
-        se = self.cpu.stage_execute
-        sm = self.cpu.stage_memory
-        sw = self.cpu.stage_writeback
+        core = self.cpu.core
+        sd = core.stage_decode
+        se = core.stage_execute
+        sm = core.stage_memory
+        sw = core.stage_writeback
 
         if bool(sw.valid):
             self.instructions += 1
