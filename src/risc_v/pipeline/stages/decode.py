@@ -7,29 +7,41 @@ from risc_v.modules.branch_unit import BranchUnit
 from risc_v.modules.mem.reg_file import RegFile
 
 
+import risc_v.riscv_config as conf
+import risc_v.pipeline.regs as regs
+from risc_v.modules.decode import Instruction_Decoder
+from risc_v.modules.immgen import ImmGen
+from risc_v.modules.branch_unit import BranchUnit
+from risc_v.modules.mem.reg_file import RegFile
+
+
 class Decode:
     def __init__(self, rf: RegFile, buff_if_id: regs.IF_ID_Stage, buff_id_ex: regs.ID_EX_Stage):
-        self.rf_inst = rf
-        self.buff_if_id = buff_if_id
-        self.buff_id_ex = buff_id_ex
+        # --- Зависимости (Dependencies) ---
+        self.rf_inst: RegFile = rf
+        self.buff_if_id: regs.IF_ID_Stage = buff_if_id
+        self.buff_id_ex: regs.ID_EX_Stage = buff_id_ex
+        
+        # ----- Control Signals -----
         self.id_controls = None
         self.instr = None
-        self.br_eq = 0
-        self.br_lt = 0
-        self.rs1 = 0
-        self.rs2 = 0
-        self.rd = 0
-        self.rf_rd1 = 0
-        self.rf_rd2 = 0
-        self.pc = 0
-        self.imm = 0
-        self.imm_pc = 0
-        self.jfid = 0
-        self.valid = 0
+        self.valid: bool = False
+        self.br_eq: bool = False
+        self.br_lt: bool = False
+        self.jfid: bool = False
+        
+        # --- Данные пути (Data Path) ---
+        self.rs1: int = 0
+        self.rs2: int = 0
+        self.rd: int = 0
+        self.rf_rd1: int = 0
+        self.rf_rd2: int = 0
+        self.pc: int = 0
+        self.imm: int = 0
+        self.imm_pc: int = 0
 
     def update(self):
         self.instr = conf.Instruction(self.buff_if_id.instr.read())
-
         self.pc = self.buff_if_id.pc.read()
 
         self.rs1 = self.instr.rs1
@@ -66,6 +78,11 @@ class Decode:
         self.buff_id_ex.shift_sel.set(self.id_controls.sh_sel)
 
         self.jfid = not bool(self.id_controls.pc_sel)
-
-        self.valid = self.buff_if_id.valid.read()
+        self.valid = bool(self.buff_if_id.valid.read())
         self.buff_id_ex.valid.set(self.valid)
+        
+    def stall(self):
+        self.buff_id_ex.stall()
+        
+    def flush(self):
+        self.buff_id_ex.flush()

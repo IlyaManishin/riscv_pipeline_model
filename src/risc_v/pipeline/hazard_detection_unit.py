@@ -50,15 +50,15 @@ class Hazard_Detection_Unit:
         # ===== Control Hazards =====
         # jalr
         if self.stage_decode.id_controls.jf_exe:
-            self.stage_fetch.stall()  # fetch stall
-            self.buff_if_id.flush()  # decoder flush
+            self.stage_fetch.stall()
+            self.stage_fetch.flush()
         if self.stage_execute.jfexe:
-            self.buff_if_id.flush()  # decoder flush
-            self.buff_id_ex.flush()  # execute flush
+            self.stage_fetch.flush()
+            self.stage_decode.flush()
 
         # branch and jal
         if self.stage_decode.jfid:
-            self.buff_if_id.flush()
+            self.stage_fetch.flush()
 
         # ===== Data Hazards =====
 
@@ -85,8 +85,7 @@ class Hazard_Detection_Unit:
             (uses_rs2 and self.stage_execute.rd == self.stage_decode.rs2)
         ):
             self.stage_fetch.stall()
-            self.buff_if_id.stall()
-            self.buff_id_ex.flush()
+            self.stage_decode.flush()
 
         # Decode-Memory Hazard
         if self.stage_memory.reg_wr and self.stage_memory.rd != 0 and (
@@ -94,8 +93,7 @@ class Hazard_Detection_Unit:
             (uses_rs2 and self.stage_memory.rd == self.stage_decode.rs2)
         ):
             self.stage_fetch.stall()
-            self.buff_if_id.stall()
-            self.buff_id_ex.flush()
+            self.stage_decode.flush()
 
         # Decode-Writeback Hazard
         if self.stage_writeback.reg_wr and self.stage_writeback.rd != 0 and (
@@ -103,5 +101,4 @@ class Hazard_Detection_Unit:
             (uses_rs2 and self.stage_writeback.rd == self.stage_decode.rs2)
         ):
             self.stage_fetch.stall()
-            self.buff_if_id.stall()
-            self.buff_id_ex.flush()
+            self.stage_decode.flush()
