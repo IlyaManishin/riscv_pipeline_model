@@ -15,18 +15,18 @@ from risc_v.modules.dmem_rd_port import dmem_rd_port
 
 class Memory:
     def __init__(self, dmem: DataMem, buff_ex_mem: regs.EX_MEM_Stage, buff_mem_wb: regs.MEM_WB_Stage):
-        # --- Зависимости (Dependencies) ---
+        # --- Dependencies ---
         self.dmem: DataMem = dmem
         self.buff_ex_mem: regs.EX_MEM_Stage = buff_ex_mem
         self.buff_mem_wb: regs.MEM_WB_Stage = buff_mem_wb
 
-        # --- Сигналы управления (Control Signals) ---
+        # --- Control Signals ---
         self.dmem_sel: conf.DMem_sel = conf.DMem_sel.NONE
         self.dmem_we: bool = False
         self.valid: bool = False
         self.reg_wr: bool = False
-        
-        # --- Данные пути (Data Path) ---
+
+        # --- Data Path ---
         self.dmem_addr: int = 0
         self.dmem_funct3: int = 0
         self.dmem_byte_off: int = 0
@@ -75,9 +75,3 @@ class Memory:
 
         self.valid = bool(self.buff_ex_mem.valid.read())
         self.buff_mem_wb.valid.set(self.valid)
-        
-    def stall(self):
-        self.buff_mem_wb.stall()
-        
-    def flush(self):
-        self.buff_mem_wb.flush()

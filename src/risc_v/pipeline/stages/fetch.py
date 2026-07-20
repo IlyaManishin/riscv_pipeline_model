@@ -14,16 +14,16 @@ from risc_v.modules.mem.imem import InstrMem
 
 class Fetch:
     def __init__(self, pc: PC, imem: InstrMem, buff_if_id: regs.IF_ID_Stage):
-        # --- Зависимости (Dependencies) ---
+        # --- Dependencies ---
         self.buff_if_id: regs.IF_ID_Stage = buff_if_id
         self.pc_instr: PC = pc
         self.imem: InstrMem = imem
-        
-        # --- Управляющие сигналы (Control Signals) ---
+
+        # --- Control Signals ---
         self.stall_pc: bool = False
         self.valid: bool = False
-        
-        # --- Данные пути (Data Path) ---
+
+        # --- Data Path ---
         self.pc: int = 0
 
     def update(self, jfexe: int, jfid: int, alures: int,  imm_pc: int):
@@ -45,6 +45,6 @@ class Fetch:
     def stall(self):
         self.pc_instr.set_pc(True, self.pc_instr.read())
         self.buff_if_id.stall()
-        
+
     def flush(self):
         self.buff_if_id.flush()

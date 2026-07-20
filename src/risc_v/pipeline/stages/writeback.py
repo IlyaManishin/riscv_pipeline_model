@@ -13,17 +13,17 @@ from risc_v.modules.mem.reg_file import RegFile
 
 class WriteBack:
     def __init__(self, rf: RegFile, buff_mem_wb: regs.MEM_WB_Stage, rst_reg: Register):
-        # --- Зависимости (Dependencies) ---
+        # --- Dependencies ---
         self.rf_inst: RegFile = rf
         self.buff_mem_wb: regs.MEM_WB_Stage = buff_mem_wb
         self.rst_reg: Register = rst_reg
 
-        # --- Сигналы управления (Control Signals) ---
+        # --- Control Signals ---
         self.rf_we3: bool = False
         self.valid: bool = False
         self.reg_wr: bool = False
-        
-        # --- Данные пути (Data Path) ---
+
+        # --- Data Path ---
         self.rf_wd3: int = 0
         self.pc4: int = 0
         self.rd: int = 0
@@ -45,7 +45,7 @@ class WriteBack:
         self.rd = self.buff_mem_wb.rd.read()
         self.reg_wr = bool(self.buff_mem_wb.reg_wr.read())
         self.rf_we3 = self.reg_wr and not bool(self.rst_reg.read())
-        
+
         if self.rf_we3:
             self.rf_inst.write(self.rd, self.rf_wd3)
 

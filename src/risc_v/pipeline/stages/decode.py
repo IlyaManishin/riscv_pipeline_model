@@ -17,20 +17,20 @@ from risc_v.modules.mem.reg_file import RegFile
 
 class Decode:
     def __init__(self, rf: RegFile, buff_if_id: regs.IF_ID_Stage, buff_id_ex: regs.ID_EX_Stage):
-        # --- Зависимости (Dependencies) ---
+        # --- Dependencies ---
         self.rf_inst: RegFile = rf
         self.buff_if_id: regs.IF_ID_Stage = buff_if_id
         self.buff_id_ex: regs.ID_EX_Stage = buff_id_ex
-        
-        # ----- Control Signals -----
+
+        # --- Control Signals ---
         self.id_controls = None
         self.instr = None
         self.valid: bool = False
         self.br_eq: bool = False
         self.br_lt: bool = False
         self.jfid: bool = False
-        
-        # --- Данные пути (Data Path) ---
+
+        # --- Data Path ---
         self.rs1: int = 0
         self.rs2: int = 0
         self.rd: int = 0
@@ -80,9 +80,9 @@ class Decode:
         self.jfid = not bool(self.id_controls.pc_sel)
         self.valid = bool(self.buff_if_id.valid.read())
         self.buff_id_ex.valid.set(self.valid)
-        
+
     def stall(self):
         self.buff_id_ex.stall()
-        
+
     def flush(self):
         self.buff_id_ex.flush()

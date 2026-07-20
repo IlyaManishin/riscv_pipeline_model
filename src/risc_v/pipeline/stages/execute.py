@@ -15,16 +15,16 @@ from risc_v.riscv_config import Alu_sel_t, Shift_sel_t
 
 class Execute:
     def __init__(self, buff_id_ex: regs.ID_EX_Stage, buff_ex_mem: regs.EX_MEM_Stage):
-        # --- Зависимости (Dependencies) ---
+        # --- Dependencies ---
         self.buff_id_ex: regs.ID_EX_Stage = buff_id_ex
         self.buff_ex_mem: regs.EX_MEM_Stage = buff_ex_mem
-        
-        # --- Сигналы управления (Control Signals) ---
+
+        # --- Control Signals ---
         self.reg_wr: bool = False
         self.jfexe: bool = False
         self.valid: bool = False
-        
-        # --- Данные пути (Data Path) ---
+
+        # --- Data Path ---
         self.rd1: int = 0
         self.rd2: int = 0
         self.alu_in_a: int = 0
@@ -68,9 +68,3 @@ class Execute:
 
         self.valid = bool(self.buff_id_ex.valid.read())
         self.buff_ex_mem.valid.set(self.valid)
-        
-    def stall(self):
-        self.buff_ex_mem.stall()
-        
-    def flush(self):
-        self.buff_ex_mem.flush()
