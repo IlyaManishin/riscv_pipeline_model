@@ -54,7 +54,7 @@ class CpuSystem(ICpuSystem):
         # Register all pipeline buffer registers as clock triggers
         for stage in (self.buff_if_id, self.buff_id_ex,
                       self.buff_ex_mem, self.buff_mem_wb):
-            for reg in stage.get_triggers():
+            for reg in stage.get_registers():
                 self.clk.add_trigger(reg)
 
         self.stage_fetch = Fetch(self.pc_inst,

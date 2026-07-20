@@ -17,11 +17,11 @@ class IF_ID_Stage:
         self.instr = Register()
         self.valid = Register()
 
-    def get_triggers(self) -> list[ITrigger]:
+    def get_registers(self) -> list[Register]:
         return [self.pc, self.instr, self.valid]
 
     def stall(self):
-        for r in self.get_triggers():
+        for r in self.get_registers():
             r.set(r.read())
 
     def flush(self):
@@ -67,7 +67,7 @@ class ID_EX_Stage:
         self.alushift_sel = Register()
         self.valid = Register()
 
-    def get_triggers(self) -> list[ITrigger]:
+    def get_registers(self) -> list[Register]:
         return [
             self.pc, self.rf_rd1, self.rf_rd2, self.imm,
             self.rs1, self.rs2, self.rd,
@@ -76,7 +76,7 @@ class ID_EX_Stage:
         ]
 
     def stall(self):
-        for r in self.get_triggers():
+        for r in self.get_registers():
             r.set(r.read())
 
     def flush(self):
@@ -106,7 +106,7 @@ class EX_MEM_Stage:
         self.pc4 = Register()
         self.valid = Register()
 
-    def get_triggers(self) -> list[ITrigger]:
+    def get_registers(self) -> list[Register]:
         return [
             self.alu_out, self.rf_rd2, self.rd,
             self.wb_sel, self.reg_wr, self.dmem_sel, self.pc4, self.valid
@@ -131,7 +131,7 @@ class MEM_WB_Stage:
         self.pc4 = Register()
         self.valid = Register()
 
-    def get_triggers(self) -> list[ITrigger]:
+    def get_registers(self) -> list[Register]:
         return [
             self.alu_out, self.dmem_data, self.rd,
             self.wb_sel, self.reg_wr, self.pc4, self.valid

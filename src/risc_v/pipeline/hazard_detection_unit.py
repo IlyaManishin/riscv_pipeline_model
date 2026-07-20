@@ -45,8 +45,15 @@ class Hazard_Detection_Unit:
         self.stage_execute = stage_execute
         self.stage_memory = stage_memory
         self.stage_writeback = stage_writeback
+        
+        # --- Debug Flags ---
+        self.is_id_ex_raw_hazard: bool = False
+        self.is_id_mem_raw_hazard: bool = False
+        self.is_id_wb_raw_hazard: bool = False
 
     def update(self) -> None:
+        self.reset_debug_state()
+
         # ===== Control Hazards =====
         # jalr
         if self.stage_decode.id_controls.jf_exe:
@@ -84,6 +91,7 @@ class Hazard_Detection_Unit:
             (uses_rs1 and self.stage_execute.rd == self.stage_decode.rs1) or
             (uses_rs2 and self.stage_execute.rd == self.stage_decode.rs2)
         ):
+            self.is_id_ex_raw_hazard = True
             self.stage_fetch.stall()
             self.stage_decode.flush()
 
@@ -92,6 +100,7 @@ class Hazard_Detection_Unit:
             (uses_rs1 and self.stage_memory.rd == self.stage_decode.rs1) or
             (uses_rs2 and self.stage_memory.rd == self.stage_decode.rs2)
         ):
+            self.is_id_mem_raw_hazard = True
             self.stage_fetch.stall()
             self.stage_decode.flush()
 
@@ -100,5 +109,11 @@ class Hazard_Detection_Unit:
             (uses_rs1 and self.stage_writeback.rd == self.stage_decode.rs1) or
             (uses_rs2 and self.stage_writeback.rd == self.stage_decode.rs2)
         ):
+            self.is_id_wb_raw_hazard = True
             self.stage_fetch.stall()
             self.stage_decode.flush()
+            
+    def reset_debug_state(self) -> None:
+        self.is_id_ex_raw_hazard = False
+        self.is_id_mem_raw_hazard = False
+        self.is_id_wb_raw_hazard = False
