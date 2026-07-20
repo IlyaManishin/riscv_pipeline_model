@@ -7,14 +7,6 @@ from risc_v.modules.branch_unit import BranchUnit
 from risc_v.modules.mem.reg_file import RegFile
 
 
-import risc_v.riscv_config as conf
-import risc_v.pipeline.regs as regs
-from risc_v.modules.decode import Instruction_Decoder
-from risc_v.modules.immgen import ImmGen
-from risc_v.modules.branch_unit import BranchUnit
-from risc_v.modules.mem.reg_file import RegFile
-
-
 class Decode:
     def __init__(self, rf: RegFile, buff_if_id: regs.IF_ID_Stage, buff_id_ex: regs.ID_EX_Stage):
         # --- Dependencies ---

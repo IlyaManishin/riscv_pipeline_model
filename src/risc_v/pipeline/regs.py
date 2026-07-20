@@ -1,11 +1,4 @@
-import risc_v.riscv_config as conf
 from sim_base.mem.register import Register
-from sim_base.mem.register import ITrigger
-from risc_v.modules.pc import PC
-from risc_v.modules.mem.reg_file import RegFile
-from risc_v.modules.mem.imem import InstrMem
-from risc_v.modules.mem.dmem import DataMem
-
 
 class IF_ID_Stage:
     pc: Register

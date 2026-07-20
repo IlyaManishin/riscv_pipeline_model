@@ -1,10 +1,11 @@
-import risc_v.riscv_config as conf
-import risc_v.pipeline.regs as regs
+# -------------import pipeline stages-----------------
 from risc_v.pipeline.stages.fetch import Fetch
 from risc_v.pipeline.stages.decode import Decode
 from risc_v.pipeline.stages.execute import Execute
 from risc_v.pipeline.stages.mem import Memory
 from risc_v.pipeline.stages.writeback import WriteBack
+
+import risc_v.pipeline.regs as regs
 
 
 class Hazard_Detection_Unit:
@@ -45,7 +46,7 @@ class Hazard_Detection_Unit:
         self.stage_execute = stage_execute
         self.stage_memory = stage_memory
         self.stage_writeback = stage_writeback
-        
+
         # --- Debug Flags ---
         self.is_id_ex_raw_hazard: bool = False
         self.is_id_mem_raw_hazard: bool = False
@@ -115,7 +116,7 @@ class Hazard_Detection_Unit:
             self.stage_decode.flush()
 
             self.is_id_wb_raw_hazard = True
-            
+
     def reset_debug_state(self) -> None:
         self.is_id_ex_raw_hazard = False
         self.is_id_mem_raw_hazard = False

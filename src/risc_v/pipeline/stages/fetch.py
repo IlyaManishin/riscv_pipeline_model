@@ -1,15 +1,7 @@
-import risc_v.riscv_config as conf
-from risc_v.pipeline import regs
-
-from risc_v.modules.pc import PC
-
-from risc_v.modules.mem.imem import InstrMem
-
-
-import risc_v.riscv_config as conf
-from risc_v.pipeline import regs
 from risc_v.modules.pc import PC
 from risc_v.modules.mem.imem import InstrMem
+
+from risc_v.pipeline import regs
 
 
 class Fetch:

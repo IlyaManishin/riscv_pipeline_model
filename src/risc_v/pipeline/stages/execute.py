@@ -1,13 +1,5 @@
-import risc_v.riscv_config as conf
 import risc_v.pipeline.regs as regs
 
-from risc_v.modules.alu import Alu
-from risc_v.modules.shifter import Shifter
-from risc_v.riscv_config import Alu_sel_t, Shift_sel_t
-
-
-import risc_v.riscv_config as conf
-import risc_v.pipeline.regs as regs
 from risc_v.modules.alu import Alu
 from risc_v.modules.shifter import Shifter
 from risc_v.riscv_config import Alu_sel_t, Shift_sel_t

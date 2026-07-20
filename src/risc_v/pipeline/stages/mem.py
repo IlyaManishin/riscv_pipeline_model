@@ -6,13 +6,6 @@ from risc_v.modules.dmem_wr_port import dmem_wr_port
 from risc_v.modules.dmem_rd_port import dmem_rd_port
 
 
-import risc_v.riscv_config as conf
-import risc_v.pipeline.regs as regs
-from risc_v.modules.mem.dmem import DataMem
-from risc_v.modules.dmem_wr_port import dmem_wr_port
-from risc_v.modules.dmem_rd_port import dmem_rd_port
-
-
 class Memory:
     def __init__(self, dmem: DataMem, buff_ex_mem: regs.EX_MEM_Stage, buff_mem_wb: regs.MEM_WB_Stage):
         # --- Dependencies ---
