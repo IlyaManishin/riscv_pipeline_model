@@ -52,13 +52,13 @@ class CpuSystem(ICpuSystem):
         # 1. Instruction Fetch Stage
         imem_addr = self._core.get_imem_addr()
         word_imem_addr = imem_addr >> 2
-        instr = self._imem.read(word_imem_addr)
+        instr_raw = self._imem.read(word_imem_addr)
 
         # 2. Decode and evaluate combinational signals (Generates memory addr & write data)
-        dmem_data = self._core.dec_exec_alu(instr)
+        dmem_data = self._core.dec_exec_alu(instr_raw)
 
         # 3. Handle Data Memory access based on combinational outputs
-        is_dmem_access = True # TEMP HACK, research this
+        is_dmem_access = True # TEMP HACK
         if is_dmem_access:
             word_dmem_addr = (dmem_data.addr & 0x0FFFFFFF) >> 2
 

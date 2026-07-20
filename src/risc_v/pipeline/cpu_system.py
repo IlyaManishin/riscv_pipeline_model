@@ -67,7 +67,7 @@ class CpuSystem(ICpuSystem):
         self.stage_writeback = WriteBack(self._rf_inst,
                                          self.buff_mem_wb,
                                          self.rst_reg)
-        
+
         self.hdu = Hazard_Detection_Unit(self.buff_if_id,
                                          self.buff_id_ex,
                                          self.buff_ex_mem,
@@ -94,7 +94,7 @@ class CpuSystem(ICpuSystem):
             alures=self.stage_execute.alures,
             imm_pc=self.stage_decode.imm_pc
         )
-        
+
         self.hdu.update()
 
         # Commit all synchronous changes (Clock Tick)

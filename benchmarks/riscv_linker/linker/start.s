@@ -6,6 +6,10 @@
 	.globl	_start
 	.type	_start, @function
 _start:
+    # Turn off optimisations
+    .option push
+    .option norelax
+
     # Global pointer init
     lui     gp, %hi(__global_pointer$)
     addi    gp, gp, %lo(__global_pointer$)
@@ -29,6 +33,8 @@ bss_init_loop:
     addi    a5, a5, 1
     j       bss_init_loop
 
+    # Remove norelax
+    .option pop
 prog_run:
     call    main
 

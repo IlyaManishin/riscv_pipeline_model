@@ -3,8 +3,8 @@ from typing import Optional
 import pytest
 
 from risc_v.base.icpu_system import ICpuSystem
-from tracers import BaseTracer
-from cpu_config import *
+from tracers.base_tracers import BaseTracer
+from tests.cpu.tests_config import *
 from benchmarks.build_paths import TEST_LIST_NAME
 
 
@@ -52,7 +52,7 @@ def execute_program(
         # Main clock cycle loop
         for cycle in range(TIMEOUT_ITERATIONS):
             cpu.step()
-            
+
             for tracer in tracers:
                 tracer.trace_cycle(cycle)
 
@@ -75,6 +75,7 @@ def execute_program(
     finally:
         tracer.close()
 
+
 def run_program(
     cpu: ICpuSystem,
     tracers: list[BaseTracer],
@@ -86,14 +87,14 @@ def run_program(
 
     for tracer in tracers:
         tracer.on_test_start(test_name)
-    
+
     passed = False
     try:
         execute_program(cpu, tracers)
         passed = True
     finally:
         for tracer in tracers:
-            tracer.on_test_end(test_name, passed)
+            tracer.on_test_end(passed)
 
 
 # ============================================================
@@ -117,7 +118,7 @@ def collect_tests(tests_dir: Path) -> list[tuple[str, str, Optional[str]]]:
             parts = [p.strip() for p in line.split(",")]
             test_name = parts[0]
             imem_path = tests_dir / parts[1]
-            
+
             dmem_path = None
             if len(parts) > 2 and parts[2]:
                 dmem_path = tests_dir / parts[2]

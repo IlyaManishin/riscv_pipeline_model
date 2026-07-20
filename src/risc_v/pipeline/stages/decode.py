@@ -26,27 +26,28 @@ class Decode:
         self.imm_pc = 0
         self.jfid = 0
         self.valid = 0
-        
+
     def update(self):
         self.instr = conf.Instruction(self.buff_if_id.instr.read())
-        
+
         self.pc = self.buff_if_id.pc.read()
-        
+
         self.rs1 = self.instr.rs1
         self.rs2 = self.instr.rs2
         self.rd = self.instr.rd
-        
+
         self.rf_rd1 = self.rf_inst.read(self.rs1)
         self.rf_rd2 = self.rf_inst.read(self.rs2)
-        
+
         self.id_controls = Instruction_Decoder.decode(self.instr)
         self.br_eq, self.br_lt = BranchUnit.compare(
             self.rf_rd1, self.rf_rd2, bool(self.id_controls.br_un))
-        self.id_controls = Instruction_Decoder.decode(self.instr, self.br_eq, self.br_lt)
-        
+        self.id_controls = Instruction_Decoder.decode(
+            self.instr, self.br_eq, self.br_lt)
+
         self.imm = ImmGen.generate(self.instr, self.id_controls.imm_type)
         self.imm_pc = self.pc + self.imm
-        
+
         self.buff_id_ex.pc.set(self.pc)
         self.buff_id_ex.rf_rd1.set(self.rf_rd1)
         self.buff_id_ex.rf_rd2.set(self.rf_rd2)
@@ -63,14 +64,8 @@ class Decode:
         self.buff_id_ex.jfexe.set(self.id_controls.jf_exe)
         self.buff_id_ex.alushift_sel.set(self.id_controls.alushift_sel)
         self.buff_id_ex.shift_sel.set(self.id_controls.sh_sel)
-        
-        self.jfid =  not bool(self.id_controls.pc_sel)
-        
-        
+
+        self.jfid = not bool(self.id_controls.pc_sel)
+
         self.valid = self.buff_if_id.valid.read()
         self.buff_id_ex.valid.set(self.valid)
-        
-        
-        
-        
-    

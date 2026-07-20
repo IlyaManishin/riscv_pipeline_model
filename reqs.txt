@@ -6,3 +6,4 @@ pluggy==1.6.0
 Pygments==2.19.2
 pytest==9.0.2
 tqdm==4.68.4
+pyvcd>=0.4.1,<0.5

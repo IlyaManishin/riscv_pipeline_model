@@ -23,14 +23,15 @@ class Memory:
         self.dmem_rdata = 0
         self.valid = 0
         self.pc4 = 0
-        
+
         self.rd = 0
         self.reg_wr = 0
 
     def update(self):
         self.dmem_addr = self.buff_ex_mem.alu_out.read()
 
-        self.dmem_sel = conf.DMem_sel.from_int(self.buff_ex_mem.dmem_sel.read())
+        self.dmem_sel = conf.DMem_sel.from_int(
+            self.buff_ex_mem.dmem_sel.read())
         self.dmem_we = self.dmem_sel.is_write()
         self.dmem_funct3 = self.dmem_sel.funct3()
         self.dmem_byte_off = self.dmem_addr & 0b11
@@ -45,7 +46,8 @@ class Memory:
         word_dmem_addr = (self.dmem_addr & 0x0FFFFFFF) >> 2
 
         if self.dmem_byte_we != 0:
-            self.dmem.write(word_dmem_addr, self.dmem_wdata, byte_we=self.dmem_byte_we)
+            self.dmem.write(word_dmem_addr, self.dmem_wdata,
+                            byte_we=self.dmem_byte_we)
 
         data_to_cpu = self.dmem.read(word_dmem_addr)
 
@@ -61,6 +63,6 @@ class Memory:
         self.buff_mem_wb.reg_wr.set(self.reg_wr)
         self.pc4 = self.buff_ex_mem.pc4.read()
         self.buff_mem_wb.pc4.set(self.pc4)
-        
+
         self.valid = self.buff_ex_mem.valid.read()
         self.buff_mem_wb.valid.set(self.valid)
