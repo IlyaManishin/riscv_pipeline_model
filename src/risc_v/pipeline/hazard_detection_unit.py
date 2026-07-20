@@ -91,27 +91,30 @@ class Hazard_Detection_Unit:
             (uses_rs1 and self.stage_execute.rd == self.stage_decode.rs1) or
             (uses_rs2 and self.stage_execute.rd == self.stage_decode.rs2)
         ):
-            self.is_id_ex_raw_hazard = True
             self.stage_fetch.stall()
             self.stage_decode.flush()
+
+            self.is_id_ex_raw_hazard = True
 
         # Decode-Memory Hazard
         if self.stage_memory.reg_wr and self.stage_memory.rd != 0 and (
             (uses_rs1 and self.stage_memory.rd == self.stage_decode.rs1) or
             (uses_rs2 and self.stage_memory.rd == self.stage_decode.rs2)
         ):
-            self.is_id_mem_raw_hazard = True
             self.stage_fetch.stall()
             self.stage_decode.flush()
+
+            self.is_id_mem_raw_hazard = True
 
         # Decode-Writeback Hazard
         if self.stage_writeback.reg_wr and self.stage_writeback.rd != 0 and (
             (uses_rs1 and self.stage_writeback.rd == self.stage_decode.rs1) or
             (uses_rs2 and self.stage_writeback.rd == self.stage_decode.rs2)
         ):
-            self.is_id_wb_raw_hazard = True
             self.stage_fetch.stall()
             self.stage_decode.flush()
+
+            self.is_id_wb_raw_hazard = True
             
     def reset_debug_state(self) -> None:
         self.is_id_ex_raw_hazard = False
