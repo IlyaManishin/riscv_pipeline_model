@@ -46,6 +46,12 @@ Resolves pipeline hazards using the bound buffers and stage instances:
 - **RAW data hazards** – when an in-flight instruction in EX/MEM/WB will write
   a register that the current Decode reads (`rs1`/`rs2`), the unit stalls Fetch,
   stalls IF/ID, and flushes ID/EX until the producer reaches WB.
+  *Note on Opcode-Based Optimization:* To prevent unnecessary stalls caused by 
+  "ghost" register indices (where an instruction format exposes fields in `rs1`/`rs2` 
+  but does not actually use them, such as in `JAL` or `LUI`), the unit evaluates the 
+  current Decode instruction `opcode`. It dynamically generates `uses_rs1` and 
+  `uses_rs2` validation flags, ensuring stalls are strictly triggered only when 
+  the source registers are actively required by the decoded instruction type. 
 
 The `update()` method is the single point where stall/flush control signals are
 produced each cycle.

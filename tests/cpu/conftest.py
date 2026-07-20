@@ -1,7 +1,7 @@
 import pytest
 from pathlib import Path
 from tests_config import *
-from reports.report_gen import generate_global_performance_report
+from tests.cpu.reports.perf_reports import gen_compare_performance_report
 
 
 @pytest.hookimpl(trylast=True)
@@ -15,13 +15,13 @@ def pytest_sessionfinish(session, exitstatus):
     compact_report_path = Path(TRACE_DIRNAME) / \
         "global_performance_compact_report.csv"
 
-    generate_global_performance_report(
+    gen_compare_performance_report(
         summaries=summary_inputs,
         output_path=full_report_path,
         columns=FULL_PERF_REPORT_COLS
     )
 
-    generate_global_performance_report(
+    gen_compare_performance_report(
         summaries=summary_inputs,
         output_path=compact_report_path,
         columns=COMPACT_PERF_REPORT_COLS

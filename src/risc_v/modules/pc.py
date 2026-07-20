@@ -17,11 +17,13 @@ class PC:
     def read(self) -> int:
         return self._reg.read()
 
-    def set_pc(self, br_taken: bool, pc_br: int) -> None:
+    def set_pc(self, br_taken: bool, pc_br: int, pc_stall: bool = False) -> None:
         """always_ff logic"""
         rst = self.rst_reg.read()
         if rst:
             next_pc = self._pc_start_addr
+        elif pc_stall:
+            next_pc = self._reg.read()
         elif br_taken:
             next_pc = pc_br
         else:
@@ -29,5 +31,3 @@ class PC:
 
         self._reg.set(next_pc & self.pc_mask)
     
-    def stall(self):
-        self._reg.set(self.read())

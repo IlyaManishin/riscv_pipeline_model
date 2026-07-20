@@ -2,7 +2,7 @@ import csv
 from pathlib import Path
 
 
-def generate_global_performance_report(
+def gen_compare_performance_report(
     summaries: dict[str, Path | str], 
     output_path: Path | str, 
     columns: list[str]

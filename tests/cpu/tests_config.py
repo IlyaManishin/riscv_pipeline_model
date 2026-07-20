@@ -27,7 +27,7 @@ PL_TRACE_DIR = TRACE_DIRNAME / "pl"
 FULL_PERF_REPORT_COLS = ["cycles", "instructions", "cpi",
                          "stalls", "flushes", "jumps", "jpi", "status"]
 
-COMPACT_PERF_REPORT_COLS = ["cycles", "cpi", "status"]
+COMPACT_PERF_REPORT_COLS = ["cycles", "cpi"]
 
 PERF_SUMMARY_NAME = "performance_summary.csv"
 
