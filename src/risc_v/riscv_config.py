@@ -21,7 +21,7 @@ class Alu_sel_t(enum.Enum):
     SLTU = 0b0110
     LUI  = 0b0111
     JALR = 0b1000
-    ANY  = 0b0000
+    ANY  = 0b1111
 
 class Shift_sel_t(enum.Enum):
     SLL = 0b100
