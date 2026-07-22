@@ -162,7 +162,7 @@ class Instruction_Decoder:
                     reg_wr=1, dmem_sel=DMem_sel.from_load_funct3(funct3),
                     a_sel=1, b_sel=0,
                     sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1,
-                    alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.DMEM_OUT,
+                    alu_sel=Alu_sel_t.ADD, wb_sel=WB_sel_t.DMEM_OUT,
                     imm_type=Instr_type_t.TYPE_I, illegal=0, jf_exe=0
                 )
             return default

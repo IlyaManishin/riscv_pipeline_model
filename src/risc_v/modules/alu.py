@@ -2,6 +2,7 @@ from risc_v.riscv_config import XLEN, Alu_sel_t
 
 
 class Alu:
+    DEFAULT_VALUE = 0
 
     @staticmethod
     def execute(sel: Alu_sel_t, a: int, b: int) -> int:
@@ -47,6 +48,8 @@ class Alu:
 
             case Alu_sel_t.LUI:
                 res = b
+            case Alu_sel_t.ANY:
+                return Alu.DEFAULT_VALUE
 
             case _:
                 raise ValueError(f"Unsupported ALU operation: {sel}")
