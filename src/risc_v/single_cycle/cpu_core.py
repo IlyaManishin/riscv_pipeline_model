@@ -125,8 +125,8 @@ class Core:
             self.rf_rd1, self.shift_shamt, self.id_controls.sh_sel)
 
         # DMEM Write Port Logic (Data formatting and Byte Enable)
-        self.dmem_we = self.id_controls.dmem_sel.is_write()
-        self.dmem_funct3 = self.instr.funct3
+        self.dmem_we = self.id_controls.dmem_sel.dmem_we
+        self.dmem_funct3 = self.id_controls.dmem_sel.funct3
         self.dmem_byte_off = self.dmem_addr & 0b11
 
         self.dmem_wdata = 0
