@@ -121,14 +121,14 @@ class Instruction:
         self._decode_fields()
 
     def _decode_fields(self):
-        self.opcode = self.raw & 0x7F
-        self.rd     = (self.raw >> 7) & 0x1F
-        self.funct3  = (self.raw >> 12) & 0x7
-        self.rs1    = (self.raw >> 15) & 0x1F
-        self.rs2    = (self.raw >> 20) & 0x1F
-        self.funct7 = (self.raw >> 25) & 0x7F
-        self.funct7_onebit = (self.funct7 >> 5) & 1
-        self.shamt = (self.raw >> 20) & 0x1F
+        self.opcode = self.raw & 0b1111111
+        self.rd     = (self.raw >> 7) & 0b11111
+        self.funct3  = (self.raw >> 12) & 0b111
+        self.rs1    = (self.raw >> 15) & 0b11111
+        self.rs2    = (self.raw >> 20) & 0b11111
+        self.funct7 = (self.raw >> 25) & 0b1111111
+        self.funct7_onebit = (self.funct7 >> 5) & 0b1
+        self.shamt = (self.raw >> 20) & 0b11111
     
     def __repr__(self) -> str:
         return (
