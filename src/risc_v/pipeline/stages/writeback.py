@@ -30,8 +30,6 @@ class WriteBack:
                 self.rf_wd3 = self.pc4
             case conf.WB_sel_t.ALU_OUT:
                 self.rf_wd3 = self.buff_mem_wb.alu_out.read()
-            case conf.WB_sel_t.SHIFTER_OUT:
-                self.rf_wd3 = self.buff_mem_wb.alu_out.read()
             case conf.WB_sel_t.DMEM_OUT:
                 self.rf_wd3 = self.buff_mem_wb.dmem_data.read()
             case _:
