@@ -69,7 +69,7 @@ class Decode:
         self.buff_id_ex.alushift_sel.set(self.id_controls.alushift_sel)
         self.buff_id_ex.shift_sel.set(self.id_controls.sh_sel)
 
-        self.jfid = not bool(self.id_controls.pc_sel)
+        self.jfid = not bool(self.id_controls.pc_sel) and not bool(self.id_controls.jf_exe) #pass jumps in execute stage
         self.valid = bool(self.buff_if_id.valid.read())
         self.buff_id_ex.valid.set(self.valid)
 

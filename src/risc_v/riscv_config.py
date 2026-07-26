@@ -44,9 +44,8 @@ class Instr_type_t(enum.Enum):
 class WB_sel_t(enum.Enum):
     PC4_OUT = 0b00
     ALU_OUT = 0b01
-    SHIFTER_OUT = 0b10
-    DMEM_OUT = 0b11
-    ANY = 0b00
+    DMEM_OUT = 0b10
+    ANY = 0b11
 
 
 @dataclass

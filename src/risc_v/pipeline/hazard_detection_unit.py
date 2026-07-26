@@ -58,7 +58,6 @@ class Hazard_Detection_Unit:
         # ===== Control Hazards =====
         # jalr
         if self.stage_decode.id_controls.jf_exe:
-            self.stage_fetch.stall()
             self.stage_fetch.flush()
         if self.stage_execute.jfexe:
             self.stage_fetch.flush()

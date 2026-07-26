@@ -228,7 +228,7 @@ class Instruction_Decoder:
                     return Id_controls_out(
                         reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=0,
                         sh_sel=Shift_sel_t.SLL, br_un=0, pc_sel=1,
-                        alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.SHIFTER_OUT,
+                        alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.ALU_OUT,
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0,
                         alushift_sel=1
                     )
@@ -237,7 +237,7 @@ class Instruction_Decoder:
                     return Id_controls_out(
                         reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=0,
                         sh_sel=Shift_sel_t.SRL, br_un=0, pc_sel=1,
-                        alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.SHIFTER_OUT,
+                        alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.ALU_OUT,
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0,
                         alushift_sel=1
                     )
@@ -245,7 +245,7 @@ class Instruction_Decoder:
                     return Id_controls_out(
                         reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=0,
                         sh_sel=Shift_sel_t.SRA, br_un=0, pc_sel=1,
-                        alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.SHIFTER_OUT,
+                        alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.ALU_OUT,
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0,
                         alushift_sel=1
                     )
@@ -273,7 +273,7 @@ class Instruction_Decoder:
                     return Id_controls_out(
                         reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=1,
                         sh_sel=Shift_sel_t.SLL, br_un=0, pc_sel=1,
-                        alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.SHIFTER_OUT,
+                        alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.ALU_OUT,
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0,
                         alushift_sel=1
                     )
@@ -306,7 +306,7 @@ class Instruction_Decoder:
                     return Id_controls_out(
                         reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=1,
                         sh_sel=Shift_sel_t.SRL, br_un=0, pc_sel=1,
-                        alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.SHIFTER_OUT,
+                        alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.ALU_OUT,
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0,
                         alushift_sel=1
                     )
@@ -314,7 +314,7 @@ class Instruction_Decoder:
                     return Id_controls_out(
                         reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=1,
                         sh_sel=Shift_sel_t.SRA, br_un=0, pc_sel=1,
-                        alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.SHIFTER_OUT,
+                        alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel_t.ALU_OUT,
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0, jf_exe=0,
                         alushift_sel=1
                     )
