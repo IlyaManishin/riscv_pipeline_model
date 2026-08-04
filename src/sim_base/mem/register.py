@@ -1,9 +1,7 @@
-#fix cyclic import
 from __future__ import annotations
+from ..core.iregister import IRegister
 
-from ..core.itrigger import ITrigger
-
-class Register(ITrigger):
+class Register(IRegister):
     def __init__(self, init_value: int = 0):
         self._current_value: int = init_value
         self._next_value: int = init_value
@@ -16,6 +14,3 @@ class Register(ITrigger):
 
     def read(self) -> int:
         return self._current_value
-
-    def set_from_reg(self, reg: Register):
-        self.set(reg)
