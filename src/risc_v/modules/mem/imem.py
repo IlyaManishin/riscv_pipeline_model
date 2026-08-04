@@ -1,8 +1,8 @@
-from sim_base.mem.block_mem import BlockMem
+from sim_base.mem.async_block_mem import AsyncBlockMem
 from risc_v import riscv_config as conf
 
 
-class InstrMem(BlockMem):
+class InstrMem(AsyncBlockMem):
     def __init__(self,
                  addr_width: int = conf.IMEM_ADDR_BYTE_WIDTH - conf.BYTE_ADDR_WIDTH,
                  cell_size: int = conf.XLEN):

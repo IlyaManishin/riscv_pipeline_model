@@ -1,9 +1,9 @@
 from abc import abstractmethod
 
-from ..core.itrigger import ITrigger
+from sim_base.core.itrigger import ITrigger
 
 
-class BaseMem(ITrigger):
+class MemoryArray(ITrigger):
     def __init__(self, size: int, cell_size: int):
         self._size: int = size
         self._cell_size: int = cell_size
@@ -25,7 +25,7 @@ class BaseMem(ITrigger):
     def _read_cell(self, addr: int):
         self._validate_address(addr)
         return self._memory[addr]
-    
+
     def _write_cell(self, addr: int, value: int):
         self._validate_address(addr)
         self._memory[addr] = value & self._cell_mask
