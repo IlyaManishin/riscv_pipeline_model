@@ -1,8 +1,8 @@
 import risc_v.riscv_config as conf
 from risc_v.mem.pl.dmem import DataMem
 
-from risc_v.modules.dmem_wr_port import dmem_wr_port
-from risc_v.modules.dmem_rd_port import dmem_rd_port
+from risc_v.mem.dmem_wr_port import dmem_wr_port
+from risc_v.mem.dmem_rd_port import dmem_rd_port
 
 from models.pipeline import regs
 

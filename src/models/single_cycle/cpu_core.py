@@ -10,8 +10,8 @@ from risc_v.modules.immgen import ImmGen
 from risc_v.modules.alu import Alu
 from risc_v.modules.shifter import Shifter
 from risc_v.modules.branch_unit import BranchUnit
-from risc_v.modules.dmem_wr_port import dmem_wr_port
-from risc_v.modules.dmem_rd_port import dmem_rd_port
+from risc_v.mem.dmem_wr_port import dmem_wr_port
+from risc_v.mem.dmem_rd_port import dmem_rd_port
 
 from risc_v.riscv_config import WB_sel_t
 import risc_v.riscv_config as conf
