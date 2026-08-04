@@ -8,10 +8,10 @@ class RegFile(LutMemory):
     def __init__(self, size: int = REG_COUNT, cell_size: int = REG_WIDTH):
         super().__init__(size, cell_size)
 
-    def read(self, address: int) -> int:
-        if address == 0:
+    def read(self, addr: int) -> int:
+        if addr == 0:
             return 0
-        return super().read(address)
+        return super().read(addr)
 
     def update(self) -> None:
         super().update()
