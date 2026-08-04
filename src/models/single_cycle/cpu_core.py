@@ -4,7 +4,7 @@ from sim_base.clock import Clock
 from sim_base.mem.register import Register
 
 from risc_v.modules.pc import PC
-from risc_v.modules.mem.reg_file import RegFile
+from risc_v.mem.reg_file import RegFile
 from risc_v.modules.decode import Instruction_Decoder
 from risc_v.modules.immgen import ImmGen
 from risc_v.modules.alu import Alu

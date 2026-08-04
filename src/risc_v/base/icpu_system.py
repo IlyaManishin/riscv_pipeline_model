@@ -1,19 +1,18 @@
 from abc import ABC, abstractmethod
 
-from risc_v.modules.mem.imem import InstrMem
-from risc_v.modules.mem.dmem import DataMem
-from risc_v.modules.mem.reg_file import RegFile
+from sim_base.mem.block_mem import BlockMem
+from risc_v.mem.reg_file import RegFile
 
 
 class ICpuSystem(ABC):
     @property
     @abstractmethod
-    def imem(self) -> InstrMem:
+    def imem(self) -> BlockMem:
         pass
 
     @property
     @abstractmethod
-    def dmem(self) -> DataMem:
+    def dmem(self) -> BlockMem:
         pass
 
     @property

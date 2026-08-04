@@ -1,10 +1,10 @@
 import risc_v.riscv_config as conf
-import risc_v.pipeline.regs as regs
+from models.pipeline import regs
 
 from risc_v.modules.decode import Instruction_Decoder
 from risc_v.modules.immgen import ImmGen
 from risc_v.modules.branch_unit import BranchUnit
-from risc_v.modules.mem.reg_file import RegFile
+from risc_v.mem.reg_file import RegFile
 
 
 class Decode:

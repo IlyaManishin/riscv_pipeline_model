@@ -1,6 +1,6 @@
 import pytest
 
-from risc_v.modules.mem.imem import InstrMem
+from risc_v.mem.sc.imem import InstrMem
 
 
 def test_imem_load_and_sync_read_cycle():
@@ -31,6 +31,7 @@ def test_imem_load_overflow():
 
     with pytest.raises(ValueError, match="exceeds Instruction Memory capacity"):
         imem.load_program(big_program)
+
 
 def test_imem_load_program_masking():
     imem = InstrMem(addr_width=2, cell_size=8)

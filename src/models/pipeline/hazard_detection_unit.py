@@ -1,11 +1,11 @@
 # -------------import pipeline stages-----------------
-from risc_v.pipeline.stages.fetch import Fetch
-from risc_v.pipeline.stages.decode import Decode
-from risc_v.pipeline.stages.execute import Execute
-from risc_v.pipeline.stages.mem import Memory
-from risc_v.pipeline.stages.writeback import WriteBack
+from .stages.fetch import Fetch
+from .stages.decode import Decode
+from .stages.execute import Execute
+from .stages.memory import Memory
+from .stages.writeback import WriteBack
 
-import risc_v.pipeline.regs as regs
+from . import regs
 
 
 class Hazard_Detection_Unit:

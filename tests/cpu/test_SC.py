@@ -1,7 +1,7 @@
 from typing import Optional
 import pytest
 
-from risc_v.single_cycle import cpu_system as sc_cpu_system
+from models.single_cycle import cpu_system as sc_cpu_system
 from tracers.data_tracers import RegisterTracer
 from tracers.vcd_tracer import CpuVcdTracer
 from tracers.perf_tracers import SingleCyclePerfTracer

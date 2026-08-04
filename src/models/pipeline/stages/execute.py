@@ -1,4 +1,4 @@
-import risc_v.pipeline.regs as regs
+from models.pipeline import regs
 
 from risc_v.modules.alu import Alu
 from risc_v.modules.shifter import Shifter

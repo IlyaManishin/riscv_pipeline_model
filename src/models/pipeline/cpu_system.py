@@ -3,9 +3,9 @@ from sim_base.clock import Clock
 from sim_base.mem.register import Register
 
 # -------------import base risc_v modules-------------
-from risc_v.modules.mem.dmem import DataMem
-from risc_v.modules.mem.imem import InstrMem
-from risc_v.modules.mem.reg_file import RegFile
+from risc_v.mem.pl.dmem import DataMem
+from risc_v.mem.pl.imem import InstrMem
+from risc_v.mem.reg_file import RegFile
 from risc_v.base.icpu_system import ICpuSystem
 import risc_v.riscv_config as conf
 

@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from .base_tracers import BasePerfTracer
-from risc_v.single_cycle.cpu_system import CpuSystem as SC_CpuSystem
-from risc_v.pipeline.cpu_system import CpuSystem as PL_CpuSystem
+from models.single_cycle.cpu_system import CpuSystem as SC_CpuSystem
+from models.pipeline.cpu_system import CpuSystem as PL_CpuSystem
 
 
 class SingleCyclePerfTracer(BasePerfTracer):

@@ -1,7 +1,7 @@
 from risc_v.modules.pc import PC
-from risc_v.modules.mem.imem import InstrMem
+from risc_v.mem.pl.imem import InstrMem
 
-from risc_v.pipeline import regs
+from models.pipeline import regs
 
 
 class Fetch:

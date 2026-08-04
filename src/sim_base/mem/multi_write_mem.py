@@ -1,20 +1,17 @@
-from .base.base_mem import BaseMem
+from .base.memory_array import MemoryArray
 
-class MultiWriteMem(BaseMem):
+class MultiWriteMem(MemoryArray):
     def __init__(self, addr_width: int, cell_size: int, addr_overflow: bool = False):
         super().__init__(addr_width, cell_size, addr_overflow)
         self._transactions: list[tuple[int, int]] = []
 
     def read(self, addr: int) -> int:
-        eff_addr = self._get_effective_addr(addr)
-        return self._read_cell(eff_addr)
+        return self._read_cell(addr)
 
     def write(self, address: int, value: int) -> None:
-        eff_addr = self._get_effective_addr(address)
-        self._validate_address(eff_addr)
-        self._transactions.append((eff_addr, value & self._cell_mask))
+        self._transactions.append((address, value))
 
     def update(self) -> None:
         for addr, val in self._transactions:
-            self._memory[addr] = val
+            self._write_cell(addr, val)
         self._transactions.clear()

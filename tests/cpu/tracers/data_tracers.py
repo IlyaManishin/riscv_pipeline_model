@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any
 
 from risc_v.base.icpu_system import ICpuSystem
-from risc_v.pipeline.cpu_system import CpuSystem as PL_CpuSystem
+from models.pipeline.cpu_system import CpuSystem as PL_CpuSystem
 
 from tests.cpu.tests_config import REG_COUNT
 from .base_tracers import CsvTracer
