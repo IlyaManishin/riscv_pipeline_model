@@ -1,16 +1,16 @@
 from __future__ import annotations
 from ..core.iregister import IRegister
 
-class Register(IRegister):
+class Register[T](IRegister):
     def __init__(self, init_value: int = 0):
-        self._current_value: int = init_value
-        self._next_value: int = init_value
+        self._current_value: T = init_value
+        self._next_value: T = init_value
 
-    def set(self, next_value: int) -> None:
+    def set(self, next_value: T) -> None:
         self._next_value = next_value
     
     def update(self) -> None:
         self._current_value = self._next_value
 
-    def read(self) -> int:
+    def read(self) -> T:
         return self._current_value

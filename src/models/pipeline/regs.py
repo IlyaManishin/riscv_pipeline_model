@@ -1,16 +1,17 @@
 from sim_base.mem.register import Register
 
+
 class IF_ID_Stage:
-    pc: Register
-    instr: Register
-    valid: Register
+    pc: Register[int]
+    instr: Register[int]
+    valid: Register[bool]
 
     def __init__(self):
-        self.pc = Register()
-        self.instr = Register()
-        self.valid = Register()
+        self.pc = Register(0)
+        self.instr = Register(0)
+        self.valid = Register(False)
 
-    def get_registers(self) -> list[Register]:
+    def get_registers(self) -> list[Register[int] | Register[bool]]:
         return [self.pc, self.instr, self.valid]
 
     def stall(self):
@@ -19,48 +20,50 @@ class IF_ID_Stage:
 
     def flush(self):
         self.instr.set(0)
-        self.valid.set(0)
+        self.valid.set(False)
 
 
 class ID_EX_Stage:
-    pc: Register
-    rf_rd1: Register
-    rf_rd2: Register
-    imm: Register
-    rs1: Register
-    rs2: Register
-    rd: Register
-    alu_sel: Register
-    shift_sel: Register
-    a_sel: Register
-    b_sel: Register
-    wb_sel: Register
-    reg_wr: Register
-    dmem_sel: Register
-    jfexe: Register
-    alushift_sel: Register
-    valid: Register
+    pc: Register[int]
+    rf_rd1: Register[int]
+    rf_rd2: Register[int]
+    imm: Register[int]
+    rs1: Register[int]
+    rs2: Register[int]
+    rd: Register[int]
+    alu_sel: Register[bool]
+    shift_sel: Register[bool]
+    a_sel: Register[bool]
+    b_sel: Register[bool]
+    wb_sel: Register[bool]
+    reg_wr: Register[bool]
+    dmem_sel: Register[bool]
+    jfexe: Register[bool]
+    alushift_sel: Register[bool]
+    valid: Register[bool]
 
     def __init__(self):
-        self.pc = Register()
-        self.rf_rd1 = Register()
-        self.rf_rd2 = Register()
-        self.imm = Register()
-        self.rs1 = Register()
-        self.rs2 = Register()
-        self.rd = Register()
-        self.alu_sel = Register()
-        self.shift_sel = Register()
-        self.a_sel = Register()
-        self.b_sel = Register()
-        self.wb_sel = Register()
-        self.reg_wr = Register()
-        self.dmem_sel = Register()
-        self.jfexe = Register()
-        self.alushift_sel = Register()
-        self.valid = Register()
+        self.pc = Register(0)
+        self.rf_rd1 = Register(0)
+        self.rf_rd2 = Register(0)
+        self.imm = Register(0)
+        self.rs1 = Register(0)
+        self.rs2 = Register(0)
+        self.rd = Register(0)
 
-    def get_registers(self) -> list[Register]:
+        # Инициализация булевых регистров
+        self.alu_sel = Register(False)
+        self.shift_sel = Register(False)
+        self.a_sel = Register(False)
+        self.b_sel = Register(False)
+        self.wb_sel = Register(False)
+        self.reg_wr = Register(False)
+        self.dmem_sel = Register(False)
+        self.jfexe = Register(False)
+        self.alushift_sel = Register(False)
+        self.valid = Register(False)
+
+    def get_registers(self) -> list[Register[int] | Register[bool]]:
         return [
             self.pc, self.rf_rd1, self.rf_rd2, self.imm,
             self.rs1, self.rs2, self.rd,
@@ -73,33 +76,33 @@ class ID_EX_Stage:
             r.set(r.read())
 
     def flush(self):
-        self.jfexe.set(0)
-        self.reg_wr.set(0)
-        self.dmem_sel.set(0)
-        self.valid.set(0)
+        self.jfexe.set(False)
+        self.reg_wr.set(False)
+        self.dmem_sel.set(False)
+        self.valid.set(False)
 
 
 class EX_MEM_Stage:
-    alu_out: Register
-    rf_rd2: Register
-    rd: Register
-    wb_sel: Register
-    reg_wr: Register
-    dmem_sel: Register
-    pc4: Register
-    valid: Register
+    alu_out: Register[int]
+    rf_rd2: Register[int]
+    rd: Register[int]
+    wb_sel: Register[bool]
+    reg_wr: Register[bool]
+    dmem_sel: Register[bool]
+    pc4: Register[int]
+    valid: Register[bool]
 
     def __init__(self):
-        self.alu_out = Register()
-        self.rf_rd2 = Register()
-        self.rd = Register()
-        self.wb_sel = Register()
-        self.reg_wr = Register()
-        self.dmem_sel = Register()
-        self.pc4 = Register()
-        self.valid = Register()
+        self.alu_out = Register(0)
+        self.rf_rd2 = Register(0)
+        self.rd = Register(0)
+        self.wb_sel = Register(False)
+        self.reg_wr = Register(False)
+        self.dmem_sel = Register(False)
+        self.pc4 = Register(0)
+        self.valid = Register(False)
 
-    def get_registers(self) -> list[Register]:
+    def get_registers(self) -> list[Register[int] | Register[bool]]:
         return [
             self.alu_out, self.rf_rd2, self.rd,
             self.wb_sel, self.reg_wr, self.dmem_sel, self.pc4, self.valid
@@ -107,24 +110,24 @@ class EX_MEM_Stage:
 
 
 class MEM_WB_Stage:
-    alu_out: Register
-    dmem_data: Register
-    rd: Register
-    wb_sel: Register
-    reg_wr: Register
-    pc4: Register
-    valid: Register
+    alu_out: Register[int]
+    dmem_data: Register[int]
+    rd: Register[int]
+    wb_sel: Register[bool]
+    reg_wr: Register[bool]
+    pc4: Register[int]
+    valid: Register[bool]
 
     def __init__(self):
-        self.alu_out = Register()
-        self.dmem_data = Register()
-        self.rd = Register()
-        self.wb_sel = Register()
-        self.reg_wr = Register()
-        self.pc4 = Register()
-        self.valid = Register()
+        self.alu_out = Register(0)
+        self.dmem_data = Register(0)
+        self.rd = Register(0)
+        self.wb_sel = Register(False)
+        self.reg_wr = Register(False)
+        self.pc4 = Register(0)
+        self.valid = Register(False)
 
-    def get_registers(self) -> list[Register]:
+    def get_registers(self) -> list[Register[int] | Register[bool]]:
         return [
             self.alu_out, self.dmem_data, self.rd,
             self.wb_sel, self.reg_wr, self.pc4, self.valid
