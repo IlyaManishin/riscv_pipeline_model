@@ -1,8 +1,8 @@
 from .base.memory_array import MemoryArray
 
 class MultiWriteMem(MemoryArray):
-    def __init__(self, addr_width: int, cell_size: int, addr_overflow: bool = False):
-        super().__init__(addr_width, cell_size, addr_overflow)
+    def __init__(self, addr_width: int, cell_size: int):
+        super().__init__(addr_width, cell_size)
         self._transactions: list[tuple[int, int]] = []
 
     def read(self, addr: int) -> int:

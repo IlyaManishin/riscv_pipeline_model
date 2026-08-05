@@ -15,10 +15,10 @@ class BlockMem(BaseBlockMem, IRegister):
         * Supports address overflow and can get mask from address.
     """
 
-    def __init__(self, addr_width: int, cell_size: int, addr_overflow: bool = False):
+    def __init__(self, addr_width: int, cell_size: int, addr_overflow: bool = True):
         super().__init__(addr_width, cell_size, addr_overflow)
-        self._current_read_addr: int = 0
-        self._next_read_addr: int = 0
+        self._current_read_addr: int = None
+        self._next_read_addr: int = None
 
     def set_address(self, addr: int) -> None:
         self._next_read_addr = self._get_effective_addr(addr)
@@ -27,6 +27,8 @@ class BlockMem(BaseBlockMem, IRegister):
         self.set_address(next_value)
 
     def read(self, addr: int | None = None) -> int:
+        if self._current_read_addr is None:
+            return 0
         return self._read_cell(self._current_read_addr)
 
     def update(self) -> None:
