@@ -24,6 +24,7 @@ class WriteBack:
         self.rd: int = 0
 
     def update(self):
+        # ===== Write-Back Data Multiplexing =====
         self.pc4 = self.buff_mem_wb.pc4.read()
         match conf.WB_sel_t(self.buff_mem_wb.wb_sel.read()):
             case conf.WB_sel_t.PC4_OUT:
@@ -37,6 +38,7 @@ class WriteBack:
             case _:
                 self.rf_wd3 = 0
 
+        # ===== Register File Write =====
         self.rd = self.buff_mem_wb.rd.read()
         self.reg_wr = bool(self.buff_mem_wb.reg_wr.read())
         self.rf_we3 = self.reg_wr and not bool(self.rst_reg.read())

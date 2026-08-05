@@ -10,12 +10,16 @@ from . import regs
 
 class Hazard_Detection_Unit:
     """
-    Hazard Detection Unit (foundation).
+    Hazard Detection Unit.
 
-    All pipeline buffers and stage instances are injected via the
-    constructor. The conflict-resolution logic is intentionally left
-    empty - implement it yourself in `update()` using the buffers and
-    stages stored on `self`.
+    Mirrors hazard_detection_unit.sv exactly:
+      * Control hazards are resolved using the DELAYED redirect signals
+        (stage_execute.jfexe_M and stage_decode.jfid_E) - never the
+        immediate, same-cycle stage_execute.jfexe / stage_decode.jfid.
+        Both only ever flush the ID/EX register (squash Decode); the PC
+        redirect itself is handled entirely inside Fetch, not here.
+      * RAW hazards stall the fetch/IF-ID stage and flush ID/EX, exactly
+        like stall_pc/stall_if_id/flush_id_ex in the RTL.
 
     Control signals you should produce each cycle (read by cpu_system /
     stages):
@@ -55,22 +59,7 @@ class Hazard_Detection_Unit:
     def update(self) -> None:
         self.reset_debug_state()
 
-        # ===== Control Hazards =====
-        # jalr
-        if self.stage_decode.id_controls.jf_exe:
-            self.stage_fetch.stall()
-            self.stage_fetch.flush()
-        if self.stage_execute.jfexe:
-            self.stage_fetch.flush()
-            self.stage_decode.flush()
-
-        # branch and jal
-        if self.stage_decode.jfid:
-            self.stage_fetch.flush()
-
-        # ===== Data Hazards =====
-
-        # RAW (Register after write hazard)
+        # ===== RAW Hazard Detection (rs1/rs2 usage per opcode) =====
         opcode = self.stage_decode.instr.opcode >> 2
         uses_rs1 = opcode in (
             0b11001,  # JALR
@@ -80,42 +69,43 @@ class Hazard_Detection_Unit:
             0b00100,  # Immediate ALU (ADDI, etc.)
             0b01100   # Register ALU (ADD, SUB, etc.)
         )
-
         uses_rs2 = opcode in (
             0b11000,  # Branch
             0b01000,  # Store
             0b01100   # Register ALU
         )
 
-        # Decode-Execute Hazard
-        if self.stage_execute.reg_wr and self.stage_execute.rd != 0 and (
+        is_ex_hazard = self.stage_execute.reg_wr and self.stage_execute.rd != 0 and (
             (uses_rs1 and self.stage_execute.rd == self.stage_decode.rs1) or
             (uses_rs2 and self.stage_execute.rd == self.stage_decode.rs2)
-        ):
-            self.stage_fetch.stall()
-            self.stage_decode.flush()
-
-            self.is_id_ex_raw_hazard = True
-
-        # Decode-Memory Hazard
-        if self.stage_memory.reg_wr and self.stage_memory.rd != 0 and (
+        )
+        is_mem_hazard = self.stage_memory.reg_wr and self.stage_memory.rd != 0 and (
             (uses_rs1 and self.stage_memory.rd == self.stage_decode.rs1) or
             (uses_rs2 and self.stage_memory.rd == self.stage_decode.rs2)
-        ):
-            self.stage_fetch.stall()
-            self.stage_decode.flush()
-
-            self.is_id_mem_raw_hazard = True
-
-        # Decode-Writeback Hazard
-        if self.stage_writeback.reg_wr and self.stage_writeback.rd != 0 and (
+        )
+        is_wb_hazard = self.stage_writeback.reg_wr and self.stage_writeback.rd != 0 and (
             (uses_rs1 and self.stage_writeback.rd == self.stage_decode.rs1) or
             (uses_rs2 and self.stage_writeback.rd == self.stage_decode.rs2)
-        ):
-            self.stage_fetch.stall()
+        )
+
+        self.is_id_ex_raw_hazard = is_ex_hazard
+        self.is_id_mem_raw_hazard = is_mem_hazard
+        self.is_id_wb_raw_hazard = is_wb_hazard
+
+        # ===== Control Hazards (branch / jump redirect) =====
+
+        # jfexe_M: JALR target was resolved in Execute and is now
+        if self.stage_execute.jfexe_M:
             self.stage_decode.flush()
 
-            self.is_id_wb_raw_hazard = True
+        # jfid_E: branch/jal outcome was resolved in Decode and is now
+        if self.stage_decode.jfid_E:
+            self.stage_decode.flush()
+
+        # ===== Data Hazards (RAW) =====
+        if is_ex_hazard or is_mem_hazard or is_wb_hazard:
+            self.stage_fetch.stall()
+            self.stage_decode.flush()
 
     def reset_debug_state(self) -> None:
         self.is_id_ex_raw_hazard = False

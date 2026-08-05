@@ -1,5 +1,5 @@
-from typing import Optional
 import pytest
+from typing import Optional
 
 from models.single_cycle import cpu_system as sc_cpu_system
 from tracers.data_tracers import RegisterTracer

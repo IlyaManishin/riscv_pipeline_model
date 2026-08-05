@@ -30,6 +30,7 @@ class Memory:
         self.rd: int = 0
 
     def update(self):
+        # ===== Address / Control Decode =====
         self.dmem_addr = self.buff_ex_mem.alu_out.read()
 
         self.dmem_sel = conf.DMem_sel.from_int(
@@ -38,6 +39,7 @@ class Memory:
         self.dmem_funct3 = self.dmem_sel.funct3()
         self.dmem_byte_off = self.dmem_addr & 0b11
 
+        # ===== Store Data / Byte-Enable Formatting =====
         self.dmem_wdata = 0
         self.dmem_byte_we = 0
 
@@ -47,6 +49,7 @@ class Memory:
 
         word_dmem_addr = (self.dmem_addr & 0x0FFFFFFF) >> 2
 
+        # ===== Data Memory Access =====
         if self.dmem_byte_we != 0:
             self.dmem.write(word_dmem_addr, self.dmem_wdata,
                             byte_we=self.dmem_byte_we)
@@ -56,6 +59,7 @@ class Memory:
         self.dmem_rdata = dmem_rd_port(
             data_to_cpu, self.dmem_byte_off, self.dmem_funct3)
 
+        # ===== MEM/WB Pipeline Register =====
         self.buff_mem_wb.alu_out.set(self.buff_ex_mem.alu_out.read())
         self.buff_mem_wb.dmem_data.set(self.dmem_rdata)
         self.rd = self.buff_ex_mem.rd.read()

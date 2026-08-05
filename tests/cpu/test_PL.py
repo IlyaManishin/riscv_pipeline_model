@@ -1,5 +1,5 @@
-from typing import Optional
 import pytest
+from typing import Optional
 
 from models.pipeline import cpu_system as pl_cpu_system
 from tracers.data_tracers import PipelineTracer
