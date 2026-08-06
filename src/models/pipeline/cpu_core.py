@@ -34,8 +34,18 @@ class Core:
         self._rf_inst = RegFile()
         self.clk.add_trigger(self._rf_inst)
 
+        # Jump registers
+        self.jfid_E: Register[bool] = Register(False)
+        self.jfpc_E: Register[int] = Register(0)
+
+        self.jfexe_M: Register[bool] = Register(False)
+        self.jfpc_M: Register[int] = Register(0)
+
+        for reg in [self.jfid_E, self.jfpc_E, self.jfexe_M, self.jfpc_M]:
+            self.clk.add_trigger(reg)
+
         # Pipeline Buffers
-        self.buff_if_id = regs.IF_ID_Stage()
+        self.buff_if_id = regs.IF_ID_Stage(imem)
         self.buff_id_ex = regs.ID_EX_Stage()
         self.buff_ex_mem = regs.EX_MEM_Stage()
         self.buff_mem_wb = regs.MEM_WB_Stage()
@@ -81,10 +91,10 @@ class Core:
         self.stage_writeback.update()
 
         self.stage_fetch.update(
-            jfexe=self.stage_execute.jfexe,
-            jfid=self.stage_decode.jfid,
-            alures=self.stage_execute.alures,
-            imm_pc=self.stage_decode.imm_pc
+            jfid_e=self.jfid_E,
+            jfpc_e=self.jfpc_E,
+            jfexe_m=self.jfexe_M,
+            jfpc_m=self.jfpc_M
         )
 
         self.hdu.update()

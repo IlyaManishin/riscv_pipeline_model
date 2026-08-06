@@ -1,3 +1,5 @@
+from sim_base.mem.register import Register
+
 from risc_v.modules.pc import PC
 from risc_v.mem.pl.imem import InstrMem
 
@@ -21,14 +23,16 @@ class Fetch:
         self.pc: int = 0
         self.pc_next: int = 0
 
-    def update(self, jfexe_m: bool, jfpc_m: int, jfid_e: bool, jfpc_e: int):
+    def update(self,
+               jfid_e: Register[bool], jfpc_e: Register[int],
+               jfexe_m: Register[bool], jfpc_m: Register[int]) -> None:
         # ===== Branch/Jump Mux =====
-        if jfexe_m:
+        if jfexe_m.read():
             self.br_taken = True
-            pc_br = jfpc_m
-        elif jfid_e:
+            pc_br = jfpc_m.read()
+        elif jfid_e.read():
             self.br_taken = True
-            pc_br = jfpc_e
+            pc_br = jfpc_e.read()
         else:
             self.br_taken = False
             pc_br = 0
