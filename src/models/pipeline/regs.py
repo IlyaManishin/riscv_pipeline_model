@@ -117,9 +117,9 @@ class MEM_WB_Stage:
     pc4: Register[int]
     valid: Register[bool]
 
-    def __init__(self):
+    def __init__(self, dmem: BlockMem):
         self.alu_out = Register(0)
-        self.dmem_data = Register(0)
+        self.dmem_data = dmem
         self.rd = Register(0)
         self.wb_sel = Register(False)
         self.reg_wr = Register(False)

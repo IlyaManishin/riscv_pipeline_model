@@ -10,7 +10,8 @@ from risc_v.mem.reg_file import RegFile
 
 
 class Decode:
-    def __init__(self, rf: RegFile, buff_if_id: regs.IF_ID_Stage, buff_id_ex: regs.ID_EX_Stage):
+    def __init__(self, rf: RegFile, buff_if_id: regs.IF_ID_Stage, buff_id_ex: regs.ID_EX_Stage,
+                 jfid_E: Register[bool], jfpc_E: Register[int]):
         ########## INPUT SIGNALS ##########
         self.rf_inst: RegFile = rf
         self.buff_if_id: regs.IF_ID_Stage = buff_if_id
@@ -19,11 +20,10 @@ class Decode:
         self.buff_id_ex: regs.ID_EX_Stage = buff_id_ex
 
         # --- jump logic ---
+        self.jfid_E = jfid_E
+        self.jfpc_E = jfpc_E
         self.jfid: bool = False
         self.imm_pc: int = 0
-
-        self.jfid_E: Register[bool] = Register(False)
-        self.jfpc_E: Register[int] = Register(0)
 
         ########## DEBUG SIGNALS ##########
 

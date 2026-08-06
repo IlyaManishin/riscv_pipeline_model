@@ -8,7 +8,8 @@ from risc_v.riscv_config import Alu_sel_t, Shift_sel_t
 
 
 class Execute:
-    def __init__(self, buff_id_ex: regs.ID_EX_Stage, buff_ex_mem: regs.EX_MEM_Stage):
+    def __init__(self, buff_id_ex: regs.ID_EX_Stage, buff_ex_mem: regs.EX_MEM_Stage,
+                 jfexe_M: Register[bool], jfpc_M: Register[int]):
         ########## INPUT SIGNALS ##########
         self.buff_id_ex: regs.ID_EX_Stage = buff_id_ex
 
@@ -16,11 +17,10 @@ class Execute:
         self.buff_ex_mem: regs.EX_MEM_Stage = buff_ex_mem
 
         # --- jump logic ---
+        self.jfexe_M = jfexe_M
+        self.jfpc_M = jfpc_M
         self.jfexe: bool = False
         self.jfpc: int = 0
-
-        self.jfexe_M: Register[bool] = Register(False)
-        self.jfpc_M: Register[int] = Register(0)
 
         ########## DEBUG SIGNALS ##########
 
