@@ -10,22 +10,11 @@ from . import regs
 
 class Hazard_Detection_Unit:
     """
-    Hazard Detection Unit.
-
-    Mirrors hazard_detection_unit.sv exactly:
-      * Control hazards are resolved using the DELAYED redirect signals
-        (stage_execute.jfexe_M and stage_decode.jfid_E) - never the
-        immediate, same-cycle stage_execute.jfexe / stage_decode.jfid.
-        Both only ever flush the ID/EX register (squash Decode); the PC
-        redirect itself is handled entirely inside Fetch, not here.
-      * RAW hazards stall the fetch/IF-ID stage and flush ID/EX, exactly
-        like stall_pc/stall_if_id/flush_id_ex in the RTL.
-
-    Control signals you should produce each cycle (read by cpu_system /
-    stages):
-        self.stall     - 1 to stall the pipeline
-        self.forward_a - forwarding selector for source operand A
-        self.forward_b - forwarding selector for source operand B
+    Mirrors hazard_detection_unit.sv:
+      * control hazards use the delayed jfexe_M/jfid_E registers and only
+        ever flush Decode - PC redirect itself lives inside Fetch;
+      * flush_if_id is never asserted in the RTL, so Fetch is never flushed
+        here, only stalled on a RAW hazard.
     """
 
     def __init__(self,
@@ -59,7 +48,7 @@ class Hazard_Detection_Unit:
     def update(self) -> None:
         self.reset_debug_state()
 
-        # ===== RAW Hazard Detection (rs1/rs2 usage per opcode) =====
+        # ===== RAW Hazard Detection =====
         opcode = self.stage_decode.instr.opcode >> 2
         uses_rs1 = opcode in (
             0b11001,  # JALR
@@ -92,14 +81,11 @@ class Hazard_Detection_Unit:
         self.is_id_mem_raw_hazard = is_mem_hazard
         self.is_id_wb_raw_hazard = is_wb_hazard
 
-        # ===== Control Hazards (branch / jump redirect) =====
-
-        # jfexe_M: JALR target was resolved in Execute and is now
-        if self.stage_execute.jfexe_M:
+        # ===== Control Hazards =====
+        if self.stage_execute.jfexe_M.read():
             self.stage_decode.flush()
 
-        # jfid_E: branch/jal outcome was resolved in Decode and is now
-        if self.stage_decode.jfid_E:
+        if self.stage_decode.jfid_E.read():
             self.stage_decode.flush()
 
         # ===== Data Hazards (RAW) =====

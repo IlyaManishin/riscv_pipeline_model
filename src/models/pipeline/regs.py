@@ -1,25 +1,25 @@
 from sim_base.mem.register import Register
+from sim_base.mem.block_mem import BlockMem
 
 
 class IF_ID_Stage:
     pc: Register[int]
-    instr: Register[int]
+    instr: BlockMem
     valid: Register[bool]
 
-    def __init__(self):
+    def __init__(self, imem: BlockMem):
         self.pc = Register(0)
-        self.instr = Register(0)
+        self.instr = imem  # imem is itself register-like (addr in -> data out next cycle)
         self.valid = Register(False)
 
     def get_registers(self) -> list[Register[int] | Register[bool]]:
-        return [self.pc, self.instr, self.valid]
+        return [self.pc, self.valid]  # instr/imem is committed externally, not here
 
     def stall(self):
         for r in self.get_registers():
             r.set(r.read())
 
     def flush(self):
-        self.instr.set(0)
         self.valid.set(False)
 
 
@@ -51,7 +51,6 @@ class ID_EX_Stage:
         self.rs2 = Register(0)
         self.rd = Register(0)
 
-        # Инициализация булевых регистров
         self.alu_sel = Register(False)
         self.shift_sel = Register(False)
         self.a_sel = Register(False)

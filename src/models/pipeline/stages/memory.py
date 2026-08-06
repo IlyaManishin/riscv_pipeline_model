@@ -6,20 +6,22 @@ from risc_v.mem.dmem_rd_port import dmem_rd_port
 
 from models.pipeline import regs
 
+
 class Memory:
     def __init__(self, dmem: DataMem, buff_ex_mem: regs.EX_MEM_Stage, buff_mem_wb: regs.MEM_WB_Stage):
-        # --- Dependencies ---
+        ########## INPUT SIGNALS ##########
         self.dmem: DataMem = dmem
         self.buff_ex_mem: regs.EX_MEM_Stage = buff_ex_mem
+
+        ########## OUTPUT SIGNALS ##########
         self.buff_mem_wb: regs.MEM_WB_Stage = buff_mem_wb
 
-        # --- Control Signals ---
+        ########## DEBUG SIGNALS ##########
         self.dmem_sel: conf.DMem_sel = conf.DMem_sel.NONE
         self.dmem_we: bool = False
         self.valid: bool = False
         self.reg_wr: bool = False
 
-        # --- Data Path ---
         self.dmem_addr: int = 0
         self.dmem_funct3: int = 0
         self.dmem_byte_off: int = 0

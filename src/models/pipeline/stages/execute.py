@@ -40,13 +40,6 @@ class Execute:
         self.pc4: int = 0
 
     def update(self):
-        # ===== EX/MEM Pipeline Register: Control-Hazard Signals =====
-        # The EX/MEM register (unlike ID/EX) is never stalled or flushed
-        # by the hazard unit, so this latch is unconditional every cycle -
-        # mirrors execute.sv's always_ff, which always takes the
-        # "!stall_ex_mem" branch since stall_ex_mem/flush_ex_mem are tied
-        # low in hazard_detection_unit.sv.
-
         # ===== Operand Read =====
         self.rd1 = self.buff_id_ex.rf_rd1.read()
         self.rd2 = self.buff_id_ex.rf_rd2.read()
@@ -57,7 +50,7 @@ class Execute:
         self.alu_in_b = self.rd2 if self.buff_id_ex.b_sel.read() else self.buff_id_ex.imm.read()
 
         # ===== Arithmetic / Logic =====
-        alures: int = Alu.execute(Alu_sel_t(self.buff_id_ex.alu_sel.read()),
+        self.alures = Alu.execute(Alu_sel_t(self.buff_id_ex.alu_sel.read()),
                                   self.alu_in_a, self.alu_in_b)
 
         # ===== Shifter =====
@@ -83,9 +76,12 @@ class Execute:
         self.buff_ex_mem.pc4.set(self.pc4)
         self.buff_ex_mem.valid.set(self.valid)
 
-        # ===== Control-Hazard Signal (combinational, same cycle) =====
+        # ===== Control-Hazard Signal =====
         self.jfexe = self.valid and bool(self.buff_id_ex.jfexe.read())
         self.jfpc = self.alures
 
         self.jfexe_M.set(self.jfexe)
         self.jfpc_M.set(self.jfpc)
+
+    def get_registers(self) -> list[Register[bool] | Register[int]]:
+        return [self.jfexe_M, self.jfpc_M]

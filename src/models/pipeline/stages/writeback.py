@@ -8,17 +8,18 @@ from models.pipeline import regs
 
 class WriteBack:
     def __init__(self, rf: RegFile, buff_mem_wb: regs.MEM_WB_Stage, rst_reg: Register):
-        # --- Dependencies ---
-        self.rf_inst: RegFile = rf
+        ########## INPUT SIGNALS ##########
         self.buff_mem_wb: regs.MEM_WB_Stage = buff_mem_wb
         self.rst_reg: Register = rst_reg
 
-        # --- Control Signals ---
+        ########## OUTPUT SIGNALS ##########
+        self.rf_inst: RegFile = rf
+
+        ########## DEBUG SIGNALS ##########
         self.rf_we3: bool = False
         self.valid: bool = False
         self.reg_wr: bool = False
 
-        # --- Data Path ---
         self.rf_wd3: int = 0
         self.pc4: int = 0
         self.rd: int = 0

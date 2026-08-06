@@ -1,3 +1,5 @@
+from sim_base.mem.register import Register
+
 import risc_v.riscv_config as conf
 from models.pipeline import regs
 
@@ -9,10 +11,21 @@ from risc_v.mem.reg_file import RegFile
 
 class Decode:
     def __init__(self, rf: RegFile, buff_if_id: regs.IF_ID_Stage, buff_id_ex: regs.ID_EX_Stage):
-        # --- Dependencies ---
+        ########## INPUT SIGNALS ##########
         self.rf_inst: RegFile = rf
         self.buff_if_id: regs.IF_ID_Stage = buff_if_id
+
+        ########## OUTPUT SIGNALS ##########
         self.buff_id_ex: regs.ID_EX_Stage = buff_id_ex
+
+        # --- jump logic ---
+        self.jfid: bool = False
+        self.imm_pc: int = 0
+
+        self.jfid_E: Register[bool] = Register(False)
+        self.jfpc_E: Register[int] = Register(0)
+
+        ########## DEBUG SIGNALS ##########
 
         # --- Control Signals ---
         self.id_controls = None
@@ -20,11 +33,6 @@ class Decode:
         self.valid: bool = False
         self.br_eq: bool = False
         self.br_lt: bool = False
-
-        self.jfid: bool = False
-
-        self.jfid_E: bool = False
-        self.jfpc_E: int = 0
 
         # --- Data Path ---
         self.rs1: int = 0
@@ -34,18 +42,8 @@ class Decode:
         self.rf_rd2: int = 0
         self.pc: int = 0
         self.imm: int = 0
-        self.imm_pc: int = 0
 
     def update(self):
-        # ===== ID/EX Pipeline Register: Control-Hazard Signals =====
-        # Latch last cycle's combinational jfid/imm_pc into the delayed
-        # "_E" copies before recomputing them below. This is exactly the
-        # same clocked event as the rest of the ID/EX register further
-        # down - it just needs to happen first since jfid/imm_pc are about
-        # to be overwritten with this cycle's (new) instruction.
-        self.jfid_E = self.jfid
-        self.jfpc_E = self.imm_pc
-
         # ===== Instruction Field Extraction =====
         self.instr = conf.Instruction(self.buff_if_id.instr.read())
         self.pc = self.buff_if_id.pc.read()
@@ -89,14 +87,23 @@ class Decode:
         self.buff_id_ex.shift_sel.set(self.id_controls.sh_sel)
         self.buff_id_ex.valid.set(self.valid)
 
-        # ===== Control-Hazard Signal (combinational, same cycle) =====
+        # ===== Control-Hazard Signal =====
+        # id_jfid = valid & !pc_sel & !jf_exe (JALR resolves later, via jfexe_M)
         self.jfid = self.valid and (not bool(self.id_controls.pc_sel)) and (
             not bool(self.id_controls.jf_exe))
 
+        self.jfid_E.set(self.jfid)
+        self.jfpc_E.set(self.imm_pc)
+
+    def get_registers(self) -> list[Register[bool] | Register[int]]:
+        return [self.jfid_E, self.jfpc_E]
+
     def stall(self):
+        for r in self.get_registers():
+            r.set(r.read())
         self.buff_id_ex.stall()
 
     def flush(self):
-        self.jfid_E = False
-        self.jfpc_E = 0
+        self.jfid_E.set(False)
+        self.jfpc_E.set(0)
         self.buff_id_ex.flush()
