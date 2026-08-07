@@ -69,31 +69,29 @@ class Decode:
         # id_jfid = valid & !pc_sel & !jf_exe (JALR resolves later, via jfexe_M)
         self.jfid = self.valid and (not bool(self.id_controls.pc_sel)) and (
             not bool(self.id_controls.jf_exe))
-        
-        if not self.buff_if_id.valid:
+
+        if not self.buff_if_id.valid.read():
             self.flush()
-            return 
+            return
 
         # ===== ID/EX Pipeline Register =====
-        self.buff_id_ex.write(
-            pc=self.pc,
-            rf_rd1=self.rf_rd1,
-            rf_rd2=self.rf_rd2,
-            imm=self.imm,
-            rs1=self.instr.rs1,
-            rs2=self.instr.rs2,
-            rd=self.rd,
-            alu_sel=self.id_controls.alu_sel.value,
-            a_sel=self.id_controls.a_sel,
-            b_sel=self.id_controls.b_sel,
-            wb_sel=self.id_controls.wb_sel,
-            reg_wr=self.id_controls.reg_wr,
-            dmem_sel=self.id_controls.dmem_sel.to_int(),
-            jfexe=self.id_controls.jf_exe,
-            alushift_sel=self.id_controls.alushift_sel,
-            shift_sel=self.id_controls.sh_sel,
-            valid=self.valid,
-        )
+        self.buff_id_ex.pc.set(self.pc)
+        self.buff_id_ex.rf_rd1.set(self.rf_rd1)
+        self.buff_id_ex.rf_rd2.set(self.rf_rd2)
+        self.buff_id_ex.imm.set(self.imm)
+        self.buff_id_ex.rs1.set(self.instr.rs1)
+        self.buff_id_ex.rs2.set(self.instr.rs2)
+        self.buff_id_ex.rd.set(self.rd)
+        self.buff_id_ex.alu_sel.set(self.id_controls.alu_sel.value)
+        self.buff_id_ex.a_sel.set(self.id_controls.a_sel)
+        self.buff_id_ex.b_sel.set(self.id_controls.b_sel)
+        self.buff_id_ex.wb_sel.set(self.id_controls.wb_sel)
+        self.buff_id_ex.reg_wr.set(self.id_controls.reg_wr)
+        self.buff_id_ex.dmem_sel.set(self.id_controls.dmem_sel.to_int())
+        self.buff_id_ex.jfexe.set(self.id_controls.jf_exe)
+        self.buff_id_ex.alushift_sel.set(self.id_controls.alushift_sel)
+        self.buff_id_ex.shift_sel.set(self.id_controls.sh_sel)
+        self.buff_id_ex.valid.set(self.valid)
 
         self.jfid_E.set(self.jfid)
         self.jfpc_E.set(self.imm_pc)

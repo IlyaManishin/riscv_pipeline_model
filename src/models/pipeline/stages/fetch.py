@@ -49,7 +49,8 @@ class Fetch:
 
         # ===== IF/ID Pipeline Register =====
         self.valid = True
-        self.buff_if_id.write(pc=self.pc_next, valid=self.valid)
+        self.buff_if_id.pc.set(self.pc_next)
+        self.buff_if_id.valid.set(self.valid)
 
     def pc_stall(self):
         self.pc_instr.set_pc(True, self.pc_instr.read())

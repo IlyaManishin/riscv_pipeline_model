@@ -2,21 +2,7 @@ from sim_base.mem.register import Register
 from sim_base.mem.block_mem import BlockMem
 
 
-class PipelineStage:
-    """
-    Base for the IF/ID, ID/EX, EX/MEM, MEM/WB pipeline registers.
-
-    write() stages this cycle's outputs into the buffer's fields in one
-    call instead of a long list of `self.field.set(value)` lines:
-        buff.write(pc=.., rd=.., valid=..)
-    """
-
-    def write(self, **fields) -> None:
-        for name, value in fields.items():
-            getattr(self, name).set(value)
-
-
-class IF_ID_Stage(PipelineStage):
+class IF_ID_Stage:
     pc: Register[int]
     instr: BlockMem
     valid: Register[bool]
@@ -38,7 +24,7 @@ class IF_ID_Stage(PipelineStage):
         self.valid.set(False)
 
 
-class ID_EX_Stage(PipelineStage):
+class ID_EX_Stage:
     pc: Register[int]
     rf_rd1: Register[int]
     rf_rd2: Register[int]
@@ -96,7 +82,7 @@ class ID_EX_Stage(PipelineStage):
         self.valid.set(False)
 
 
-class EX_MEM_Stage(PipelineStage):
+class EX_MEM_Stage:
     alu_out: Register[int]
     rf_rd2: Register[int]
     rd: Register[int]
@@ -123,7 +109,7 @@ class EX_MEM_Stage(PipelineStage):
         ]
 
 
-class MEM_WB_Stage(PipelineStage):
+class MEM_WB_Stage:
     alu_out: Register[int]
     dmem_data: BlockMem
     dmem_byte_off: Register[int]

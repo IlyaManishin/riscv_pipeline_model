@@ -62,16 +62,14 @@ class Execute:
         self.pc4 = self.buff_id_ex.pc.read() + 4
 
         # ===== EX/MEM Pipeline Register =====
-        self.buff_ex_mem.write(
-            alu_out=self.shift_res if self.buff_id_ex.alushift_sel.read() else self.alures,
-            rf_rd2=self.rd2,
-            rd=self.rd,
-            wb_sel=self.buff_id_ex.wb_sel.read(),
-            reg_wr=self.reg_wr,
-            dmem_sel=self.buff_id_ex.dmem_sel.read(),
-            pc4=self.pc4,
-            valid=self.valid
-        )
+        self.buff_ex_mem.alu_out.set(self.shift_res if self.buff_id_ex.alushift_sel.read() else self.alures)
+        self.buff_ex_mem.rf_rd2.set(self.rd2)
+        self.buff_ex_mem.rd.set(self.rd)
+        self.buff_ex_mem.wb_sel.set(self.buff_id_ex.wb_sel.read())
+        self.buff_ex_mem.reg_wr.set(self.reg_wr)
+        self.buff_ex_mem.dmem_sel.set(self.buff_id_ex.dmem_sel.read())
+        self.buff_ex_mem.pc4.set(self.pc4)
+        self.buff_ex_mem.valid.set(self.valid)
 
         # ===== Control-Hazard Signal =====
         self.jfexe = self.valid and self.buff_id_ex.jfexe.read()

@@ -63,13 +63,11 @@ class Memory:
         self.valid = self.buff_ex_mem.valid.read()
 
         # ===== MEM/WB Pipeline Register =====
-        self.buff_mem_wb.write(
-            alu_out=self.buff_ex_mem.alu_out.read(),
-            dmem_byte_off=self.dmem_byte_off,
-            dmem_funct3=self.dmem_funct3,
-            rd=self.rd,
-            wb_sel=self.buff_ex_mem.wb_sel.read(),
-            reg_wr=self.reg_wr,
-            pc4=self.pc4,
-            valid=self.valid,
-        )
+        self.buff_mem_wb.alu_out.set(self.buff_ex_mem.alu_out.read())
+        self.buff_mem_wb.dmem_byte_off.set(self.dmem_byte_off)
+        self.buff_mem_wb.dmem_funct3.set(self.dmem_funct3)
+        self.buff_mem_wb.rd.set(self.rd)
+        self.buff_mem_wb.wb_sel.set(self.buff_ex_mem.wb_sel.read())
+        self.buff_mem_wb.reg_wr.set(self.reg_wr)
+        self.buff_mem_wb.pc4.set(self.pc4)
+        self.buff_mem_wb.valid.set(self.valid)
