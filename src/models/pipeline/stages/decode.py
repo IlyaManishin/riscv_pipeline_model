@@ -11,7 +11,7 @@ from risc_v.mem.reg_file import RegFile
 
 class Decode:
     def __init__(self, rf: RegFile, buff_if_id: regs.IF_ID_Stage, buff_id_ex: regs.ID_EX_Stage,
-                 jfid_e: Register[bool], jfpc_e: Register[int]):
+                 jfid_E: Register[bool], jfpc_E: Register[int]):
         ########## INPUT SIGNALS ##########
         self.rf_inst: RegFile = rf
         self.buff_if_id: regs.IF_ID_Stage = buff_if_id
@@ -20,8 +20,8 @@ class Decode:
         self.buff_id_ex: regs.ID_EX_Stage = buff_id_ex
 
         # --- jump logic ---
-        self.jfid_E: Register[bool] = jfid_e
-        self.jfpc_E: Register[int] = jfpc_e
+        self.jfid_E: Register[bool] = jfid_E
+        self.jfpc_E: Register[int] = jfpc_E
         self.jfid: bool = False
         self.imm_pc: int = 0
 
@@ -66,7 +66,6 @@ class Decode:
         self.imm_pc = self.pc + self.imm
 
         # ===== Control-Hazard Signal =====
-        # id_jfid = valid & !pc_sel & !jf_exe (JALR resolves later, via jfexe_M)
         self.jfid = self.valid and (not bool(self.id_controls.pc_sel)) and (
             not bool(self.id_controls.jf_exe))
 

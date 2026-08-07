@@ -11,7 +11,7 @@ class Fetch:
                  jfid_E: Register[bool], jfpc_E: Register[int],
                  jfexe_M: Register[bool], jfpc_M: Register[int]):
         ########## INPUT SIGNALS ##########
-        self.pc_instr: PC = pc
+        self.pc_inst: PC = pc
         self.imem: InstrMem = imem
         self.jfid_E: Register[bool] = jfid_E
         self.jfpc_E: Register[int] = jfpc_E
@@ -41,10 +41,10 @@ class Fetch:
             pc_br = 0
 
         # ===== PC & IMEM Address =====
-        self.pc = self.pc_instr.read()
+        self.pc = self.pc_inst.read()
         self.pc_next = pc_br if self.br_taken else self.pc + 4
 
-        self.pc_instr.set_pc(True, self.pc_next)
+        self.pc_inst.set_pc(self.br_taken, self.pc_next)
         self.imem.set(self.pc_next)
 
         # ===== IF/ID Pipeline Register =====
@@ -53,7 +53,7 @@ class Fetch:
         self.buff_if_id.valid.set(self.valid)
 
     def pc_stall(self):
-        self.pc_instr.set_pc(True, self.pc_instr.read())
+        self.pc_inst.set_pc(True, self.pc_inst.read())
 
     def stall(self):
         self.buff_if_id.stall()
