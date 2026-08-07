@@ -74,7 +74,6 @@ class Execute:
         )
 
         # ===== Control-Hazard Signal =====
-        # ex_jfexe = valid & jf_exe; target is the raw ALU result (rd1 + imm)
         self.jfexe = self.valid and self.buff_id_ex.jfexe.read()
         self.jfpc = self.alures
 

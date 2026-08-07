@@ -20,12 +20,6 @@ class Hazard_Detection_Unit:
         redirect itself is handled entirely inside Fetch, not here.
       * RAW hazards stall the fetch/IF-ID stage and flush ID/EX, exactly
         like stall_pc/stall_if_id/flush_id_ex in the RTL.
-
-    Control signals you should produce each cycle (read by cpu_system /
-    stages):
-        self.stall     - 1 to stall the pipeline
-        self.forward_a - forwarding selector for source operand A
-        self.forward_b - forwarding selector for source operand B
     """
 
     def __init__(self,

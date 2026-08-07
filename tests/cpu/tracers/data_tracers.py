@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Any
 
 from risc_v.base.icpu_system import ICpuSystem
+from risc_v.riscv_config import IMEM_ADDR_BYTE_WIDTH
 from models.pipeline.cpu_system import CpuSystem as PL_CpuSystem
 
 from tests.cpu.tests_config import REG_COUNT
@@ -53,9 +54,9 @@ class PipelineTracer(CsvTracer):
                   "pc", "is_jump",
                   "jfexe", "jfid",
                   "alures", "imm_pc",
-                  "disasm fetch", "disasm decoder", "disasm execute",
-                  "disasm memory", "dmemsel",
-                  "disasm wb"]
+                  "fetch instr", "decoder instr", "execute instr",
+                  "memory instr", "dmemsel",
+                  "wb instr"]
         header.extend(f"x{i}" for i in range(REG_COUNT))
         return header
 
@@ -94,6 +95,7 @@ class PipelineTracer(CsvTracer):
     def disasm_instr(self, pc: int, valid: int):
         if not bool(valid):
             return "nop"
-        instr = self.cpu.imem._memory[pc >> 2]
+        pc_mask = 1 << IMEM_ADDR_BYTE_WIDTH - 1
+        instr = self.cpu.imem._memory[(pc & pc_mask) >> 2]
         dis_instr = disasm.disasm(instr)
         return f"{{{pc}}}{dis_instr}"

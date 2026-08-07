@@ -65,6 +65,15 @@ class Decode:
         self.imm = ImmGen.generate(self.instr, self.id_controls.imm_type)
         self.imm_pc = self.pc + self.imm
 
+        # ===== Control-Hazard Signal =====
+        # id_jfid = valid & !pc_sel & !jf_exe (JALR resolves later, via jfexe_M)
+        self.jfid = self.valid and (not bool(self.id_controls.pc_sel)) and (
+            not bool(self.id_controls.jf_exe))
+        
+        if not self.buff_if_id.valid:
+            self.flush()
+            return 
+
         # ===== ID/EX Pipeline Register =====
         self.buff_id_ex.write(
             pc=self.pc,
@@ -85,11 +94,6 @@ class Decode:
             shift_sel=self.id_controls.sh_sel,
             valid=self.valid,
         )
-
-        # ===== Control-Hazard Signal =====
-        # id_jfid = valid & !pc_sel & !jf_exe (JALR resolves later, via jfexe_M)
-        self.jfid = self.valid and (not bool(self.id_controls.pc_sel)) and (
-            not bool(self.id_controls.jf_exe))
 
         self.jfid_E.set(self.jfid)
         self.jfpc_E.set(self.imm_pc)

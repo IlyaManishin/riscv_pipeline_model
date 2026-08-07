@@ -26,7 +26,6 @@ class Fetch:
         self.br_taken: bool = False
 
         self.pc: int = 0
-        self.pc_stall: bool = False
         self.pc_next: int = 0
 
     def update(self) -> None:
