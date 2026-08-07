@@ -16,7 +16,7 @@ class Memory:
         self.buff_mem_wb: regs.MEM_WB_Stage = buff_mem_wb
 
         ########## DEBUG SIGNALS ##########
-        self.dmem_sel: conf.DMem_sel = conf.DMem_sel.NONE
+        self.dmem_sel: conf.DMem_sel = conf.DMem_sel(0, 0)
         self.dmem_we: bool = False
         self.valid: bool = False
         self.reg_wr: bool = False
@@ -35,8 +35,8 @@ class Memory:
 
         self.dmem_sel = conf.DMem_sel.from_int(
             self.buff_ex_mem.dmem_sel.read())
-        self.dmem_we = self.dmem_sel.is_write()
-        self.dmem_funct3 = self.dmem_sel.funct3()
+        self.dmem_we = self.dmem_sel.dmem_we
+        self.dmem_funct3 = self.dmem_sel.funct3
         self.dmem_byte_off = self.dmem_addr & 0b11
 
         # ===== Store Data / Byte-Enable Formatting =====

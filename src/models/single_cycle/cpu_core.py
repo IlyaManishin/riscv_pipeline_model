@@ -115,7 +115,7 @@ class Core:
         # ALU Execution
         self.alu_in_a = self.rf_rd1 if self.id_controls.a_sel else self.pc
         self.alu_in_b = self.rf_rd2 if self.id_controls.b_sel else self.imm
-        self.alu_out = Alu.execute(
+        self.alu_res = Alu.execute(
             self.id_controls.alu_sel, self.alu_in_a, self.alu_in_b)
 
         # Shifter Execution
@@ -123,10 +123,13 @@ class Core:
             self.rf_rd2 & 0x1F) if self.id_controls.b_sel else self.instr.shamt
         self.shifter_out = Shifter.shift(
             self.rf_rd1, self.shift_shamt, self.id_controls.sh_sel)
+        
+        # ALU Out
+        self.alu_out = self.shifter_out if self.id_controls.alushift_sel else self.alu_res
 
         # DMEM Write Port Logic (Data formatting and Byte Enable)
-        self.dmem_we = self.id_controls.dmem_sel.is_write()
-        self.dmem_funct3 = self.instr.funct3
+        self.dmem_we = self.id_controls.dmem_sel.dmem_we
+        self.dmem_funct3 = self.id_controls.dmem_sel.funct3
         self.dmem_byte_off = self.dmem_addr & 0b11
 
         self.dmem_wdata = 0
@@ -157,8 +160,6 @@ class Core:
                 self.rf_wd3 = (self.pc + 4) & ((1 << conf.XLEN) - 1)
             case WB_sel_t.ALU_OUT:
                 self.rf_wd3 = self.alu_out
-            case WB_sel_t.SHIFTER_OUT:
-                self.rf_wd3 = self.shifter_out
             case WB_sel_t.DMEM_OUT:
                 self.rf_wd3 = dmem_rdata_out
             case _:

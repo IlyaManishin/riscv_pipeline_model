@@ -8,20 +8,22 @@ PC_START_ADDR = 0
 IMEM_ADDR_BYTE_WIDTH = 14
 DMEM_ADDR_BYTE_WIDTH = 14
 
-DATA_BYTE_NUM   = XLEN / 8 # bytes in block with XLEN size
+DATA_BYTE_NUM = XLEN / 8  # bytes in block with XLEN size
 BYTE_ADDR_WIDTH = int(math.log2(DATA_BYTE_NUM))
 
+
 class Alu_sel_t(enum.Enum):
-    ADD  = 0b0000
-    SUB  = 0b0001
-    AND  = 0b0010
-    OR   = 0b0011
-    XOR  = 0b0100
-    SLT  = 0b0101
+    ADD = 0b0000
+    SUB = 0b0001
+    AND = 0b0010
+    OR = 0b0011
+    XOR = 0b0100
+    SLT = 0b0101
     SLTU = 0b0110
-    LUI  = 0b0111
+    LUI = 0b0111
     JALR = 0b1000
-    ANY  = 0b0000
+    ANY = 0b1111
+
 
 class Shift_sel_t(enum.Enum):
     SLL = 0b100
@@ -29,80 +31,45 @@ class Shift_sel_t(enum.Enum):
     SRA = 0b001
     ANY = 0b000
 
+
 class Instr_type_t(enum.Enum):
-    TYPE_I   = 0b001
-    TYPE_S   = 0b010
-    TYPE_B   = 0b011
-    TYPE_U   = 0b100
-    TYPE_J   = 0b101
+    TYPE_I = 0b001
+    TYPE_S = 0b010
+    TYPE_B = 0b011
+    TYPE_U = 0b100
+    TYPE_J = 0b101
     TYPE_ANY = 0b000
 
+
 class WB_sel_t(enum.Enum):
-    PC4_OUT     = 0b00
-    ALU_OUT     = 0b01
-    SHIFTER_OUT = 0b10
-    DMEM_OUT    = 0b11
-    ANY         = 0b00
+    PC4_OUT = 0b00
+    ALU_OUT = 0b01
+    DMEM_OUT = 0b10
+    ANY = 0b11
 
-class DMem_sel(enum.Enum):
-    NONE = 0b0000
 
-    LB  = 0b0000
-    LH  = 0b0001
-    LW  = 0b0010
-    LBU = 0b0100
-    LHU = 0b0101
-
-    SB  = 0b1000
-    SH  = 0b1001
-    SW  = 0b1010
-
-    # ---------- Factory methods (return DMem_sel) ----------
+@dataclass
+class DMem_sel:
+    dmem_we: bool = False
+    funct3: int = 0
 
     @staticmethod
-    def from_load_funct3(funct3: int) -> 'DMem_sel':
-        match funct3:
-            case 0b000: return DMem_sel.LB
-            case 0b001: return DMem_sel.LH
-            case 0b010: return DMem_sel.LW
-            case 0b100: return DMem_sel.LBU
-            case 0b101: return DMem_sel.LHU
-            case _: raise ValueError(f"Unsupported load funct3: {funct3:#05b}")
-
-    @staticmethod
-    def from_store_funct3(funct3: int) -> 'DMem_sel':
-        match funct3:
-            case 0b000: return DMem_sel.SB
-            case 0b001: return DMem_sel.SH
-            case 0b010: return DMem_sel.SW
-            case _: raise ValueError(f"Unsupported store funct3: {funct3:#05b}")
-
-    @staticmethod
-    def from_int(value: int) -> 'DMem_sel':
-        """int convert to DMem_sel, if value exists."""
-        for member in DMem_sel:
-            if member.value == value:
-                return member
-        raise ValueError(f"Invalid DMem_sel value: {value:#x}")
-
-
-    def funct3(self) -> int:
-        return self.value & 0b111
-
-    def is_write(self) -> bool:
-        return bool(self.value & 0b1000)
+    def from_int(value: int) -> "DMem_sel":
+        return DMem_sel(
+            dmem_we=bool(value & 0b1000),
+            funct3=value & 0b111
+        )
 
     def to_int(self) -> int:
-        """Конвертирует DMem_sel в int."""
-        return self.value
+        return (int(self.dmem_we) << 3) | (self.funct3 & 0b111)
 
 @dataclass
 class Id_controls_out:
     reg_wr: int = 0
-    dmem_sel: DMem_sel = DMem_sel.NONE
+    dmem_sel: DMem_sel = None
     a_sel: int = 0
     b_sel: int = 0
-    sh_sel: Shift_sel_t   = Shift_sel_t.ANY
+    sh_sel: Shift_sel_t = Shift_sel_t.ANY
     br_un: int = 0
     pc_sel: int = 0
     alu_sel: Alu_sel_t = Alu_sel_t.ANY
@@ -111,6 +78,11 @@ class Id_controls_out:
     illegal: int = 0
     jf_exe: int = 0
     alushift_sel: int = 0
+
+    # workaround for dataclass mutable default error
+    def __post_init__(self):
+        if self.dmem_sel is None:
+            self.dmem_sel = DMem_sel(0, 0)
 
 
 class Instruction:
@@ -121,15 +93,15 @@ class Instruction:
         self._decode_fields()
 
     def _decode_fields(self):
-        self.opcode = self.raw & 0x7F
-        self.rd     = (self.raw >> 7) & 0x1F
-        self.funct3  = (self.raw >> 12) & 0x7
-        self.rs1    = (self.raw >> 15) & 0x1F
-        self.rs2    = (self.raw >> 20) & 0x1F
-        self.funct7 = (self.raw >> 25) & 0x7F
-        self.funct7_onebit = (self.funct7 >> 5) & 1
-        self.shamt = (self.raw >> 20) & 0x1F
-    
+        self.opcode = self.raw & 0b1111111
+        self.rd = (self.raw >> 7) & 0b11111
+        self.funct3 = (self.raw >> 12) & 0b111
+        self.rs1 = (self.raw >> 15) & 0b11111
+        self.rs2 = (self.raw >> 20) & 0b11111
+        self.funct7 = (self.raw >> 25) & 0b1111111
+        self.funct7_onebit = (self.funct7 >> 5) & 0b1
+        self.shamt = (self.raw >> 20) & 0b11111
+
     def __repr__(self) -> str:
         return (
             f"Instruction("
@@ -154,9 +126,3 @@ class Instruction:
             f"f3={self.funct3:03b} "
             f"f7={self.funct7:07b}"
         )
-
-
-
-
-
-
