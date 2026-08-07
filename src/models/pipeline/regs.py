@@ -2,7 +2,21 @@ from sim_base.mem.register import Register
 from sim_base.mem.block_mem import BlockMem
 
 
-class IF_ID_Stage:
+class PipelineStage:
+    """
+    Base for the IF/ID, ID/EX, EX/MEM, MEM/WB pipeline registers.
+
+    write() stages this cycle's outputs into the buffer's fields in one
+    call instead of a long list of `self.field.set(value)` lines:
+        buff.write(pc=.., rd=.., valid=..)
+    """
+
+    def write(self, **fields) -> None:
+        for name, value in fields.items():
+            getattr(self, name).set(value)
+
+
+class IF_ID_Stage(PipelineStage):
     pc: Register[int]
     instr: BlockMem
     valid: Register[bool]
@@ -20,10 +34,11 @@ class IF_ID_Stage:
             r.set(r.read())
 
     def flush(self):
+        self.pc.set(0)
         self.valid.set(False)
 
 
-class ID_EX_Stage:
+class ID_EX_Stage(PipelineStage):
     pc: Register[int]
     rf_rd1: Register[int]
     rf_rd2: Register[int]
@@ -81,7 +96,7 @@ class ID_EX_Stage:
         self.valid.set(False)
 
 
-class EX_MEM_Stage:
+class EX_MEM_Stage(PipelineStage):
     alu_out: Register[int]
     rf_rd2: Register[int]
     rd: Register[int]
@@ -108,9 +123,11 @@ class EX_MEM_Stage:
         ]
 
 
-class MEM_WB_Stage:
+class MEM_WB_Stage(PipelineStage):
     alu_out: Register[int]
-    dmem_data: Register[int]
+    dmem_data: BlockMem
+    dmem_byte_off: Register[int]
+    dmem_funct3: Register[int]
     rd: Register[int]
     wb_sel: Register[bool]
     reg_wr: Register[bool]
@@ -119,7 +136,9 @@ class MEM_WB_Stage:
 
     def __init__(self, dmem: BlockMem):
         self.alu_out = Register(0)
-        self.dmem_data = dmem
+        self.dmem_data = dmem  # dmem is itself register-like (addr in -> data out next cycle)
+        self.dmem_byte_off = Register(0)
+        self.dmem_funct3 = Register(0)
         self.rd = Register(0)
         self.wb_sel = Register(False)
         self.reg_wr = Register(False)
@@ -128,6 +147,6 @@ class MEM_WB_Stage:
 
     def get_registers(self) -> list[Register[int] | Register[bool]]:
         return [
-            self.alu_out, self.dmem_data, self.rd,
+            self.alu_out, self.dmem_byte_off, self.dmem_funct3, self.rd,
             self.wb_sel, self.reg_wr, self.pc4, self.valid
-        ]
+        ]  # dmem_data/dmem is committed externally, not here

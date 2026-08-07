@@ -7,32 +7,36 @@ from models.pipeline import regs
 
 
 class Fetch:
-    def __init__(self, pc: PC, imem: InstrMem, buff_if_id: regs.IF_ID_Stage):
+    def __init__(self, pc: PC, imem: InstrMem, buff_if_id: regs.IF_ID_Stage,
+                 jfid_E: Register[bool], jfpc_E: Register[int],
+                 jfexe_M: Register[bool], jfpc_M: Register[int]):
         ########## INPUT SIGNALS ##########
         self.pc_instr: PC = pc
         self.imem: InstrMem = imem
+        self.jfid_E: Register[bool] = jfid_E
+        self.jfpc_E: Register[int] = jfpc_E
+        self.jfexe_M: Register[bool] = jfexe_M
+        self.jfpc_M: Register[int] = jfpc_M
 
         ########## OUTPUT SIGNALS ##########
         self.buff_if_id: regs.IF_ID_Stage = buff_if_id
 
         ########## DEBUG SIGNALS ##########
-        self.stall_pc: bool = False
         self.valid: bool = False
         self.br_taken: bool = False
 
         self.pc: int = 0
+        self.pc_stall: bool = False
         self.pc_next: int = 0
 
-    def update(self,
-               jfid_e: Register[bool], jfpc_e: Register[int],
-               jfexe_m: Register[bool], jfpc_m: Register[int]) -> None:
+    def update(self) -> None:
         # ===== Branch/Jump Mux =====
-        if jfexe_m.read():
+        if self.jfexe_M.read():
             self.br_taken = True
-            pc_br = jfpc_m.read()
-        elif jfid_e.read():
+            pc_br = self.jfpc_M.read()
+        elif self.jfid_E.read():
             self.br_taken = True
-            pc_br = jfpc_e.read()
+            pc_br = self.jfpc_E.read()
         else:
             self.br_taken = False
             pc_br = 0
@@ -46,11 +50,12 @@ class Fetch:
 
         # ===== IF/ID Pipeline Register =====
         self.valid = True
-        self.buff_if_id.pc.set(self.pc_next)
-        self.buff_if_id.valid.set(self.valid)
+        self.buff_if_id.write(pc=self.pc_next, valid=self.valid)
+
+    def pc_stall(self):
+        self.pc_instr.set_pc(True, self.pc_instr.read())
 
     def stall(self):
-        self.pc_instr.set_pc(True, self.pc_instr.read())
         self.buff_if_id.stall()
 
     def flush(self):

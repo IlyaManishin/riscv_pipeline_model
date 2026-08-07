@@ -34,14 +34,13 @@ class Core:
         self._rf_inst = RegFile()
         self.clk.add_trigger(self._rf_inst)
 
-        # Jump registers
+        # Control-hazard jump registers (ID/EX and EX/MEM "extra" flops)
         self.jfid_E: Register[bool] = Register(False)
         self.jfpc_E: Register[int] = Register(0)
-
         self.jfexe_M: Register[bool] = Register(False)
         self.jfpc_M: Register[int] = Register(0)
 
-        for reg in [self.jfid_E, self.jfpc_E, self.jfexe_M, self.jfpc_M]:
+        for reg in (self.jfid_E, self.jfpc_E, self.jfexe_M, self.jfpc_M):
             self.clk.add_trigger(reg)
 
         # Pipeline Buffers
@@ -56,26 +55,29 @@ class Core:
             for reg in stage.get_registers():
                 self.clk.add_trigger(reg)
 
-    def init_modules(self):
+        self.init_modules()
+
+    def init_modules(self) -> None:
         # Pipeline Stages Instantiation
         self.stage_fetch = Fetch(self.pc_inst,
                                  self.imem,
-                                 self.buff_if_id)
+                                 self.buff_if_id,
+                                 self.jfid_E,
+                                 self.jfpc_E,
+                                 self.jfexe_M,
+                                 self.jfpc_M)
         self.stage_decode = Decode(self._rf_inst,
                                    self.buff_if_id,
                                    self.buff_id_ex,
                                    self.jfid_E,
                                    self.jfpc_E)
-
         self.stage_execute = Execute(self.buff_id_ex,
                                      self.buff_ex_mem,
                                      self.jfexe_M,
                                      self.jfpc_M)
-
         self.stage_memory = Memory(self.dmem,
                                    self.buff_ex_mem,
                                    self.buff_mem_wb)
-
         self.stage_writeback = WriteBack(self._rf_inst,
                                          self.buff_mem_wb,
                                          self.rst_reg)
@@ -93,17 +95,11 @@ class Core:
 
     def step(self) -> None:
         # Combinational stage updates
+        self.stage_fetch.update()
         self.stage_decode.update()
         self.stage_execute.update()
         self.stage_memory.update()
         self.stage_writeback.update()
-
-        self.stage_fetch.update(
-            jfid_e=self.jfid_E,
-            jfpc_e=self.jfpc_E,
-            jfexe_m=self.jfexe_M,
-            jfpc_m=self.jfpc_M,
-        )
 
         self.hdu.update()
 

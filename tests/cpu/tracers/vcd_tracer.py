@@ -181,7 +181,7 @@ class CpuVcdTracer(BaseTracer):
             "ex_alu_a": execute.alu_in_a,
             "ex_alu_b": execute.alu_in_b,
             "ex_alu_result": execute.alures,
-            "ex_shift_result": execute.shres,
+            "ex_shift_result": execute.shift_res,
             "ex_jump": execute.jfexe,
             "mem_valid": memory.valid,
             "mem_pc": memory_pc,

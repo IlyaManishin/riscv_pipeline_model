@@ -11,7 +11,7 @@ from risc_v.mem.reg_file import RegFile
 
 class Decode:
     def __init__(self, rf: RegFile, buff_if_id: regs.IF_ID_Stage, buff_id_ex: regs.ID_EX_Stage,
-                 jfid_E: Register[bool], jfpc_E: Register[int]):
+                 jfid_e: Register[bool], jfpc_e: Register[int]):
         ########## INPUT SIGNALS ##########
         self.rf_inst: RegFile = rf
         self.buff_if_id: regs.IF_ID_Stage = buff_if_id
@@ -20,21 +20,18 @@ class Decode:
         self.buff_id_ex: regs.ID_EX_Stage = buff_id_ex
 
         # --- jump logic ---
-        self.jfid_E = jfid_E
-        self.jfpc_E = jfpc_E
+        self.jfid_E: Register[bool] = jfid_e
+        self.jfpc_E: Register[int] = jfpc_e
         self.jfid: bool = False
         self.imm_pc: int = 0
 
         ########## DEBUG SIGNALS ##########
-
-        # --- Control Signals ---
         self.id_controls = None
         self.instr = None
         self.valid: bool = False
         self.br_eq: bool = False
         self.br_lt: bool = False
 
-        # --- Data Path ---
         self.rs1: int = 0
         self.rs2: int = 0
         self.rd: int = 0
@@ -47,7 +44,7 @@ class Decode:
         # ===== Instruction Field Extraction =====
         self.instr = conf.Instruction(self.buff_if_id.instr.read())
         self.pc = self.buff_if_id.pc.read()
-        self.valid = bool(self.buff_if_id.valid.read())
+        self.valid = self.buff_if_id.valid.read()
 
         self.rs1 = self.instr.rs1
         self.rs2 = self.instr.rs2
@@ -68,24 +65,26 @@ class Decode:
         self.imm = ImmGen.generate(self.instr, self.id_controls.imm_type)
         self.imm_pc = self.pc + self.imm
 
-        # ===== ID/EX Pipeline Register: Data Path =====
-        self.buff_id_ex.pc.set(self.pc)
-        self.buff_id_ex.rf_rd1.set(self.rf_rd1)
-        self.buff_id_ex.rf_rd2.set(self.rf_rd2)
-        self.buff_id_ex.imm.set(self.imm)
-        self.buff_id_ex.rs1.set(self.instr.rs1)
-        self.buff_id_ex.rs2.set(self.instr.rs2)
-        self.buff_id_ex.rd.set(self.rd)
-        self.buff_id_ex.alu_sel.set(self.id_controls.alu_sel.value)
-        self.buff_id_ex.a_sel.set(self.id_controls.a_sel)
-        self.buff_id_ex.b_sel.set(self.id_controls.b_sel)
-        self.buff_id_ex.wb_sel.set(self.id_controls.wb_sel)
-        self.buff_id_ex.reg_wr.set(self.id_controls.reg_wr)
-        self.buff_id_ex.dmem_sel.set(self.id_controls.dmem_sel.to_int())
-        self.buff_id_ex.jfexe.set(self.id_controls.jf_exe)
-        self.buff_id_ex.alushift_sel.set(self.id_controls.alushift_sel)
-        self.buff_id_ex.shift_sel.set(self.id_controls.sh_sel)
-        self.buff_id_ex.valid.set(self.valid)
+        # ===== ID/EX Pipeline Register =====
+        self.buff_id_ex.write(
+            pc=self.pc,
+            rf_rd1=self.rf_rd1,
+            rf_rd2=self.rf_rd2,
+            imm=self.imm,
+            rs1=self.instr.rs1,
+            rs2=self.instr.rs2,
+            rd=self.rd,
+            alu_sel=self.id_controls.alu_sel.value,
+            a_sel=self.id_controls.a_sel,
+            b_sel=self.id_controls.b_sel,
+            wb_sel=self.id_controls.wb_sel,
+            reg_wr=self.id_controls.reg_wr,
+            dmem_sel=self.id_controls.dmem_sel.to_int(),
+            jfexe=self.id_controls.jf_exe,
+            alushift_sel=self.id_controls.alushift_sel,
+            shift_sel=self.id_controls.sh_sel,
+            valid=self.valid,
+        )
 
         # ===== Control-Hazard Signal =====
         # id_jfid = valid & !pc_sel & !jf_exe (JALR resolves later, via jfexe_M)
@@ -95,12 +94,9 @@ class Decode:
         self.jfid_E.set(self.jfid)
         self.jfpc_E.set(self.imm_pc)
 
-    def get_registers(self) -> list[Register[bool] | Register[int]]:
-        return [self.jfid_E, self.jfpc_E]
-
     def stall(self):
-        for r in self.get_registers():
-            r.set(r.read())
+        self.jfid_E.set(self.jfid_E.read())
+        self.jfpc_E.set(self.jfpc_E.read())
         self.buff_id_ex.stall()
 
     def flush(self):

@@ -50,7 +50,7 @@ class PipelineTracer(CsvTracer):
 
     def get_header(self) -> list[str]:
         header = ["cycle",
-                  "pc", "is_jump", "stall_pc",
+                  "pc", "is_jump",
                   "jfexe", "jfid",
                   "alures", "imm_pc",
                   "disasm fetch", "disasm decoder", "disasm execute",
@@ -71,7 +71,6 @@ class PipelineTracer(CsvTracer):
             cycle,
             self.cpu.get_cur_pc(),
             is_jump,
-            core.stage_fetch.stall_pc,
             core.stage_execute.jfexe,
             core.stage_decode.jfid,
             uint32_to_int32(core.stage_execute.alures),

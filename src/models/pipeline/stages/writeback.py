@@ -1,6 +1,7 @@
 from sim_base.mem.register import Register
 
 from risc_v.mem.reg_file import RegFile
+from risc_v.mem.dmem_rd_port import dmem_rd_port
 import risc_v.riscv_config as conf
 
 from models.pipeline import regs
@@ -19,12 +20,22 @@ class WriteBack:
         self.rf_we3: bool = False
         self.valid: bool = False
         self.reg_wr: bool = False
+        self.dmem_rdata: int = 0
 
         self.rf_wd3: int = 0
         self.pc4: int = 0
         self.rd: int = 0
 
     def update(self):
+        # ===== Data Memory Read Port =====
+        # dmem's address was staged by Memory last cycle, so the raw word
+        # (and the byte/funct3 extraction) is only available now.
+        self.dmem_rdata = dmem_rd_port(
+            self.buff_mem_wb.dmem_data.read(),
+            self.buff_mem_wb.dmem_byte_off.read(),
+            self.buff_mem_wb.dmem_funct3.read(),
+        )
+
         # ===== Write-Back Data Multiplexing =====
         self.pc4 = self.buff_mem_wb.pc4.read()
         match conf.WB_sel_t(self.buff_mem_wb.wb_sel.read()):
@@ -35,16 +46,16 @@ class WriteBack:
             case conf.WB_sel_t.SHIFTER_OUT:
                 self.rf_wd3 = self.buff_mem_wb.alu_out.read()
             case conf.WB_sel_t.DMEM_OUT:
-                self.rf_wd3 = self.buff_mem_wb.dmem_data.read()
+                self.rf_wd3 = self.dmem_rdata
             case _:
                 self.rf_wd3 = 0
 
         # ===== Register File Write =====
         self.rd = self.buff_mem_wb.rd.read()
-        self.reg_wr = bool(self.buff_mem_wb.reg_wr.read())
-        self.rf_we3 = self.reg_wr and not bool(self.rst_reg.read())
+        self.reg_wr = self.buff_mem_wb.reg_wr.read()
+        self.rf_we3 = self.reg_wr and not self.rst_reg.read()
 
         if self.rf_we3:
             self.rf_inst.write(self.rd, self.rf_wd3)
 
-        self.valid = bool(self.buff_mem_wb.valid.read())
+        self.valid = self.buff_mem_wb.valid.read()
