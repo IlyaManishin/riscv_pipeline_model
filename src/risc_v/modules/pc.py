@@ -29,3 +29,5 @@ class PC:
 
         self._reg.set(next_pc & self.pc_mask)
     
+    def stall(self):
+        self._reg.set(self._reg.read())

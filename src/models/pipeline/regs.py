@@ -76,9 +76,16 @@ class ID_EX_Stage:
             r.set(r.read())
 
     def flush(self):
-        self.jfexe.set(False)
+        self.pc.set(0)
+        self.alu_sel.set(False)
+        self.shift_sel.set(False)
+        self.a_sel.set(False)
+        self.b_sel.set(False)
+        self.wb_sel.set(False)
         self.reg_wr.set(False)
         self.dmem_sel.set(False)
+        self.jfexe.set(False)
+        self.alushift_sel.set(False)
         self.valid.set(False)
 
 
@@ -107,6 +114,16 @@ class EX_MEM_Stage:
             self.alu_out, self.rf_rd2, self.rd,
             self.wb_sel, self.reg_wr, self.dmem_sel, self.pc4, self.valid
         ]
+
+    def flush(self):
+        self.alu_out.set(0)
+        self.rf_rd2.set(0)
+        self.rd.set(0)
+        self.wb_sel.set(False)
+        self.reg_wr.set(False)
+        self.dmem_sel.set(False)
+        self.pc4.set(0)
+        self.valid.set(False)
 
 
 class MEM_WB_Stage:

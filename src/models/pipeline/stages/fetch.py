@@ -53,8 +53,8 @@ class Fetch:
         self.buff_if_id.valid.set(self.valid)
 
     def pc_stall(self):
-        self.pc_inst.set_pc(True, self.pc_inst.read())
-
+        self.pc_inst.stall()
+        
     def stall(self):
         self.buff_if_id.stall()
 

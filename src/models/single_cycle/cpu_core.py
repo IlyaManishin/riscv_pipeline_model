@@ -123,7 +123,7 @@ class Core:
             self.rf_rd2 & 0x1F) if self.id_controls.b_sel else self.instr.shamt
         self.shifter_out = Shifter.shift(
             self.rf_rd1, self.shift_shamt, self.id_controls.sh_sel)
-        
+
         # ALU Out
         self.alu_out = self.shifter_out if self.id_controls.alushift_sel else self.alu_res
 
