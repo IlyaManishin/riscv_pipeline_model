@@ -60,3 +60,4 @@ class Fetch:
 
     def flush(self):
         self.buff_if_id.flush()
+        
