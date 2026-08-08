@@ -153,3 +153,11 @@ class MEM_WB_Stage:
             self.alu_out, self.dmem_byte_off, self.dmem_funct3, self.rd,
             self.wb_sel, self.reg_wr, self.pc4, self.valid
         ]  # dmem_data/dmem is committed externally, not here
+
+    def flush(self):
+        self.alu_out.set(0)
+        self.rd.set(0)
+        self.pc4.set(0)
+        self.wb_sel.set(False)
+        self.reg_wr.set(False)
+        self.valid.set(False)

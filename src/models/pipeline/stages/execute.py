@@ -71,3 +71,11 @@ class Execute:
 
         self.jfexe_M.set(self.jfexe)
         self.jfpc_M.set(self.jfpc)
+
+    def flush(self):
+        self.buff_ex_mem.flush()
+        self.jfexe_M.set(False)
+        self.jfpc_M.set(0) # not necessery
+
+    def rst(self):
+        self.flush()

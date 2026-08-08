@@ -18,7 +18,7 @@ class WriteBack:
 
         ########## DEBUG SIGNALS ##########
         self.valid: bool = False
-        
+
         self.rf_we3: bool = False
         self.reg_wr: bool = False
         self.dmem_rdata: int = 0
@@ -51,7 +51,7 @@ class WriteBack:
 
         # ===== Register File Write =====
         self.rd = self.buff_mem_wb.rd.read()
-        self.rf_we3 = self.buff_mem_wb.reg_wr.read() and not self.rst_reg.read()  # Check need for that
+        self.rf_we3 = self.buff_mem_wb.reg_wr.read()
 
         if self.rf_we3:
             self.rf_inst.write(self.rd, self.rf_wd3)

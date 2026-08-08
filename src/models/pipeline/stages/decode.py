@@ -104,3 +104,6 @@ class Decode:
         self.jfid_E.set(False)
         self.jfpc_E.set(0)
         self.buff_id_ex.flush()
+
+    def rst(self):
+        self.flush()

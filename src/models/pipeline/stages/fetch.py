@@ -65,3 +65,6 @@ class Fetch:
 
     def flush(self):
         self.buff_if_id.flush()
+        
+    def rst(self):
+        self.flush()
