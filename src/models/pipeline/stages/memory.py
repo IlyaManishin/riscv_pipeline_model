@@ -16,18 +16,18 @@ class Memory:
         self.buff_mem_wb: regs.MEM_WB_Stage = buff_mem_wb
 
         ########## DEBUG SIGNALS ##########
+        self.valid: bool = False
+
         self.dmem_sel: conf.DMem_sel = conf.DMem_sel(0, 0)
         self.dmem_we: bool = False
-        self.valid: bool = False
-        self.reg_wr: bool = False
 
         self.dmem_addr: int = 0
         self.dmem_funct3: int = 0
         self.dmem_byte_off: int = 0
         self.dmem_wdata: int = 0
         self.dmem_byte_we: int = 0
-        self.pc4: int = 0
         self.rd: int = 0
+        self.pc4: int = 0
 
     def update(self):
         # ===== Address / Control Decode =====
@@ -57,8 +57,6 @@ class Memory:
                             byte_we=self.dmem_byte_we)
         self.dmem.set(word_dmem_addr)
 
-        self.rd = self.buff_ex_mem.rd.read()
-        self.reg_wr = self.buff_ex_mem.reg_wr.read()
         self.pc4 = self.buff_ex_mem.pc4.read()
         self.valid = self.buff_ex_mem.valid.read()
 
@@ -66,8 +64,8 @@ class Memory:
         self.buff_mem_wb.alu_out.set(self.buff_ex_mem.alu_out.read())
         self.buff_mem_wb.dmem_byte_off.set(self.dmem_byte_off)
         self.buff_mem_wb.dmem_funct3.set(self.dmem_funct3)
-        self.buff_mem_wb.rd.set(self.rd)
+        self.buff_mem_wb.rd.set(self.buff_ex_mem.rd.read())
         self.buff_mem_wb.wb_sel.set(self.buff_ex_mem.wb_sel.read())
-        self.buff_mem_wb.reg_wr.set(self.reg_wr)
+        self.buff_mem_wb.reg_wr.set(self.buff_ex_mem.reg_wr.read())
         self.buff_mem_wb.pc4.set(self.pc4)
         self.buff_mem_wb.valid.set(self.valid)

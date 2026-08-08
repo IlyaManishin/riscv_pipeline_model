@@ -17,14 +17,15 @@ class WriteBack:
         self.rf_inst: RegFile = rf
 
         ########## DEBUG SIGNALS ##########
-        self.rf_we3: bool = False
         self.valid: bool = False
+        
+        self.rf_we3: bool = False
         self.reg_wr: bool = False
         self.dmem_rdata: int = 0
 
         self.rf_wd3: int = 0
-        self.pc4: int = 0
         self.rd: int = 0
+        self.pc4: int = 0
 
     def update(self):
         # ===== Data Memory Read Port =====

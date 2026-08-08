@@ -44,8 +44,8 @@ class Fetch:
         self.pc = self.pc_inst.read()
         self.pc_next = self.pc_inst.get_pc_next(br_taken, pc_br)
 
-        imem_addr = self.pc_next >> 2
-        self.imem.set(imem_addr)
+        word_imem_addr = self.pc_next >> 2
+        self.imem.set(word_imem_addr)
         self.pc_inst.set_pc(self.pc_next)
         self.is_pc_stall = False
 
