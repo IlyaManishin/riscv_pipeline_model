@@ -23,29 +23,28 @@ class Fetch:
 
         ########## DEBUG SIGNALS ##########
         self.valid: bool = False
-        self.br_taken: bool = False
 
         self.pc: int = 0
         self.pc_next: int = 0
 
     def update(self) -> None:
         # ===== Branch/Jump Mux =====
+        br_taken = False
         if self.jfexe_M.read():
-            self.br_taken = True
+            br_taken = True
             pc_br = self.jfpc_M.read()
         elif self.jfid_E.read():
-            self.br_taken = True
+            br_taken = True
             pc_br = self.jfpc_E.read()
         else:
-            self.br_taken = False
             pc_br = 0
 
         # ===== PC & IMEM Address =====
         self.pc = self.pc_inst.read()
-        self.pc_next = pc_br if self.br_taken else self.pc + 4
+        self.pc_next = self.pc_inst.get_pc_next(br_taken, pc_br)
 
-        self.pc_inst.set_pc(self.br_taken, self.pc_next)
         self.imem.set(self.pc_next)
+        self.pc_inst.set_pc(self.pc_next)
 
         # ===== IF/ID Pipeline Register =====
         self.valid = True
@@ -53,9 +52,11 @@ class Fetch:
         self.buff_if_id.valid.set(self.valid)
 
     def pc_stall(self):
+        self.pc_next = self.pc_inst.read()
         self.pc_inst.stall()
         
     def stall(self):
+        self.imem.set(self.pc_inst.read())
         self.buff_if_id.stall()
 
     def flush(self):

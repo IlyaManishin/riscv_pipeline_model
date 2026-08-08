@@ -51,9 +51,9 @@ class PipelineTracer(CsvTracer):
 
     def get_header(self) -> list[str]:
         header = ["cycle",
-                  "pc", "is_jump",
+                  "pc_next", "is_jump",
                   "jfexe", "jfid",
-                  "alures", "imm_pc",
+                  "alu_out", "imm_pc",
                   "fetch instr", "decoder instr", "execute instr",
                   "memory instr", "dmemsel",
                   "wb instr"]
@@ -74,7 +74,7 @@ class PipelineTracer(CsvTracer):
             is_jump,
             core.stage_execute.jfexe,
             core.stage_decode.jfid,
-            uint32_to_int32(core.stage_execute.alures),
+            uint32_to_int32(core.stage_execute.alu_out),
             uint32_to_int32(core.stage_decode.imm_pc),
             self.disasm_instr(
                 core.stage_fetch.pc, core.stage_fetch.valid),
@@ -95,7 +95,7 @@ class PipelineTracer(CsvTracer):
     def disasm_instr(self, pc: int, valid: int):
         if not bool(valid):
             return "nop"
-        pc_mask = 1 << IMEM_ADDR_BYTE_WIDTH - 1
+        pc_mask = (1 << IMEM_ADDR_BYTE_WIDTH) - 1
         instr = self.cpu.imem._memory[(pc & pc_mask) >> 2]
         dis_instr = disasm.disasm(instr)
         return f"{{{pc}}}{dis_instr}"

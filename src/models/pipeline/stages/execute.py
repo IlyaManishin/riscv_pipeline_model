@@ -28,11 +28,7 @@ class Execute:
 
         self.rd1: int = 0
         self.rd2: int = 0
-        self.alu_in_a: int = 0
-        self.alu_in_b: int = 0
-        self.shift_shamt: int = 0
-        self.alures: int = 0
-        self.shift_res: int = 0
+        self.alu_out: int = 0
         self.rd: int = 0
         self.pc4: int = 0
 
@@ -43,26 +39,29 @@ class Execute:
         self.valid = self.buff_id_ex.valid.read()
 
         # ===== ALU Operand Multiplexing =====
-        self.alu_in_a = self.rd1 if self.buff_id_ex.a_sel.read() else self.buff_id_ex.pc.read()
-        self.alu_in_b = self.rd2 if self.buff_id_ex.b_sel.read() else self.buff_id_ex.imm.read()
+        alu_in_a = self.rd1 if self.buff_id_ex.a_sel.read() else self.buff_id_ex.pc.read()
+        alu_in_b = self.rd2 if self.buff_id_ex.b_sel.read() else self.buff_id_ex.imm.read()
 
         # ===== Arithmetic / Logic =====
-        self.alures = Alu.execute(Alu_sel_t(self.buff_id_ex.alu_sel.read()),
-                                  self.alu_in_a, self.alu_in_b)
+        alures = Alu.execute(Alu_sel_t(self.buff_id_ex.alu_sel.read()),
+                                  alu_in_a, alu_in_b)
 
         # ===== Shifter =====
-        self.shift_shamt = (self.rd2 & 0x1F) if self.buff_id_ex.b_sel.read() else (
+        shift_shamt = (self.rd2 & 0x1F) if self.buff_id_ex.b_sel.read() else (
             self.buff_id_ex.rs2.read() & 0x1F)
-        self.shift_res = Shifter.shift(sel=Shift_sel_t(self.buff_id_ex.shift_sel.read()),
-                                   data=self.alu_in_a,
-                                   shamt=self.shift_shamt)
+        shift_res = Shifter.shift(sel=Shift_sel_t(self.buff_id_ex.shift_sel.read()),
+                                   data=alu_in_a,
+                                   shamt=shift_shamt)
 
         self.rd = self.buff_id_ex.rd.read()
         self.reg_wr = self.buff_id_ex.reg_wr.read()
         self.pc4 = self.buff_id_ex.pc.read() + 4
+        
+        # ===== ALU out =====
+        self.alu_out = shift_res if self.buff_id_ex.alushift_sel.read() else alures
 
         # ===== EX/MEM Pipeline Register =====
-        self.buff_ex_mem.alu_out.set(self.shift_res if self.buff_id_ex.alushift_sel.read() else self.alures)
+        self.buff_ex_mem.alu_out.set(self.alu_out)
         self.buff_ex_mem.rf_rd2.set(self.rd2)
         self.buff_ex_mem.rd.set(self.rd)
         self.buff_ex_mem.wb_sel.set(self.buff_id_ex.wb_sel.read())
@@ -73,7 +72,7 @@ class Execute:
 
         # ===== Control-Hazard Signal =====
         self.jfexe = self.valid and self.buff_id_ex.jfexe.read()
-        self.jfpc = self.alures
+        self.jfpc = self.alu_out
 
         self.jfexe_M.set(self.jfexe)
         self.jfpc_M.set(self.jfpc)

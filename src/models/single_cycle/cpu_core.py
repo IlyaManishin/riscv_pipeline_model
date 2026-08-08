@@ -173,4 +173,4 @@ class Core:
 
         # Update Program Counter
         br_taken = not bool(self.id_controls.pc_sel)
-        self.pc_inst.set_pc(br_taken=br_taken, pc_br=self.alu_out)
+        self.pc_inst.update_pc(br_taken=br_taken, pc_br=self.alu_out)
