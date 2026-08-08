@@ -26,6 +26,7 @@ class Fetch:
 
         self.pc: int = 0
         self.pc_next: int = 0
+        self.is_pc_stall: bool = False
 
     def update(self) -> None:
         # ===== Branch/Jump Mux =====
@@ -45,6 +46,7 @@ class Fetch:
 
         self.imem.set(self.pc_next)
         self.pc_inst.set_pc(self.pc_next)
+        self.is_pc_stall = False
 
         # ===== IF/ID Pipeline Register =====
         self.valid = True
@@ -52,6 +54,7 @@ class Fetch:
         self.buff_if_id.valid.set(self.valid)
 
     def pc_stall(self):
+        self.is_pc_stall = True
         self.pc_next = self.pc_inst.read()
         self.pc_inst.stall()
 

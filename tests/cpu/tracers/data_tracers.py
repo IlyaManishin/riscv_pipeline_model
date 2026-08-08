@@ -52,7 +52,7 @@ class PipelineTracer(CsvTracer):
     def get_header(self) -> list[str]:
         header = ["cycle",
                   "pc_next", "is_jump",
-                  "jfexe", "jfid",
+                  "jfid_E", "jfexe_M",
                   "alu_out", "imm_pc",
                   "fetch instr", "decoder instr", "execute instr",
                   "memory instr", "dmemsel",
@@ -65,19 +65,19 @@ class PipelineTracer(CsvTracer):
             return
 
         core = self.cpu.core
-        is_jump = bool(core.stage_execute.jfexe) or bool(
-            core.stage_decode.jfid)
+
+        is_jump = (core.jfid_E.read() or core.jfexe_M.read()) and not core.stage_fetch.is_pc_stall
 
         row = [
             cycle,
             self.cpu.get_cur_pc(),
             is_jump,
-            core.stage_execute.jfexe,
-            core.stage_decode.jfid,
+            core.jfid_E.read(),
+            core.jfexe_M.read(),
             uint32_to_int32(core.stage_execute.alu_out),
             uint32_to_int32(core.stage_decode.imm_pc),
             self.disasm_instr(
-                core.stage_fetch.pc, core.stage_fetch.valid),
+                core.stage_fetch.pc_next, core.stage_fetch.valid),
             self.disasm_instr(core.stage_decode.pc,
                               core.stage_decode.valid),
             self.disasm_instr(core.stage_execute.pc4 - 4,

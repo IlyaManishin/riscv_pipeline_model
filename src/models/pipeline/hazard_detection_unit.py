@@ -49,11 +49,21 @@ class Hazard_Detection_Unit:
         self.is_id_ex_raw_hazard: bool = False
         self.is_id_mem_raw_hazard: bool = False
         self.is_id_wb_raw_hazard: bool = False
+        self.is_raw_hazard: bool = False
 
     def update(self) -> None:
         self.reset_debug_state()
 
         # ===== RAW Hazard Detection (rs1/rs2 usage per opcode) =====
+        ex_reg_wr = self.buff_ex_mem.reg_wr.read()
+        ex_rd = self.buff_ex_mem.rd.read()
+
+        mem_reg_wr = self.buff_mem_wb.reg_wr.read()
+        mem_rd = self.buff_mem_wb.rd.read()
+
+        wb_reg_wr = self.stage_writeback.reg_wr
+        wb_rd = self.stage_writeback.rd
+
         opcode = self.stage_decode.instr.opcode >> 2
         uses_rs1 = opcode in (
             0b11001,  # JALR
@@ -69,22 +79,23 @@ class Hazard_Detection_Unit:
             0b01100   # Register ALU
         )
 
-        is_ex_hazard = self.stage_execute.reg_wr and self.stage_execute.rd != 0 and (
-            (uses_rs1 and self.stage_execute.rd == self.stage_decode.rs1) or
-            (uses_rs2 and self.stage_execute.rd == self.stage_decode.rs2)
+        is_ex_hazard = ex_reg_wr and ex_rd != 0 and (
+            (uses_rs1 and ex_rd == self.stage_decode.rs1) or
+            (uses_rs2 and ex_rd == self.stage_decode.rs2)
         )
-        is_mem_hazard = self.stage_memory.reg_wr and self.stage_memory.rd != 0 and (
-            (uses_rs1 and self.stage_memory.rd == self.stage_decode.rs1) or
-            (uses_rs2 and self.stage_memory.rd == self.stage_decode.rs2)
+        is_mem_hazard = mem_reg_wr and mem_rd != 0 and (
+            (uses_rs1 and mem_rd == self.stage_decode.rs1) or
+            (uses_rs2 and mem_rd == self.stage_decode.rs2)
         )
-        is_wb_hazard = self.stage_writeback.reg_wr and self.stage_writeback.rd != 0 and (
-            (uses_rs1 and self.stage_writeback.rd == self.stage_decode.rs1) or
-            (uses_rs2 and self.stage_writeback.rd == self.stage_decode.rs2)
+        is_wb_hazard = wb_reg_wr and wb_rd != 0 and (
+            (uses_rs1 and wb_rd == self.stage_decode.rs1) or
+            (uses_rs2 and wb_rd == self.stage_decode.rs2)
         )
 
         self.is_id_ex_raw_hazard = is_ex_hazard
         self.is_id_mem_raw_hazard = is_mem_hazard
         self.is_id_wb_raw_hazard = is_wb_hazard
+        self.is_raw_hazard = is_ex_hazard or is_mem_hazard or is_wb_hazard
 
         # ===== Control Hazards (branch / jump redirect) =====
 
@@ -106,3 +117,4 @@ class Hazard_Detection_Unit:
         self.is_id_ex_raw_hazard = False
         self.is_id_mem_raw_hazard = False
         self.is_id_wb_raw_hazard = False
+        self.is_raw_hazard = False
