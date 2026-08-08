@@ -54,6 +54,7 @@ class PipelineTracer(CsvTracer):
                   "pc_next", "is_jump",
                   "jfid_E", "jfexe_M",
                   "alu_out", "imm_pc",
+                  "rf_we3", "rd", "rf_wd3",
                   "fetch instr", "decoder instr", "execute instr",
                   "memory instr", "dmemsel",
                   "wb instr"]
@@ -65,6 +66,7 @@ class PipelineTracer(CsvTracer):
             return
 
         core = self.cpu.core
+        wb_stage = core.stage_writeback
 
         is_jump = (core.jfid_E.read() or core.jfexe_M.read()) and not core.stage_fetch.is_pc_stall
 
@@ -76,26 +78,35 @@ class PipelineTracer(CsvTracer):
             core.jfexe_M.read(),
             uint32_to_int32(core.stage_execute.alu_out),
             uint32_to_int32(core.stage_decode.imm_pc),
-            self.disasm_instr(
-                core.stage_fetch.pc_next, core.stage_fetch.valid),
-            self.disasm_instr(core.stage_decode.pc,
+            wb_stage.rf_we3,
+            wb_stage.rd,
+            wb_stage.rf_wd3,
+            self.disasm_pc_instr(
+                core.stage_fetch.pc, core.stage_fetch.valid),
+            self.disasm_instr(core.stage_decode.instr.raw,
                               core.stage_decode.valid),
-            self.disasm_instr(core.stage_execute.pc4 - 4,
+            self.disasm_pc_instr(core.stage_execute.pc4 - 4,
                               core.stage_execute.valid),
-            self.disasm_instr(core.stage_memory.pc4 - 4,
+            self.disasm_pc_instr(core.stage_memory.pc4 - 4,
                               core.stage_memory.valid),
             bin(core.stage_memory.dmem_sel.to_int()),
-            self.disasm_instr(core.stage_writeback.pc4 - 4,
+            self.disasm_pc_instr(core.stage_writeback.pc4 - 4,
                               core.stage_writeback.valid)
         ]
         for i in range(REG_COUNT):
             row.append(self.cpu.reg_file.read(i))
         self.writer.writerow(row)
 
-    def disasm_instr(self, pc: int, valid: int):
+    def disasm_pc_instr(self, pc: int, valid: int):
         if not bool(valid):
             return "nop"
         pc_mask = (1 << IMEM_ADDR_BYTE_WIDTH) - 1
         instr = self.cpu.imem._memory[(pc & pc_mask) >> 2]
         dis_instr = disasm.disasm(instr)
         return f"{{{pc}}}{dis_instr}"
+
+    def disasm_instr(self, instr, valid: int):
+        # if not bool(valid):
+        #     return "nop"
+        dis_instr = disasm.disasm(instr)
+        return f"{dis_instr}"

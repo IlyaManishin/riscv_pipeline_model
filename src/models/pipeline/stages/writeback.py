@@ -50,8 +50,7 @@ class WriteBack:
 
         # ===== Register File Write =====
         self.rd = self.buff_mem_wb.rd.read()
-        self.reg_wr = self.buff_mem_wb.reg_wr.read()
-        self.rf_we3 = self.reg_wr and not self.rst_reg.read()  # Check need for that
+        self.rf_we3 = self.buff_mem_wb.reg_wr.read() and not self.rst_reg.read()  # Check need for that
 
         if self.rf_we3:
             self.rf_inst.write(self.rd, self.rf_wd3)
