@@ -8,7 +8,7 @@ from models.pipeline import regs
 
 
 class WriteBack:
-    def __init__(self, rf: RegFile, buff_mem_wb: regs.MEM_WB_Stage, rst_reg: Register):
+    def __init__(self, rf: RegFile, buff_mem_wb: regs.MEM_WB_Stage, rst_reg: Register[bool]):
         ########## INPUT SIGNALS ##########
         self.buff_mem_wb: regs.MEM_WB_Stage = buff_mem_wb
         self.rst_reg: Register = rst_reg
@@ -51,7 +51,7 @@ class WriteBack:
         # ===== Register File Write =====
         self.rd = self.buff_mem_wb.rd.read()
         self.reg_wr = self.buff_mem_wb.reg_wr.read()
-        self.rf_we3 = self.reg_wr and not self.rst_reg.read()
+        self.rf_we3 = self.reg_wr and not self.rst_reg.read()  # Check need for that
 
         if self.rf_we3:
             self.rf_inst.write(self.rd, self.rf_wd3)

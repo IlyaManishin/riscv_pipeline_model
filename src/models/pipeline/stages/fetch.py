@@ -54,11 +54,10 @@ class Fetch:
     def pc_stall(self):
         self.pc_next = self.pc_inst.read()
         self.pc_inst.stall()
-        
+
     def stall(self):
         self.imem.set(self.pc_inst.read())
         self.buff_if_id.stall()
 
     def flush(self):
         self.buff_if_id.flush()
-        

@@ -44,19 +44,19 @@ class Execute:
 
         # ===== Arithmetic / Logic =====
         alures = Alu.execute(Alu_sel_t(self.buff_id_ex.alu_sel.read()),
-                                  alu_in_a, alu_in_b)
+                             alu_in_a, alu_in_b)
 
         # ===== Shifter =====
         shift_shamt = (self.rd2 & 0x1F) if self.buff_id_ex.b_sel.read() else (
             self.buff_id_ex.rs2.read() & 0x1F)
         shift_res = Shifter.shift(sel=Shift_sel_t(self.buff_id_ex.shift_sel.read()),
-                                   data=alu_in_a,
-                                   shamt=shift_shamt)
+                                  data=alu_in_a,
+                                  shamt=shift_shamt)
 
         self.rd = self.buff_id_ex.rd.read()
         self.reg_wr = self.buff_id_ex.reg_wr.read()
         self.pc4 = self.buff_id_ex.pc.read() + 4
-        
+
         # ===== ALU out =====
         self.alu_out = shift_res if self.buff_id_ex.alushift_sel.read() else alures
 

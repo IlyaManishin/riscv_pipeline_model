@@ -21,7 +21,7 @@ from .hazard_detection_unit import Hazard_Detection_Unit
 
 
 class Core:
-    def __init__(self, clk: Clock, imem: InstrMem, dmem: DataMem, rst_reg: Register):
+    def __init__(self, clk: Clock, imem: InstrMem, dmem: DataMem, rst_reg: Register[bool]):
         self.clk = clk
         self.imem = imem
         self.dmem = dmem

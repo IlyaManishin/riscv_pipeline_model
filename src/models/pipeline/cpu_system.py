@@ -28,7 +28,7 @@ class CpuSystem(ICpuSystem):
         self.clk.add_trigger(self._dmem)
 
         # Asynchronous reset register
-        self.rst_reg = Register(init_value=0)
+        self.rst_reg: Register[bool] = Register(False)
         self.clk.add_trigger(self.rst_reg)
 
         # Core instantiation

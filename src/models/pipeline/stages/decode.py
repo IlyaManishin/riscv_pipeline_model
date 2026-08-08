@@ -59,7 +59,7 @@ class Decode:
         self.br_eq, self.br_lt = BranchUnit.compare(
             self.rf_rd1, self.rf_rd2, bool(self.id_controls.br_un))
         self.id_controls = Instruction_Decoder.decode(
-            self.instr, self.br_eq, self.br_lt)
+            self.instr, br_eq=self.br_eq, br_lt=self.br_lt)
 
         # ===== Immediate Generation & Branch Target =====
         self.imm = ImmGen.generate(self.instr, self.id_controls.imm_type)
