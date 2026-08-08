@@ -46,7 +46,7 @@ class Fetch:
 
         word_imem_addr = self.pc_next >> 2
         self.imem.set(word_imem_addr)
-        self.pc_inst.set_pc(self.pc_next)
+        self.pc_inst.set_pc(self.pc_next + 4)
         self.is_pc_stall = False
 
         # ===== IF/ID Pipeline Register =====
@@ -60,7 +60,7 @@ class Fetch:
         self.pc_inst.stall()
 
     def stall(self):
-        self.imem.set(self.pc_inst.read())
+        # self.imem.set(self.pc_inst.read() >> 2)
         self.buff_if_id.stall()
 
     def flush(self):

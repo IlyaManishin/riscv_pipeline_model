@@ -25,17 +25,26 @@ class PC:
         elif br_taken:
             next_pc_raw = pc_br
         else:
-            next_pc_raw = self._reg.read() + 4
+            next_pc_raw = self._reg.read()
 
         next_pc = next_pc_raw & self.pc_mask
         return next_pc
 
     def update_pc(self, br_taken: bool, pc_br: int) -> None:
-        """always_ff logic"""
-        self._reg.set(self.get_pc_next(br_taken, pc_br))
-        
+        """always_ff logic. Only for syngle-cycle"""
+        rst = self.rst_reg.read()
+        if rst:
+            next_pc_raw = self._pc_start_addr
+        elif br_taken:
+            next_pc_raw = pc_br
+        else:
+            next_pc_raw = self._reg.read() + 4
+
+        next_pc = next_pc_raw & self.pc_mask
+        self._reg.set(next_pc)
+
     def set_pc(self, pc_next):
-        self._reg.set(pc_next)
+        self._reg.set(pc_next & self.pc_mask)
 
     def stall(self):
         self._reg.set(self._reg.read())

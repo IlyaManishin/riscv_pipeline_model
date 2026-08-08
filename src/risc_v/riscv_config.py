@@ -76,7 +76,7 @@ class Id_controls_out:
     wb_sel: WB_sel_t = WB_sel_t.ANY
     imm_type: int = Instr_type_t.TYPE_ANY
     illegal: int = 0
-    jf_exe: int = 0
+    jfexe: int = 0
     alushift_sel: int = 0
 
     # workaround for dataclass mutable default error

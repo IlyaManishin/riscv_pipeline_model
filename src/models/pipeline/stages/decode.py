@@ -67,7 +67,7 @@ class Decode:
 
         # ===== Control-Hazard Signal =====
         self.jfid = self.valid and (not bool(self.id_controls.pc_sel)) and (
-            not bool(self.id_controls.jf_exe))
+            not bool(self.id_controls.jfexe))
 
         if not self.buff_if_id.valid.read():
             self.flush()
@@ -87,8 +87,8 @@ class Decode:
         self.buff_id_ex.wb_sel.set(self.id_controls.wb_sel)
         self.buff_id_ex.reg_wr.set(self.id_controls.reg_wr)
         self.buff_id_ex.dmem_sel.set(self.id_controls.dmem_sel.to_int())
-        self.buff_id_ex.jfexe.set(self.id_controls.jf_exe)
-        self.buff_id_ex.alushift_sel.set(self.id_controls.alushift_sel)
+        self.buff_id_ex.jfexe.set(bool(self.id_controls.jfexe))
+        self.buff_id_ex.alushift_sel.set(bool(self.id_controls.alushift_sel))
         self.buff_id_ex.shift_sel.set(self.id_controls.sh_sel)
         self.buff_id_ex.valid.set(self.valid)
 

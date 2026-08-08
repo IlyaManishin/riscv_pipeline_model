@@ -82,7 +82,7 @@ class PipelineTracer(CsvTracer):
             wb_stage.rd,
             wb_stage.rf_wd3,
             self.disasm_pc_instr(
-                core.stage_fetch.pc, core.stage_fetch.valid),
+                core.stage_fetch.pc_next, core.stage_fetch.valid),
             self.disasm_instr(core.stage_decode.instr.raw,
                               core.stage_decode.valid),
             self.disasm_pc_instr(core.stage_execute.pc4 - 4,

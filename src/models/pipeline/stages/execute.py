@@ -66,7 +66,7 @@ class Execute:
         self.buff_ex_mem.valid.set(self.valid)
 
         # ===== Control-Hazard Signal =====
-        self.jfexe = self.valid and self.buff_id_ex.jfexe.read()
+        self.jfexe = bool(self.valid and self.buff_id_ex.jfexe.read())
         self.jfpc = self.alu_out
 
         self.jfexe_M.set(self.jfexe)
