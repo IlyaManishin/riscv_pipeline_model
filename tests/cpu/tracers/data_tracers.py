@@ -2,7 +2,8 @@ from pathlib import Path
 from typing import Any
 
 from risc_v.base.icpu_system import ICpuSystem
-from risc_v.pipeline.cpu_system import CpuSystem as PL_CpuSystem
+from risc_v.riscv_config import IMEM_ADDR_BYTE_WIDTH
+from models.pipeline.cpu_system import CpuSystem as PL_CpuSystem
 
 from tests.cpu.tests_config import REG_COUNT
 from .base_tracers import CsvTracer
@@ -50,12 +51,14 @@ class PipelineTracer(CsvTracer):
 
     def get_header(self) -> list[str]:
         header = ["cycle",
-                  "pc", "is_jump", "stall_pc",
-                  "jfexe", "jfid",
-                  "alures", "imm_pc",
-                  "disasm fetch", "disasm decoder", "disasm execute",
-                  "disasm memory", "dmemsel",
-                  "disasm wb"]
+                  "pc_next", "is_jump",
+                  "jfid_E", "jfexe_M",
+                  "alu_out", "imm_pc",
+                  "rf_we3", "rd", "rf_wd3",
+                  "is_stall",
+                  "fetch instr", "decoder instr", "execute instr",
+                  "memory instr", "dmemsel",
+                  "wb instr"]
         header.extend(f"x{i}" for i in range(REG_COUNT))
         return header
 
@@ -64,37 +67,49 @@ class PipelineTracer(CsvTracer):
             return
 
         core = self.cpu.core
-        is_jump = bool(core.stage_execute.jfexe) or bool(
-            core.stage_decode.jfid)
+        wb_stage = core.stage_writeback
+        hdu = core.hdu
+
+        is_jump = (core.jfid_E.read() or core.jfexe_M.read()) and not core.stage_fetch.is_pc_stall
 
         row = [
             cycle,
             self.cpu.get_cur_pc(),
             is_jump,
-            core.stage_fetch.stall_pc,
-            core.stage_execute.jfexe,
-            core.stage_decode.jfid,
-            uint32_to_int32(core.stage_execute.alures),
+            core.jfid_E.read(),
+            core.jfexe_M.read(),
+            uint32_to_int32(core.stage_execute.alu_out),
             uint32_to_int32(core.stage_decode.imm_pc),
-            self.disasm_instr(
-                core.stage_fetch.pc, core.stage_fetch.valid),
-            self.disasm_instr(core.stage_decode.pc,
+            wb_stage.rf_we3,
+            wb_stage.rd,
+            wb_stage.rf_wd3,
+            hdu.is_raw_hazard,
+            self.disasm_pc_instr(
+                core.stage_fetch.pc_next, core.stage_fetch.valid),
+            self.disasm_instr(core.stage_decode.instr.raw,
                               core.stage_decode.valid),
-            self.disasm_instr(core.stage_execute.pc4 - 4,
+            self.disasm_pc_instr(core.stage_execute.pc4 - 4,
                               core.stage_execute.valid),
-            self.disasm_instr(core.stage_memory.pc4 - 4,
+            self.disasm_pc_instr(core.stage_memory.pc4 - 4,
                               core.stage_memory.valid),
             bin(core.stage_memory.dmem_sel.to_int()),
-            self.disasm_instr(core.stage_writeback.pc4 - 4,
+            self.disasm_pc_instr(core.stage_writeback.pc4 - 4,
                               core.stage_writeback.valid)
         ]
         for i in range(REG_COUNT):
             row.append(self.cpu.reg_file.read(i))
         self.writer.writerow(row)
 
-    def disasm_instr(self, pc: int, valid: int):
+    def disasm_pc_instr(self, pc: int, valid: int):
         if not bool(valid):
             return "nop"
-        instr = self.cpu.imem._memory[pc >> 2]
+        pc_mask = (1 << IMEM_ADDR_BYTE_WIDTH) - 1
+        instr = self.cpu.imem._memory[(pc & pc_mask) >> 2]
         dis_instr = disasm.disasm(instr)
         return f"{{{pc}}}{dis_instr}"
+
+    def disasm_instr(self, instr, valid: int):
+        # if not bool(valid):
+        #     return "nop"
+        dis_instr = disasm.disasm(instr)
+        return f"{dis_instr}"

@@ -1,7 +1,7 @@
-from typing import Optional
 import pytest
+from typing import Optional
 
-from risc_v.pipeline import cpu_system as pl_cpu_system
+from models.pipeline import cpu_system as pl_cpu_system
 from tracers.data_tracers import PipelineTracer
 from tracers.vcd_tracer import CpuVcdTracer
 from tracers.perf_tracers import PipelinePerfTracer

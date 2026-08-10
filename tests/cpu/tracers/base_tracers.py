@@ -40,6 +40,9 @@ class CsvTracer(BaseTracer):
     @abstractmethod
     def get_header(self) -> list[str]:
         pass
+    
+    def _get_tracer(self, file):
+        return csv.writer(file, delimiter=";")
 
     def on_test_start(self, test_name: str) -> None:
         if not self._is_trace():
@@ -51,7 +54,7 @@ class CsvTracer(BaseTracer):
         filepath = test_trace_dir / f"{test_name}.csv"
         self.file = open(filepath, "w", newline="")
 
-        self.writer = csv.writer(self.file)
+        self.writer = self._get_tracer(self.file)
         self.writer.writerow(self.get_header())
 
     def write_row(self, row: list) -> None:

@@ -5,8 +5,8 @@ from typing import Any, TextIO
 from vcd import VCDWriter
 from vcd.writer import Variable
 
-from risc_v.single_cycle.cpu_system import CpuSystem as SC_CpuSystem
-from risc_v.pipeline.cpu_system import CpuSystem as PL_CpuSystem
+from models.single_cycle.cpu_system import CpuSystem as SC_CpuSystem
+from models.pipeline.cpu_system import CpuSystem as PL_CpuSystem
 from tests.cpu.tests_config import REG_COUNT, XLEN, CVD_TRACE_ENABLE
 from .base_tracers import BaseTracer
 
@@ -181,7 +181,7 @@ class CpuVcdTracer(BaseTracer):
             "ex_alu_a": execute.alu_in_a,
             "ex_alu_b": execute.alu_in_b,
             "ex_alu_result": execute.alures,
-            "ex_shift_result": execute.shres,
+            "ex_shift_result": execute.shift_res,
             "ex_jump": execute.jfexe,
             "mem_valid": memory.valid,
             "mem_pc": memory_pc,

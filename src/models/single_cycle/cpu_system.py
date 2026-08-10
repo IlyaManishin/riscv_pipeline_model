@@ -3,10 +3,11 @@ from sim_base.mem.register import Register
 
 from risc_v.base.icpu_system import ICpuSystem
 from risc_v import riscv_config as conf
-from risc_v.modules.mem.dmem import DataMem
-from risc_v.modules.mem.imem import InstrMem
-from risc_v.modules.mem.reg_file import RegFile
+from risc_v.mem.reg_file import RegFile
+
 from .cpu_core import Core
+from risc_v.mem.sc.dmem import DataMem
+from risc_v.mem.sc.imem import InstrMem
 
 
 # =========================================================================

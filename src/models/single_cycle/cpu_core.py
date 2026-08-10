@@ -4,14 +4,14 @@ from sim_base.clock import Clock
 from sim_base.mem.register import Register
 
 from risc_v.modules.pc import PC
-from risc_v.modules.mem.reg_file import RegFile
+from risc_v.mem.reg_file import RegFile
 from risc_v.modules.decode import Instruction_Decoder
 from risc_v.modules.immgen import ImmGen
 from risc_v.modules.alu import Alu
 from risc_v.modules.shifter import Shifter
 from risc_v.modules.branch_unit import BranchUnit
-from risc_v.modules.dmem_wr_port import dmem_wr_port
-from risc_v.modules.dmem_rd_port import dmem_rd_port
+from risc_v.mem.dmem_wr_port import dmem_wr_port
+from risc_v.mem.dmem_rd_port import dmem_rd_port
 
 from risc_v.riscv_config import WB_sel_t
 import risc_v.riscv_config as conf
@@ -123,7 +123,7 @@ class Core:
             self.rf_rd2 & 0x1F) if self.id_controls.b_sel else self.instr.shamt
         self.shifter_out = Shifter.shift(
             self.rf_rd1, self.shift_shamt, self.id_controls.sh_sel)
-        
+
         # ALU Out
         self.alu_out = self.shifter_out if self.id_controls.alushift_sel else self.alu_res
 
@@ -173,4 +173,4 @@ class Core:
 
         # Update Program Counter
         br_taken = not bool(self.id_controls.pc_sel)
-        self.pc_inst.set_pc(br_taken=br_taken, pc_br=self.alu_out)
+        self.pc_inst.update_pc(br_taken=br_taken, pc_br=self.alu_out)

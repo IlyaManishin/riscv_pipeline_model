@@ -1,28 +1,37 @@
+from sim_base.mem.register import Register
+
 import risc_v.riscv_config as conf
-import risc_v.pipeline.regs as regs
+from models.pipeline import regs
 
 from risc_v.modules.decode import Instruction_Decoder
 from risc_v.modules.immgen import ImmGen
 from risc_v.modules.branch_unit import BranchUnit
-from risc_v.modules.mem.reg_file import RegFile
+from risc_v.mem.reg_file import RegFile
 
 
 class Decode:
-    def __init__(self, rf: RegFile, buff_if_id: regs.IF_ID_Stage, buff_id_ex: regs.ID_EX_Stage):
-        # --- Dependencies ---
+    def __init__(self, rf: RegFile, buff_if_id: regs.IF_ID_Stage, buff_id_ex: regs.ID_EX_Stage,
+                 jfid_E: Register[bool], jfpc_E: Register[int]):
+        ########## INPUT SIGNALS ##########
         self.rf_inst: RegFile = rf
         self.buff_if_id: regs.IF_ID_Stage = buff_if_id
+
+        ########## OUTPUT SIGNALS ##########
         self.buff_id_ex: regs.ID_EX_Stage = buff_id_ex
 
-        # --- Control Signals ---
+        # --- jump logic ---
+        self.jfid_E: Register[bool] = jfid_E
+        self.jfpc_E: Register[int] = jfpc_E
+        self.jfid: bool = False
+        self.imm_pc: int = 0
+
+        ########## DEBUG SIGNALS ##########
         self.id_controls = None
         self.instr = None
         self.valid: bool = False
         self.br_eq: bool = False
         self.br_lt: bool = False
-        self.jfid: bool = False
 
-        # --- Data Path ---
         self.rs1: int = 0
         self.rs2: int = 0
         self.rd: int = 0
@@ -30,28 +39,43 @@ class Decode:
         self.rf_rd2: int = 0
         self.pc: int = 0
         self.imm: int = 0
-        self.imm_pc: int = 0
+
+        self._is_stall: bool = False
 
     def update(self):
+        # ===== Instruction Field Extraction =====
         self.instr = conf.Instruction(self.buff_if_id.instr.read())
         self.pc = self.buff_if_id.pc.read()
+        self.valid = self.buff_if_id.valid.read()
 
         self.rs1 = self.instr.rs1
         self.rs2 = self.instr.rs2
         self.rd = self.instr.rd
 
+        # ===== Register File Read =====
         self.rf_rd1 = self.rf_inst.read(self.rs1)
         self.rf_rd2 = self.rf_inst.read(self.rs2)
 
+        # ===== Control Decode & Branch Resolution =====
         self.id_controls = Instruction_Decoder.decode(self.instr)
         self.br_eq, self.br_lt = BranchUnit.compare(
             self.rf_rd1, self.rf_rd2, bool(self.id_controls.br_un))
         self.id_controls = Instruction_Decoder.decode(
-            self.instr, self.br_eq, self.br_lt)
+            self.instr, br_eq=self.br_eq, br_lt=self.br_lt)
 
+        # ===== Immediate Generation & Branch Target =====
         self.imm = ImmGen.generate(self.instr, self.id_controls.imm_type)
         self.imm_pc = self.pc + self.imm
 
+        # ===== Control-Hazard Signal =====
+        self.jfid = self.valid and (not bool(self.id_controls.pc_sel)) and (
+            not bool(self.id_controls.jfexe))
+
+        if not self.buff_if_id.valid.read():
+            self.flush()
+            return
+
+        # ===== ID/EX Pipeline Register =====
         self.buff_id_ex.pc.set(self.pc)
         self.buff_id_ex.rf_rd1.set(self.rf_rd1)
         self.buff_id_ex.rf_rd2.set(self.rf_rd2)
@@ -65,16 +89,27 @@ class Decode:
         self.buff_id_ex.wb_sel.set(self.id_controls.wb_sel)
         self.buff_id_ex.reg_wr.set(self.id_controls.reg_wr)
         self.buff_id_ex.dmem_sel.set(self.id_controls.dmem_sel.to_int())
-        self.buff_id_ex.jfexe.set(self.id_controls.jf_exe)
-        self.buff_id_ex.alushift_sel.set(self.id_controls.alushift_sel)
+        self.buff_id_ex.jfexe.set(bool(self.id_controls.jfexe))
+        self.buff_id_ex.alushift_sel.set(bool(self.id_controls.alushift_sel))
         self.buff_id_ex.shift_sel.set(self.id_controls.sh_sel)
-
-        self.jfid = not bool(self.id_controls.pc_sel) and not bool(self.id_controls.jf_exe) #pass jumps in execute stage
-        self.valid = bool(self.buff_if_id.valid.read())
         self.buff_id_ex.valid.set(self.valid)
 
+        self.jfid_E.set(self.jfid)
+        self.jfpc_E.set(self.imm_pc)
+
+        self._is_stall = True
+
     def stall(self):
+        self.jfid_E.set(self.jfid_E.read())
+        self.jfpc_E.set(self.jfpc_E.read())
         self.buff_id_ex.stall()
 
+        self._is_stall = False
+
     def flush(self):
+        self.jfid_E.set(False)
+        self.jfpc_E.set(0)
         self.buff_id_ex.flush()
+
+    def rst(self):
+        self.flush()
