@@ -30,8 +30,6 @@ class Core:
         # PC and Register File instantiation
         self.pc_inst = PC(rst_reg=self.rst_reg)
         self.clk.add_trigger(self.pc_inst.reg)
-        self.pc_last: Register[int] = Register(0)
-        self.clk.add_trigger(self.pc_last)
 
         self._rf_inst = RegFile()
         self.clk.add_trigger(self._rf_inst)
@@ -61,7 +59,7 @@ class Core:
 
     def init_modules(self) -> None:
         # Pipeline Stages Instantiation
-        self.stage_fetch = Fetch(self.pc_inst, self.pc_last,
+        self.stage_fetch = Fetch(self.pc_inst,
                                  self.imem,
                                  self.buff_if_id,
                                  self.jfid_E,
