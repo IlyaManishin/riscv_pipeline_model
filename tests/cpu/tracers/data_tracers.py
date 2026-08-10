@@ -55,6 +55,7 @@ class PipelineTracer(CsvTracer):
                   "jfid_E", "jfexe_M",
                   "alu_out", "imm_pc",
                   "rf_we3", "rd", "rf_wd3",
+                  "is_stall",
                   "fetch instr", "decoder instr", "execute instr",
                   "memory instr", "dmemsel",
                   "wb instr"]
@@ -67,6 +68,7 @@ class PipelineTracer(CsvTracer):
 
         core = self.cpu.core
         wb_stage = core.stage_writeback
+        hdu = core.hdu
 
         is_jump = (core.jfid_E.read() or core.jfexe_M.read()) and not core.stage_fetch.is_pc_stall
 
@@ -81,6 +83,7 @@ class PipelineTracer(CsvTracer):
             wb_stage.rf_we3,
             wb_stage.rd,
             wb_stage.rf_wd3,
+            hdu.is_raw_hazard,
             self.disasm_pc_instr(
                 core.stage_fetch.pc_next, core.stage_fetch.valid),
             self.disasm_instr(core.stage_decode.instr.raw,

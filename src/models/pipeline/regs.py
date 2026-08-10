@@ -77,6 +77,12 @@ class ID_EX_Stage:
 
     def flush(self):
         self.pc.set(0)
+        self.rf_rd1.set(0)
+        self.rf_rd2.set(0)
+        self.imm.set(0)
+        self.rs1.set(0)
+        self.rs2.set(0)
+        self.rd.set(0)
         self.alu_sel.set(False)
         self.shift_sel.set(False)
         self.a_sel.set(False)

@@ -7,7 +7,8 @@ from models.pipeline import regs
 
 
 class Fetch:
-    def __init__(self, pc: PC, imem: InstrMem, buff_if_id: regs.IF_ID_Stage,
+    def __init__(self, pc: PC, pc_last: Register[int],
+                 imem: InstrMem, buff_if_id: regs.IF_ID_Stage,
                  jfid_E: Register[bool], jfpc_E: Register[int],
                  jfexe_M: Register[bool], jfpc_M: Register[int]):
         ########## INPUT SIGNALS ##########
@@ -27,6 +28,9 @@ class Fetch:
         self.pc: int = 0
         self.pc_next: int = 0
         self.is_pc_stall: bool = False
+        self.is_stall: bool = False
+        
+        self.pc_last: Register[int] = pc_last
 
     def update(self) -> None:
         # ===== Branch/Jump Mux =====
@@ -43,16 +47,20 @@ class Fetch:
         # ===== PC & IMEM Address =====
         self.pc = self.pc_inst.read()
         self.pc_next = self.pc_inst.get_pc_next(br_taken, pc_br)
+        self.pc_inst.set_pc(self.pc_next + 4)
+        self.is_pc_stall = False
 
         word_imem_addr = self.pc_next >> 2
         self.imem.set(word_imem_addr)
-        self.pc_inst.set_pc(self.pc_next + 4)
-        self.is_pc_stall = False
 
         # ===== IF/ID Pipeline Register =====
         self.valid = True
         self.buff_if_id.pc.set(self.pc_next)
         self.buff_if_id.valid.set(self.valid)
+        self.is_stall = False
+        
+        self.pc_last.set(self.pc_next)
+        
 
     def pc_stall(self):
         self.is_pc_stall = True
@@ -60,11 +68,15 @@ class Fetch:
         self.pc_inst.stall()
 
     def stall(self):
-        # self.imem.set(self.pc_inst.read() >> 2)
+        # self.imem.set((self.pc_inst.read()) >> 2)
+        self.imem.set(self.pc_last.read() >> 2)
+        self.pc_last.set(self.pc_last.read())
+
         self.buff_if_id.stall()
+        self.is_stall = True
 
     def flush(self):
         self.buff_if_id.flush()
-        
+
     def rst(self):
         self.flush()

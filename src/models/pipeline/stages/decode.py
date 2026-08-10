@@ -40,6 +40,8 @@ class Decode:
         self.pc: int = 0
         self.imm: int = 0
 
+        self._is_stall: bool = False
+
     def update(self):
         # ===== Instruction Field Extraction =====
         self.instr = conf.Instruction(self.buff_if_id.instr.read())
@@ -95,10 +97,14 @@ class Decode:
         self.jfid_E.set(self.jfid)
         self.jfpc_E.set(self.imm_pc)
 
+        self._is_stall = True
+
     def stall(self):
         self.jfid_E.set(self.jfid_E.read())
         self.jfpc_E.set(self.jfpc_E.read())
         self.buff_id_ex.stall()
+
+        self._is_stall = False
 
     def flush(self):
         self.jfid_E.set(False)
