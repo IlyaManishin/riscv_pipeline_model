@@ -100,7 +100,7 @@ def main() -> None:
         grand_total += total
         all_built_dirs.extend(built_dirs)
 
-    tests_lst_path = bpaths.BUILD_DIR / cfg.TESTS_LIST_NAME
+    tests_lst_path = bpaths.BENCHES_DIR / cfg.TESTS_LIST_NAME
     _write_lst(tests_lst_path, all_built_dirs)
 
     print("=" * 50)

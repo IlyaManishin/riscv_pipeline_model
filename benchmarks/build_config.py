@@ -26,9 +26,9 @@ ASM_EXTENSIONS = {".s", ".asm"}
 
 TEST_ROOTS: list[TestRoot] = [
     TestRoot("C", bpaths.BENCHES_DIR / bpaths.C_DIRNAME, bpaths.C_BUILD_DIR, C_EXTENSIONS),
-    # riscv_compiler can assemble .s via gcc, but RARS' own runtime (ecall
-    # syscalls, its pseudo-op dialect) isn't implemented by start.s/riscv.ld.
-    # Trying it here - verify results before relying on it.
+    # Default backend is "gcc" (see DEFAULT_TEST_CONFIG). Assembly usually
+    # needs RARS syntax/runtime - set "compiler": "rars" in this root's
+    # base_config.json (sources/asm/base_config.json) to switch it.
     TestRoot("asm", bpaths.BENCHES_DIR / bpaths.ASM_DIRNAME, bpaths.ASM_BUILD_DIR, ASM_EXTENSIONS),
 ]
 
@@ -37,10 +37,11 @@ DEFAULT_TEST_CONFIG = {
     "imem_size": riscv_compiler.DEFAULT_IMEM_SIZE,
     "dmem_size": riscv_compiler.DEFAULT_DMEM_SIZE,
     "max_cycles": 1_000_000,
+    "compiler": "gcc",   # "gcc" (riscv_compiler) or "rars"
 }
 
 # keys recognized in config files and forwarded into a test's effective config
-CONFIG_KEYS = ("stack_size", "imem_size", "dmem_size", "max_cycles")
+CONFIG_KEYS = ("stack_size", "imem_size", "dmem_size", "max_cycles", "compiler")
 
 BASE_CONFIG_FILENAME = "base_config.json"   # root-level, e.g. sources/C/base_config.json
 CONFIG_FILENAME = "config.json"             # project-level, inside a project subfolder
@@ -50,6 +51,10 @@ PROJECT_PREFIX = "pr_"
 IMEM_FILENAME = "imem.bin"
 DMEM_FILENAME = "dmem.bin"
 RESULT_FILENAME = "res.bin"
+
+# RARS backend settings
+RARS_PATH = Path("rars1_6.jar")
+RARS_TIMEOUT_SECONDS = 60
 
 LOG_DIR = bpaths.BUILD_DIR / "logs"
 LOG_FILENAME_FMT = "build_%Y%m%d_%H%M%S.log"
