@@ -1,0 +1,25 @@
+// config.template.jsonc
+//
+// Project-level config, placed inside a project folder (a subdirectory
+// of a test root with multiple source files). Overrides base_config.json
+// for this project only.
+//
+// Documentation only (JSON does not support comments) - copy what you
+// need into a real config.json without the comments.
+
+{
+    // Same compile-time overrides as base_config.json:
+    // "stack_size": 1024,
+    // "imem_size": 8192,
+    // "dmem_size": 8192,
+    // "max_cycles": 2000000,
+    // "compiler": "gcc",
+
+    // Explicit file list (relative to this project folder). If set,
+    // auto-discovery and "ignore" below are skipped entirely.
+    // "files": ["main.c", "core/algo.c"],
+
+    // Files/folders (relative to this project folder) excluded from
+    // auto-discovery. Ignored if "files" is set.
+    // "ignore": ["helpers/unused.c", "legacy/"]
+}
