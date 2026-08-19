@@ -64,7 +64,8 @@ def _select_roots(requested_name: str | None) -> list[cfg.TestRoot]:
 
 def setup_logger() -> logging.Logger:
     cfg.LOG_DIR.mkdir(parents=True, exist_ok=True)
-    log_path = cfg.LOG_DIR / datetime.now().strftime(cfg.LOG_FILENAME_FMT)
+    log_filename = datetime.now().strftime(cfg.LOG_FILENAME_FMT)
+    log_path = cfg.LOG_DIR / log_filename
 
     logger = logging.getLogger("build")
     logger.setLevel(logging.INFO)
@@ -76,7 +77,7 @@ def setup_logger() -> logging.Logger:
     handler.setFormatter(logging.Formatter("%(asctime)s %(message)s", "%Y-%m-%d %H:%M:%S"))
     logger.addHandler(handler)
 
-    print(f"Log file: {log_path}")
+    print(f"Log file: {log_filename}")
     return logger
 
 
@@ -134,7 +135,7 @@ def build_root(root: cfg.TestRoot, logger: logging.Logger) -> tuple[int, int]:
 
     total = len(tests)
     color = _summary_color(success_count, total)
-    print(f"{color}[{root.name}] {success_count} / {total} tests compiled{RESET}")
+    print(f"{color}[{root.name}] {success_count} / {total} tests compiled{RESET}\n")
 
     return success_count, total
 
