@@ -12,9 +12,11 @@ volatile ee_s32 seed5_volatile = 0;    /* Execs mask (0 = execute all algorithms
 
 /* Read CPU cycles using RISC-V CSR mcycle register */
 static inline ee_u32 get_cycles(void) {
-    ee_u32 cycles;
-    __asm__ __volatile__ ("csrr %0, mcycle" : "=r"(cycles));
-    return cycles;
+    // ee_u32 cycles;
+    // __asm__ __volatile__ ("csrr %0, mcycle" : "=r"(cycles));
+    // return cycles;
+
+    return 0;
 }
 
 void start_time(void) {
