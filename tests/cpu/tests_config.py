@@ -34,16 +34,26 @@ PERF_SUMMARY_NAME = "performance_summary.csv"
 # ============================================================
 # HARDWARE CONFIGURATION
 # ============================================================
-
 XLEN = 32
 REG_COUNT = 32
+
 
 # ============================================================
 # CPU STATUS
 # ============================================================
 
-
 class CpuTestResult(Enum):
     TEST_RUN = 0
     TEST_PASS = 1
     TEST_FAIL = 2
+
+
+# ============================================================
+# CPU INIT
+# ============================================================
+
+def size_to_addr_width(size: int) -> int:
+    """Calculates the minimal address bus width (in bits) needed for a given size."""
+    if size <= 1:
+        return 1
+    return (size - 1).bit_length()

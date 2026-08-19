@@ -5,6 +5,10 @@ from risc_v.mem.reg_file import RegFile
 
 
 class ICpuSystem(ABC):
+    @abstractmethod
+    def __init__(self, imem_addr_width: int, dmem_addr_width: int):
+        pass
+        
     @property
     @abstractmethod
     def imem(self) -> BlockMem:
