@@ -1,4 +1,4 @@
-#include "coremark.h"
+#include "include/coremark.h"
 
 /* Default thread count for multi-threading support */
 ee_u32 default_num_contexts = 1;
