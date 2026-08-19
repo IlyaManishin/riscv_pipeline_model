@@ -5,9 +5,9 @@ Entry point. For every root in build_config.TEST_ROOTS:
   1. discover tests            (test_collect.collect_tests)
   2. compile each              (compiler.compile_test)
   3. progress bar; print only the failing test's name above it
-  4. log full failure reasons to a log file (successes aren't logged)
+  4. log full failure reasons (incl. which backend) to a log file
   5. print "X / Y compiled" per root, plus a grand total at the end
-  6. write benches.lst per root, and a top-level tests.lst in sources/
+  6. write benches.lst per root, and a top-level tests.lst in build/
 """
 
 from __future__ import annotations
@@ -50,7 +50,7 @@ def _write_lst(path: Path, lines: list[str]) -> None:
 
 def build_root(root: cfg.TestRoot, logger: logging.Logger) -> tuple[int, int, list[str]]:
     """Builds every test in `root`. Returns (success_count, total, built_dir_names)."""
-    tests = collect_tests(root.src_dir, root.out_dir, root.extensions)
+    tests = collect_tests(root.src_dir, root.out_dir)
 
     if not tests:
         print(f"[{root.name}] no tests found under {root.src_dir}")
@@ -76,7 +76,9 @@ def build_root(root: cfg.TestRoot, logger: logging.Logger) -> tuple[int, int, li
             built_dirs.append(str(test.out_dir.relative_to(bpaths.BUILD_DIR)))
         else:
             tqdm.write(f"  FAILED: {test.name}")
-            logger.info(f"[{root.name}] FAILED {test.name} ({test.kind}): {result.error}")
+            logger.info(
+                f"[{root.name}] FAILED {test.name} ({test.kind}, backend={result.backend}): {result.error}"
+            )
 
     lst_path = root.out_dir / bpaths.TEST_LIST_NAME
     _write_lst(lst_path, lst_lines)
@@ -100,7 +102,7 @@ def main() -> None:
         grand_total += total
         all_built_dirs.extend(built_dirs)
 
-    tests_lst_path = bpaths.BENCHES_DIR / cfg.TESTS_LIST_NAME
+    tests_lst_path = bpaths.BUILD_DIR / cfg.TESTS_LIST_NAME
     _write_lst(tests_lst_path, all_built_dirs)
 
     print("=" * 50)

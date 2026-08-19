@@ -23,6 +23,7 @@ from test_collect import TestCase
 @dataclass
 class CompileResult:
     success: bool
+    backend: str = ""
     error: str = ""
 
 
@@ -52,73 +53,71 @@ def _compile_gcc(test: TestCase) -> CompileResult:
             )
         except Exception as exc:
             # a single broken test must not kill the whole build
-            return CompileResult(success=False, error=f"exception: {exc}")
+            return CompileResult(success=False, backend="gcc", error=f"exception: {exc}")
 
     if not success:
         message = captured.getvalue().strip() or "compilation failed"
-        return CompileResult(success=False, error=message)
+        return CompileResult(success=False, backend="gcc", error=message)
 
     _write_output_config(test)
-    return CompileResult(success=True)
+    return CompileResult(success=True, backend="gcc")
 
 
 # ------------------------------------------------------------------
 # rars backend
 # ------------------------------------------------------------------
 
-# RARS segment -> output filename dumped for that segment
-_RARS_DUMP_TARGETS = {
-    ".text": cfg.IMEM_FILENAME,
-    ".data": cfg.DMEM_FILENAME,
-}
-
-
-def _rars_command(sources: list[Path], dump_files: dict[str, Path]) -> list[str]:
+def _rars_base_command(sources: list[Path]) -> list[str]:
     if str(cfg.RARS_PATH).endswith(".jar"):
         cmd = ["java", "-jar", str(cfg.RARS_PATH)]
     else:
         cmd = [str(cfg.RARS_PATH)]
+    return cmd + ["a", "nc"] + [str(f) for f in sources]
 
-    cmd += ["a", "nc"] + [str(f) for f in sources]
 
-    for segment, output_file in dump_files.items():
-        cmd += ["dump", segment, "Binary", str(output_file)]
-
-    return cmd
+def _run_rars(cmd: list[str]) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        cmd,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=cfg.RARS_TIMEOUT_SECONDS,
+        text=True,
+    )
 
 
 def _compile_rars(test: TestCase) -> CompileResult:
     test.out_dir.mkdir(parents=True, exist_ok=True)
-    dump_files = {seg: test.out_dir / name for seg, name in _RARS_DUMP_TARGETS.items()}
-    cmd = _rars_command(test.sources, dump_files)
+    imem_path = test.out_dir / cfg.IMEM_FILENAME
+    dmem_path = test.out_dir / cfg.DMEM_FILENAME
 
     try:
-        result = subprocess.run(
-            cmd,
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            timeout=cfg.RARS_TIMEOUT_SECONDS,
-            text=True,
-        )
+        # .text is required - a real assembly error means it won't be produced
+        text_cmd = _rars_base_command(test.sources) + ["dump", ".text", "Binary", str(imem_path)]
+        text_result = _run_rars(text_cmd)
     except subprocess.TimeoutExpired:
-        return CompileResult(success=False, error="RARS timed out")
+        return CompileResult(success=False, backend="rars", error="RARS timed out")
     except FileNotFoundError:
-        return CompileResult(success=False, error=f"RARS not found at: {cfg.RARS_PATH}")
+        return CompileResult(success=False, backend="rars", error=f"RARS not found at: {cfg.RARS_PATH}")
 
-    # RARS reports assembler errors on stdout, not stderr
-    if result.stdout.strip():
-        for f in dump_files.values():
-            if f.exists() and f.stat().st_size == 0:
-                f.unlink()
-        return CompileResult(success=False, error=result.stdout.strip())
+    if not imem_path.exists() or imem_path.stat().st_size == 0:
+        message = text_result.stdout.strip() or text_result.stderr.strip() or "assembly failed"
+        if imem_path.exists():
+            imem_path.unlink()
+        return CompileResult(success=False, backend="rars", error=message)
 
-    missing = [seg for seg, f in dump_files.items() if not f.exists()]
-    if missing:
-        return CompileResult(success=False, error=f"missing dump(s): {', '.join(missing)}")
+    # .data is best-effort: many asm tests have no data section at all,
+    # RARS then refuses to dump it - that is not a build failure
+    try:
+        data_cmd = _rars_base_command(test.sources) + ["dump", ".data", "Binary", str(dmem_path)]
+        _run_rars(data_cmd)
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        pass
+    if dmem_path.exists() and dmem_path.stat().st_size == 0:
+        dmem_path.unlink()
 
     _write_output_config(test)
-    return CompileResult(success=True)
+    return CompileResult(success=True, backend="rars")
 
 
 # ------------------------------------------------------------------
@@ -134,12 +133,13 @@ DEFAULT_BACKEND = "gcc"
 
 
 def compile_test(test: TestCase) -> CompileResult:
-    if not test.sources:
-        return CompileResult(success=False, error="no source files found")
-
     backend_name = test.config.get("compiler", DEFAULT_BACKEND)
+
+    if not test.sources:
+        return CompileResult(success=False, backend=backend_name, error="no source files found")
+
     backend = _BACKENDS.get(backend_name)
     if backend is None:
-        return CompileResult(success=False, error=f"unknown compiler backend: {backend_name}")
+        return CompileResult(success=False, backend=backend_name, error=f"unknown compiler backend: {backend_name}")
 
     return backend(test)

@@ -49,7 +49,7 @@ def _merge_configs(*configs: dict) -> dict:
 
 
 # ------------------------------------------------------------------
-# Ignore handling
+# Ignore handling ("ignore" list lives inside base_config.json / config.json)
 # ------------------------------------------------------------------
 
 def _resolve_ignore_set(root: Path, entries: list[str]) -> set[Path]:
@@ -57,7 +57,7 @@ def _resolve_ignore_set(root: Path, entries: list[str]) -> set[Path]:
 
 
 def _is_ignored(path: Path, root: Path, ignored: set[Path]) -> bool:
-    """True if path or any ancestor up to root is in ignored."""
+    """True if path or any of its ancestors up to root is in ignored."""
     try:
         rel_parts = path.resolve().relative_to(root.resolve()).parts
     except ValueError:
@@ -74,7 +74,7 @@ def _is_ignored(path: Path, root: Path, ignored: set[Path]) -> bool:
 # Project (multi-file) test discovery
 # ------------------------------------------------------------------
 
-def _discover_project_sources(project_dir: Path, extensions: set[str]) -> tuple[list[Path], dict]:
+def _discover_project_sources(project_dir: Path) -> tuple[list[Path], dict]:
     """Returns (source files, raw project config.json content)."""
     raw_cfg = _load_json(project_dir / cfg.CONFIG_FILENAME)
 
@@ -88,7 +88,7 @@ def _discover_project_sources(project_dir: Path, extensions: set[str]) -> tuple[
     sources = [
         f for f in project_dir.rglob("*")
         if f.is_file()
-        and f.suffix.lower() in extensions
+        and f.suffix.lower() in cfg.SOURCE_EXTENSIONS
         and not _is_ignored(f, project_dir, ignored)
     ]
     return sorted(sources), raw_cfg
@@ -98,30 +98,30 @@ def _discover_project_sources(project_dir: Path, extensions: set[str]) -> tuple[
 # Root-level discovery
 # ------------------------------------------------------------------
 
-def collect_tests(root: Path, out_root: Path, extensions: set[str]) -> list[TestCase]:
+def collect_tests(root: Path, out_root: Path) -> list[TestCase]:
     """Discover tests directly under `root`.
 
     A loose source file -> "simple" test. A subdirectory -> "project" test,
     sources discovered recursively unless its config.json sets "files".
+    Root-level skip list comes from the "ignore" key in base_config.json.
     Returns [] if `root` doesn't exist; caller logs that.
     """
     if not root.exists():
         return []
 
-    root_cfg = _extract_config_values(_load_json(root / cfg.BASE_CONFIG_FILENAME))
-    root_ignore = _resolve_ignore_set(
-        root, _load_json(root / cfg.IGNORE_FILENAME).get("ignore", [])
-    )
+    raw_root_cfg = _load_json(root / cfg.BASE_CONFIG_FILENAME)
+    root_cfg = _extract_config_values(raw_root_cfg)
+    root_ignore = _resolve_ignore_set(root, raw_root_cfg.get("ignore", []))
 
     tests: list[TestCase] = []
 
     for entry in sorted(root.iterdir()):
-        if entry.name in (cfg.IGNORE_FILENAME, cfg.BASE_CONFIG_FILENAME):
+        if entry.name == cfg.BASE_CONFIG_FILENAME:
             continue
         if _is_ignored(entry, root, root_ignore):
             continue
 
-        if entry.is_file() and entry.suffix.lower() in extensions:
+        if entry.is_file() and entry.suffix.lower() in cfg.SOURCE_EXTENSIONS:
             name = entry.stem
             effective = _merge_configs(cfg.DEFAULT_TEST_CONFIG, root_cfg)
             tests.append(TestCase(
@@ -133,7 +133,7 @@ def collect_tests(root: Path, out_root: Path, extensions: set[str]) -> list[Test
             ))
 
         elif entry.is_dir():
-            sources, raw_proj_cfg = _discover_project_sources(entry, extensions)
+            sources, raw_proj_cfg = _discover_project_sources(entry)
             proj_cfg = _extract_config_values(raw_proj_cfg)
             effective = _merge_configs(cfg.DEFAULT_TEST_CONFIG, root_cfg, proj_cfg)
             name = f"{cfg.PROJECT_PREFIX}{entry.name}"

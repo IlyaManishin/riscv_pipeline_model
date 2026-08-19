@@ -11,25 +11,24 @@ from riscv_linker import riscv_compiler
 
 
 class TestRoot:
-    """One benchmark root: sources dir, build output dir, source extensions."""
-    __slots__ = ("name", "src_dir", "out_dir", "extensions")
+    """One benchmark root: sources dir + build output dir."""
+    __slots__ = ("name", "src_dir", "out_dir")
 
-    def __init__(self, name: str, src_dir: Path, out_dir: Path, extensions: set[str]):
+    def __init__(self, name: str, src_dir: Path, out_dir: Path):
         self.name = name
         self.src_dir = src_dir
         self.out_dir = out_dir
-        self.extensions = extensions
 
 
-C_EXTENSIONS = {".c"}
-ASM_EXTENSIONS = {".s", ".asm"}
+# single extension list applied to every root - a project may mix C and
+# asm sources (e.g. compiled together into one binary by the gcc backend)
+SOURCE_EXTENSIONS = {".c", ".s", ".asm"}
 
 TEST_ROOTS: list[TestRoot] = [
-    TestRoot("C", bpaths.BENCHES_DIR / bpaths.C_DIRNAME, bpaths.C_BUILD_DIR, C_EXTENSIONS),
-    # Default backend is "gcc" (see DEFAULT_TEST_CONFIG). Assembly usually
-    # needs RARS syntax/runtime - set "compiler": "rars" in this root's
-    # base_config.json (sources/asm/base_config.json) to switch it.
-    TestRoot("asm", bpaths.BENCHES_DIR / bpaths.ASM_DIRNAME, bpaths.ASM_BUILD_DIR, ASM_EXTENSIONS),
+    TestRoot("C", bpaths.BENCHES_DIR / bpaths.C_DIRNAME, bpaths.C_BUILD_DIR),
+    # Default backend is "gcc" (see DEFAULT_TEST_CONFIG). Set
+    # "compiler": "rars" in sources/asm/base_config.json to switch it.
+    TestRoot("asm", bpaths.BENCHES_DIR / bpaths.ASM_DIRNAME, bpaths.ASM_BUILD_DIR),
 ]
 
 DEFAULT_TEST_CONFIG = {
@@ -45,7 +44,7 @@ CONFIG_KEYS = ("stack_size", "imem_size", "dmem_size", "max_cycles", "compiler")
 
 BASE_CONFIG_FILENAME = "base_config.json"   # root-level, e.g. sources/C/base_config.json
 CONFIG_FILENAME = "config.json"             # project-level, inside a project subfolder
-IGNORE_FILENAME = "ignore.json"             # root-level ignore list
+
 PROJECT_PREFIX = "pr_"
 
 IMEM_FILENAME = "imem.bin"
@@ -53,7 +52,7 @@ DMEM_FILENAME = "dmem.bin"
 RESULT_FILENAME = "res.bin"
 
 # RARS backend settings
-RARS_PATH = Path("rars1_6.jar")
+RARS_PATH = bpaths.ROOT_DIR / "bin" / "rars1_6.jar"
 RARS_TIMEOUT_SECONDS = 60
 
 LOG_DIR = bpaths.BUILD_DIR / "logs"
