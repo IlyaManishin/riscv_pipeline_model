@@ -24,5 +24,9 @@
 
     // Which backend compiles tests in this root: "gcc" (default, via
     // riscv_compiler) or "rars" (via RARS, needed for RARS-flavoured asm).
-    // "compiler": "gcc"
+    // "compiler": "gcc",
+
+    // Files/folders (relative to this root) to skip entirely - applies
+    // to loose test files and whole project folders alike.
+    // "ignore": ["deprecated/", "broken_test.c", "wip"]
 }
