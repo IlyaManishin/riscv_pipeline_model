@@ -1,11 +1,15 @@
 import pytest
 from pathlib import Path
+
 from tests_config import *
 from tests.cpu.reports.perf_reports import gen_compare_performance_report
 
 
 @pytest.hookimpl(trylast=True)
 def pytest_sessionfinish(session, exitstatus):
+    build_reports()
+
+def build_reports():
     if not BASE_TRACE_ENABLE:
         return
     

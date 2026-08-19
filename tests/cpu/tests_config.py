@@ -24,7 +24,7 @@ VCD_CLOCK_PERIOD_NS = 10
 SC_TRACE_DIR = TRACE_DIRNAME / "sc"
 PL_TRACE_DIR = TRACE_DIRNAME / "pl"
 
-FULL_PERF_REPORT_COLS = ["cycles", "instructions", "cpi",
+FULL_PERF_REPORT_COLS = ["cycles", "cpi",
                          "stalls", "flushes", "jumps", "jpi", "status"]
 
 COMPACT_PERF_REPORT_COLS = ["cycles", "cpi"]
