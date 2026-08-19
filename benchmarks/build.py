@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import logging
 import shutil
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -36,6 +37,25 @@ RESET = "\033[0m"
 
 def _summary_color(success: int, total: int) -> str:
     return GREEN if total > 0 and success == total else RED
+
+
+# ------------------------------------------------------------------
+# CLI args - e.g. `python build.py test_root=C`
+# ------------------------------------------------------------------
+
+def _parse_args(argv: list[str]) -> dict[str, str]:
+    args = {}
+    for arg in argv:
+        key, sep, value = arg.partition("=")
+        if sep:
+            args[key] = value
+    return args
+
+
+def _select_roots(requested_name: str | None) -> list[cfg.TestRoot]:
+    if not requested_name:
+        return cfg.TEST_ROOTS
+    return [r for r in cfg.TEST_ROOTS if r.name == requested_name]
 
 
 # ------------------------------------------------------------------
@@ -63,6 +83,18 @@ def setup_logger() -> logging.Logger:
 def _write_lines(path: Path, lines: list[str]) -> None:
     content = "\n".join(lines) + ("\n" if lines else "")
     path.write_text(content, encoding="utf-8")
+
+
+def _update_test_roots_file(path: Path, roots: list[cfg.TestRoot]) -> None:
+    """Prepend any root not already listed; leave existing lines untouched."""
+    existing = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
+    existing_set = set(existing)
+
+    new_entries = [f"{root.name}/" for root in roots if f"{root.name}/" not in existing_set]
+    if not new_entries:
+        return
+
+    _write_lines(path, new_entries + existing)
 
 
 # ------------------------------------------------------------------
@@ -112,18 +144,30 @@ def build_root(root: cfg.TestRoot, logger: logging.Logger) -> tuple[int, int]:
 # ------------------------------------------------------------------
 
 def main() -> None:
+    args = _parse_args(sys.argv[1:])
+    requested_root = args.get("test_root")
+    roots = _select_roots(requested_root)
+
+    if requested_root and not roots:
+        available = ", ".join(r.name for r in cfg.TEST_ROOTS) or "(none found)"
+        print(f"{RED}Unknown test_root: {requested_root}{RESET}")
+        print(f"Available roots: {available}")
+        return
+
     logger = setup_logger()
 
     grand_success = 0
     grand_total = 0
 
-    for root in cfg.TEST_ROOTS:
+    for root in roots:
         success, total = build_root(root, logger)
         grand_success += success
         grand_total += total
 
+    # tests_roots.txt: add any root not already listed, keep the rest as-is
     roots_path = bpaths.BUILD_DIR / cfg.TESTS_ROOTS_FILENAME
-    _write_lines(roots_path, [f"{root.name}/" for root in cfg.TEST_ROOTS])
+    bpaths.BUILD_DIR.mkdir(parents=True, exist_ok=True)
+    _update_test_roots_file(roots_path, cfg.TEST_ROOTS)
 
     color = _summary_color(grand_success, grand_total)
     print("=" * 50)

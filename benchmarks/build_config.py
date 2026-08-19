@@ -24,12 +24,22 @@ class TestRoot:
 # asm sources (e.g. compiled together into one binary by the gcc backend)
 SOURCE_EXTENSIONS = {".c", ".s", ".asm"}
 
-TEST_ROOTS: list[TestRoot] = [
-    TestRoot("C", bpaths.BENCHES_DIR / bpaths.C_DIRNAME, bpaths.C_BUILD_DIR),
-    # Default backend is "gcc" (see DEFAULT_TEST_CONFIG). Set
-    # "compiler": "rars" in sources/asm/base_config.json to switch it.
-    TestRoot("asm", bpaths.BENCHES_DIR / bpaths.ASM_DIRNAME, bpaths.ASM_BUILD_DIR),
-]
+def discover_test_roots() -> list[TestRoot]:
+    """Every directory directly under sources/ becomes a test root, named
+    after itself, built into build/<name>/. Default backend for a root
+    can be set via that root's base_config.json ("compiler" key)."""
+    if not bpaths.BENCHES_DIR.exists():
+        return []
+
+    roots = []
+    for entry in sorted(bpaths.BENCHES_DIR.iterdir()):
+        if not entry.is_dir() or entry.name.startswith("."):
+            continue
+        roots.append(TestRoot(entry.name, entry, bpaths.BUILD_DIR / entry.name))
+    return roots
+
+
+TEST_ROOTS: list[TestRoot] = discover_test_roots()
 
 DEFAULT_TEST_CONFIG = {
     "stack_size": riscv_compiler.DEFAULT_STACK_SIZE,
