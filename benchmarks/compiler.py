@@ -31,6 +31,14 @@ def _write_output_config(test: TestCase) -> None:
     payload = dict(test.config)
     payload["sources"] = [f.name for f in test.sources]
 
+    imem_path = test.out_dir / cfg.IMEM_FILENAME
+    if imem_path.exists():
+        payload["imem"] = cfg.IMEM_FILENAME
+
+    dmem_path = test.out_dir / cfg.DMEM_FILENAME
+    if dmem_path.exists():
+        payload["dmem"] = cfg.DMEM_FILENAME
+
     config_path = test.out_dir / cfg.CONFIG_FILENAME
     content = json.dumps(payload, indent=2)
     config_path.write_text(content, encoding="utf-8")

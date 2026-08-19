@@ -58,5 +58,5 @@ RARS_TIMEOUT_SECONDS = 60
 LOG_DIR = bpaths.BUILD_DIR / "logs"
 LOG_FILENAME_FMT = "build_%Y%m%d_%H%M%S.log"
 
-# aggregated list of every built test folder across all roots
-TESTS_LIST_NAME = "tests.lst"
+# top-level list of test root directories (e.g. "C/", "asm/")
+TESTS_ROOTS_FILENAME = "tests_roots.txt"
