@@ -1,0 +1,6 @@
+{
+    "stack_size": 4096,
+    "imem_size": 16384,
+    "dmem_size": 16384,
+    "max_cycles": 100000
+}
