@@ -18,7 +18,7 @@ benchmarks/
 │   ├── logs/                         # One timestamped log file per build run
 │   ├── asm/                          # Built assembly tests + benches.lst
 │   ├── C/                            # Built C tests/projects + benches.lst
-│   └── tests.lst                     # Aggregated list of every built test folder
+│   └── tests_roots.txt               # List of every discovered test root (e.g. "C/", "asm/")
 │
 ├── riscv_linker/                     # Bare-metal C linker
 │   ├── linker/
@@ -70,7 +70,9 @@ Test tracking and execution termination validation rely on a dedicated hardware 
 
 ## 🔍 Test Discovery
 
-Each entry in `sources/` (currently `asm/` and `C/`, listed in `build_config.TEST_ROOTS`) is a **test root**. `test_collect.py` scans a root and produces two kinds of tests:
+**Test roots are discovered automatically.** `build_config.discover_test_roots()` scans `sources/` once at startup: every non-hidden subdirectory found there becomes a test root, named after itself, built into `build/<name>/` (currently `asm/` and `C/` - add another folder under `sources/` and it's picked up on the next run, nothing to register by hand). To exclude something from `sources/` entirely, don't put it there - a folder that shouldn't be scanned as tests doesn't belong under `sources/` in the first place.
+
+Within a test root, `test_collect.py` produces two kinds of tests:
 
 * **Simple test** — a loose source file directly inside the root (e.g. `sources/C/foo.c`). Compiled on its own. Output goes to `build/C/foo/`.
 * **Project test** — a subdirectory inside the root (e.g. `sources/C/my_project/`). All matching source files inside it are discovered recursively and compiled together as one unit (C and asm files may be mixed in the same project). Output goes to `build/C/pr_my_project/` — the `pr_` prefix makes project outputs easy to spot next to simple-test outputs.
@@ -89,11 +91,11 @@ Every test gets an **effective config** made of `stack_size`, `imem_size`, `dmem
 
 Only fields actually present in a config file override the previous level - anything omitted is inherited. See `config_templates/` for every recognized field, documented and commented out.
 
-* **`base_config.json`** (root level) may also set `"ignore"`: a list of files/folders (relative to the root) to skip entirely - both loose test files and whole project folders.
+* **`base_config.json`** (root level) may also set `"ignore"`: a list of files/folders (relative to the root) to skip entirely - both loose test files and whole project folders. This is the only place root-level exclusions live; there is no separate ignore file for `sources/` itself.
 * **`config.json`** (project level) may set `"ignore"` the same way (relative to the project folder), or `"files"` - an explicit list of source files to compile, which bypasses auto-discovery and `"ignore"` entirely.
 * **`"compiler"`** selects the backend: `"gcc"` (default, via `riscv_compiler`) or `"rars"`. It can be set at any of the three levels above, e.g. to make an entire `asm/` suite build with RARS while `C/` stays on gcc, or to flip a single project.
 
-Every successfully built test gets its own `config.json` written into its output folder, containing the effective config that was actually used plus the list of compiled source file names.
+Every successfully built test gets its own `config.json` written into its output folder: the effective config that was actually used, the list of compiled source file names, and - only if the file was actually produced - `"imem"`/`"dmem"` pointing at `imem.bin`/`dmem.bin` in that same folder. A missing key means the file doesn't exist (e.g. no data section was assembled), rather than pointing at a binary that isn't there.
 
 ---
 
@@ -119,13 +121,15 @@ Invokes `bin/rars1_6.jar` directly. `.text` is dumped to `imem.bin` and is the o
 
 ## 📝 Manifest Generation
 
-* **`benches.lst`** — one per test root (e.g. `build/C/benches.lst`), written after every build:
+* **`benches.lst`** — one per test root (e.g. `build/C/benches.lst`), rewritten from scratch after every build of that root:
 
   ```text
-  <test_name>,<relative_path_to_imem>,<relative_path_to_dmem>,<relative_path_to_config>
+  <test_name>,<relative_path_to_config>
   ```
 
-* **`tests.lst`** — one aggregated manifest at `build/tests.lst`, listing the output folder of every successfully built test across all roots (`C/foo`, `C/pr_my_project`, `asm/bar`, ...). A higher-level index on top of the per-root `benches.lst` files.
+  Only the test name and a path to its `config.json` - no imem/dmem paths here anymore, since not every test produces a `dmem.bin`. Read `imem`/`dmem` out of the referenced `config.json` instead (see [Configuration](#-configuration)).
+
+* **`tests_roots.txt`** — one file at `build/tests_roots.txt`, listing every discovered test root (`C/`, `asm/`, ...). Unlike `benches.lst`, it is never rewritten wholesale: each run only *adds* roots it discovered but doesn't find in the file yet (prepended to the top), existing lines are left as-is - so a filtered run (`test_root=C`) doesn't wipe out entries for roots it didn't touch.
 
 Both are parsed natively by test benches (`pytest`) to dynamically parameterize execution targets.
 
@@ -133,16 +137,26 @@ Both are parsed natively by test benches (`pytest`) to dynamically parameterize 
 
 ## 🪵 Logging
 
-Each run of `build.py` writes a timestamped log file to `build/logs/build_<timestamp>.log`. Only failures are logged (successful builds aren't, to keep the log focused), one line per failure with the test name, its kind (`simple`/`project`), the backend that was used, and the error. The console mirrors this with just the failing test's name printed above the progress bar, plus a final `X / Y compiled` summary per root and overall.
+Each run of `build.py` writes a timestamped log file to `build/logs/build_<timestamp>.log`. Only failures are logged (successful builds aren't, to keep the log focused), one line per failure with the test name, its kind (`simple`/`project`), the backend that was used, and the error. The console mirrors this with just the failing test's name printed above the progress bar (bright red), plus a final `X / Y compiled` summary per root and overall (green if everything built, red otherwise). Pass `--errors` to also print each failure's error text in the console, dimmed, right under its name - the log file always has it regardless of this flag.
 
 ---
 
 ## 🚀 Execution
 
-To trigger a full rebuild of every configured test root, run the master script from `benchmarks/`:
+Run the master script from `benchmarks/`:
 
 ```bash
 python build.py
 ```
 
-The script clears each root's `build/<root>/` directory, discovers and compiles every test, prints/logs a live progress bar with per-root and total success counts, and writes out `benches.lst`/`tests.lst`.
+This builds every discovered test root. Optional arguments:
+
+```bash
+python build.py test_root=C          # build only the "C" root
+python build.py --errors             # also print each failure's error text (dimmed) in the console
+python build.py test_root=asm --errors
+```
+
+`test_root=<name>` doesn't change how a root is built - it still reads that root's `base_config.json`/`config.json` exactly like a full run, it just narrows which roots the loop iterates over. An unknown name prints the available roots and exits without building anything.
+
+For each root built, the script clears `build/<root>/`, discovers and compiles every test, prints/logs a live progress bar with a per-root and total success count, and writes out that root's `benches.lst`. `build/tests_roots.txt` is updated (not overwritten) after every run, regardless of `test_root=`.

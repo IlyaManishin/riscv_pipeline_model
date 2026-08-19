@@ -1,13 +1,16 @@
 """
 build.py
 ========
-Entry point. For every root in build_config.TEST_ROOTS:
+Entry point. Usage: `python build.py [test_root=<name>] [--errors]`
+For every root in build_config.TEST_ROOTS (or just the one selected via
+test_root=):
   1. discover tests            (test_collect.collect_tests)
   2. compile each              (compiler.compile_test)
   3. progress bar; print only the failing test's name above it
+     (add --errors to also print the error text, dimmed, right under it)
   4. log full failure reasons (incl. which backend) to a log file
   5. print "X / Y compiled" per root, plus a grand total at the end
-  6. write benches.lst per root, and tests_roots.txt in build/
+  6. write benches.lst per root, and merge into tests_roots.txt in build/
 """
 
 from __future__ import annotations
@@ -31,6 +34,7 @@ from compiler import compile_test
 # ------------------------------------------------------------------
 
 RED = "\033[91m"
+DIM_RED = "\033[2;31m"     # muted - used for error text, lower visual priority than FAILED itself
 GREEN = "\033[32m"
 RESET = "\033[0m"
 
@@ -40,16 +44,20 @@ def _summary_color(success: int, total: int) -> str:
 
 
 # ------------------------------------------------------------------
-# CLI args - e.g. `python build.py test_root=C`
+# CLI args - e.g. `python build.py test_root=C --errors`
 # ------------------------------------------------------------------
 
-def _parse_args(argv: list[str]) -> dict[str, str]:
-    args = {}
+def _parse_args(argv: list[str]) -> tuple[dict[str, str], set[str]]:
+    kwargs: dict[str, str] = {}
+    flags: set[str] = set()
     for arg in argv:
-        key, sep, value = arg.partition("=")
-        if sep:
-            args[key] = value
-    return args
+        if arg.startswith("--"):
+            flags.add(arg[2:])
+        else:
+            key, sep, value = arg.partition("=")
+            if sep:
+                kwargs[key] = value
+    return kwargs, flags
 
 
 def _select_roots(requested_name: str | None) -> list[cfg.TestRoot]:
@@ -102,7 +110,7 @@ def _update_test_roots_file(path: Path, roots: list[cfg.TestRoot]) -> None:
 # Per-root build
 # ------------------------------------------------------------------
 
-def build_root(root: cfg.TestRoot, logger: logging.Logger) -> tuple[int, int]:
+def build_root(root: cfg.TestRoot, logger: logging.Logger, show_errors: bool) -> tuple[int, int]:
     """Builds every test in `root`. Returns (success_count, total_count)."""
     tests = collect_tests(root.src_dir, root.out_dir)
 
@@ -126,6 +134,8 @@ def build_root(root: cfg.TestRoot, logger: logging.Logger) -> tuple[int, int]:
             lst_lines.append(f"{test.name},{config}")
         else:
             tqdm.write(f"{RED}  FAILED: {test.name}{RESET}")
+            if show_errors:
+                tqdm.write(f"{DIM_RED}    {result.error}{RESET}")
             logger.info(
                 f"[{root.name}] FAILED {test.name} ({test.kind}, backend={result.backend}): {result.error}"
             )
@@ -135,7 +145,7 @@ def build_root(root: cfg.TestRoot, logger: logging.Logger) -> tuple[int, int]:
 
     total = len(tests)
     color = _summary_color(success_count, total)
-    print(f"{color}[{root.name}] {success_count} / {total} tests compiled{RESET}\n")
+    print(f"{color}[{root.name}] {success_count} / {total} tests compiled{RESET}")
 
     return success_count, total
 
@@ -145,8 +155,9 @@ def build_root(root: cfg.TestRoot, logger: logging.Logger) -> tuple[int, int]:
 # ------------------------------------------------------------------
 
 def main() -> None:
-    args = _parse_args(sys.argv[1:])
+    args, flags = _parse_args(sys.argv[1:])
     requested_root = args.get("test_root")
+    show_errors = "errors" in flags
     roots = _select_roots(requested_root)
 
     if requested_root and not roots:
@@ -161,7 +172,7 @@ def main() -> None:
     grand_total = 0
 
     for root in roots:
-        success, total = build_root(root, logger)
+        success, total = build_root(root, logger, show_errors)
         grand_success += success
         grand_total += total
 
