@@ -1,6 +1,6 @@
 # RISC-V Test Compilation Subsystem (Benchmarks Builder)
 
-This subsystem provides automated toolchain infrastructure designed to compile, link, and format Assembly (ASM) and C test suites into standalone raw binary images for a Harvard-architecture RISC-V (RV32I) simulation framework.
+This subsystem provides automated toolchain infrastructure designed to discover, compile, link, and format Assembly (ASM) and C test suites into standalone raw binary images for a Harvard-architecture RISC-V (RV32I) simulation framework.
 
 ---
 
@@ -8,26 +8,40 @@ This subsystem provides automated toolchain infrastructure designed to compile, 
 
 ```text
 benchmarks/
-├── sources/               # Source files of the test suites
-│   ├── asm/               # Raw assembly tests (.s, .S, .asm)
-│   └── C/                 # Target C source benchmarks (.c)
+├── sources/                          # Source files of the test suites
+│   ├── asm/                          # Raw assembly tests (.s, .asm)
+│   │   └── base_config.json          # (optional) root-level defaults/ignore for this suite
+│   └── C/                            # C source benchmarks (.c)
+│       └── base_config.json          # (optional) root-level defaults/ignore for this suite
 │
-├── build/                 # Generated binary artifacts (automated)
-│   ├── asm/               # Formatted binaries for assembly tests
-│   └── C/                 # Formatted binaries for C benchmarks
+├── build/                            # Generated binary artifacts (automated, gitignored)
+│   ├── logs/                         # One timestamped log file per build run
+│   ├── asm/                          # Built assembly tests + benches.lst
+│   ├── C/                            # Built C tests/projects + benches.lst
+│   └── tests.lst                     # Aggregated list of every built test folder
 │
-├── riscv_linker/          # Bare-metal C linker
+├── riscv_linker/                     # Bare-metal C linker
 │   ├── linker/
-│   │   ├── riscv.ld       # Linker script defining memory topology
-│   │   └── start.s        # CRT0 assembly initialization routine
-│   └── Makefile           # GNU Cross-Compiler compilation orchestration
+│   │   ├── riscv.ld                  # Linker script defining memory topology
+│   │   └── start.s                   # CRT0 assembly initialization routine
+│   └── riscv_compiler.py             # gcc-based compile/link/objcopy pipeline
 │
-├── build_paths.py         # Centralized project path mapping
-├── build.py               # Master build
-├── c_compiler.py          # Compilation  driver for C scripts
-├── RARS_compiler.py        # Compilation driver for ASM scripts
-└── rars1_6.jar            # RARS (RISC-V Assembler and Runtime Simulator)
-
+├── bin/
+│   └── rars1_6.jar                   # RARS (RISC-V Assembler and Runtime Simulator)
+│
+├── config_templates/                 # Documentation-only templates (not read by the code)
+│   ├── base_config.template.jsonc    # every recognized root-level field, commented out
+│   └── config.template.jsonc         # every recognized project-level field, commented out
+│
+├── legacy /                          # Deprecated scripts, kept for reference only
+│   └── RARS_compiler.py              # superseded by compiler.py's "rars" backend
+│
+├── build_paths.py                    # Centralized project path mapping
+├── build_config.py                   # All tunable build parameters (single source of truth)
+├── test_collect.py                   # Test discovery: scans a root, resolves config, returns TestCase list
+├── compiler.py                       # Compiles a TestCase via the "gcc" or "rars" backend
+├── build.py                          # Master build - entry point
+└── README.md
 ```
 
 ---
@@ -36,16 +50,13 @@ benchmarks/
 
 The build system strictly segregates compiled test execution spaces to comply with a Harvard-architecture memory organization. Output images are cleaved into two independent, unformatted byte streams:
 
-1. **Instruction Memory (`imem.bin`)** Contains the executable `.text` segment.
-* Base Address (`ORIGIN`): `0x40000000`
-* Base Capacity (`LENGTH`): `32 KB` (32768 bytes)
+1. **Instruction Memory (`imem.bin`)** — the executable `.text` segment.
+   * Base Address (`ORIGIN`): `0x40000000`
+   * Base Capacity (`LENGTH`): `32 KB` (32768 bytes) by default, overridable per test (see [Configuration](#-configuration)).
 
-
-2. **Data Memory (`dmem.bin`)** Consolidates static data allocations, literal pools, initialized variables, uninitialized blocks, and runtime stack spaces (`.rodata`, `.data`, `.sdata`, `.bss`).
-* Base Address (`ORIGIN`): `0x80000000`
-* Base Capacity (`LENGTH`): `16 KB` (16384 bytes)
-
-
+2. **Data Memory (`dmem.bin`)** — static data allocations, literal pools, initialized/uninitialized variables, and the runtime stack (`.rodata`, `.data`, `.sdata`, `.bss`).
+   * Base Address (`ORIGIN`): `0x80000000`
+   * Base Capacity (`LENGTH`): `16 KB` (16384 bytes) by default, overridable per test.
 
 ### 🏁 Architectural Verification Protocol (Signature)
 
@@ -57,47 +68,81 @@ Test tracking and execution termination validation rely on a dedicated hardware 
 
 ---
 
-## 🛠️ Compilation Pipelines
+## 🔍 Test Discovery
 
-### 1. Assembly compile (`RARS_compiler.py`)
+Each entry in `sources/` (currently `asm/` and `C/`, listed in `build_config.TEST_ROOTS`) is a **test root**. `test_collect.py` scans a root and produces two kinds of tests:
 
-* Recursively enumerates source files within `sources/asm/`.
-* Invokes the `RARS` assembler command-line interface.
-* Extracts the `.text` segment in raw binary (`Binary`) representation to generate `imem.bin`.
-* Empties or discards unutilized memory segments if data structures are omitted.
+* **Simple test** — a loose source file directly inside the root (e.g. `sources/C/foo.c`). Compiled on its own. Output goes to `build/C/foo/`.
+* **Project test** — a subdirectory inside the root (e.g. `sources/C/my_project/`). All matching source files inside it are discovered recursively and compiled together as one unit (C and asm files may be mixed in the same project). Output goes to `build/C/pr_my_project/` — the `pr_` prefix makes project outputs easy to spot next to simple-test outputs.
 
-### 2. C compile (`c_compiler.py`)
+Recognized source extensions are defined once, for every root, in `build_config.SOURCE_EXTENSIONS` (`.c`, `.s`, `.asm`).
 
-Compiling high-level C programs down to target execution binaries utilizes a `riscv64-unknown-elf-gcc` cross-compilation pipeline:
+---
 
-* **Low-Level Initialization (`start.s`)**: Establishes the execution entry point (`_start`). Configures the global pointer (`gp` using `__global_pointer$`) and seeds the stack pointer (`sp` targeting `__stack_top`). Executes an unrolled initialization loop to clear (zero-initialize) the static `BSS` memory boundary prior to calling `main`.
-* **Linker Distribution (`riscv.ld`)**: Explicitly controls memory section alignment. Sets an isolated hardware stack space boundary (`STACK_SIZE = 128 bytes`) at the top boundary of `dmem`.
-* **Binary Extraction (`Makefile`)**: Compiles the source unit alongside the runtime assembly file utilizing optimization and isolation flags (`-ffreestanding -nostdlib`). Employs `objcopy` to isolate memory spaces:
-* `-j .text` isolates the instruction stream to produce `imem.bin`.
-* `-R .text` masks out the instruction stream to pack all data structures into `dmem.bin`.
+## 🧩 Configuration
 
+Every test gets an **effective config** made of `stack_size`, `imem_size`, `dmem_size`, `max_cycles`, and `compiler`. It is resolved by merging, in increasing priority:
 
+1. built-in defaults (`build_config.DEFAULT_TEST_CONFIG`)
+2. `base_config.json` at the root of a test suite (e.g. `sources/C/base_config.json`)
+3. `config.json` inside a project folder (project tests only)
 
-### 📝 Manifest Generation (`benches.lst`)
+Only fields actually present in a config file override the previous level - anything omitted is inherited. See `config_templates/` for every recognized field, documented and commented out.
 
-Upon a validated build cycle, the compiler utilities emit a standardized test manifest (`benches.lst`) within the respective target deployment folders:
+* **`base_config.json`** (root level) may also set `"ignore"`: a list of files/folders (relative to the root) to skip entirely - both loose test files and whole project folders.
+* **`config.json`** (project level) may set `"ignore"` the same way (relative to the project folder), or `"files"` - an explicit list of source files to compile, which bypasses auto-discovery and `"ignore"` entirely.
+* **`"compiler"`** selects the backend: `"gcc"` (default, via `riscv_compiler`) or `"rars"`. It can be set at any of the three levels above, e.g. to make an entire `asm/` suite build with RARS while `C/` stays on gcc, or to flip a single project.
 
-```text
-<test_identifier>,<relative_path_to_imem>,<relative_path_to_dmem>
+Every successfully built test gets its own `config.json` written into its output folder, containing the effective config that was actually used plus the list of compiled source file names.
 
-```
+---
 
-This structured record layout is parsed natively by test benches (`pytest`) to dynamically parameterize execution targets.
+## 🛠️ Compilation Backends (`compiler.py`)
+
+`compiler.py` exposes a single entry point, `compile_test(test)`, which dispatches to one of two backends based on the test's effective `"compiler"` value.
+
+### `gcc` backend (default)
+
+Uses `riscv_linker/riscv_compiler.py`, a `riscv64-unknown-elf-gcc` cross-compilation pipeline:
+
+* **Low-Level Initialization (`start.s`)**: Establishes the execution entry point (`_start`), sets up `gp`/`sp`, and zero-initializes `.bss` before calling `main`.
+* **Linker Script (`riscv.ld`)**: Controls memory section alignment and stack placement, parameterized by the effective `stack_size`/`imem_size`/`dmem_size`.
+* **Binary Extraction**: Compiles with `-ffreestanding -nostdlib` and uses `objcopy` to split the output: `-j .text` → `imem.bin`, `-R .text` → `dmem.bin` (best-effort - a project with no data segment simply won't get a `dmem.bin`).
+
+### `rars` backend
+
+Invokes `bin/rars1_6.jar` directly. `.text` is dumped to `imem.bin` and is the only required output - a real assembly error is detected by its absence. `.data` is dumped to `dmem.bin` on a best-effort basis: many asm tests have no data section, and RARS refusing to dump an empty segment is not treated as a build failure.
+
+> RARS provides its own runtime (`ecall` syscalls, its own pseudo-op dialect) that the gcc/bare-metal pipeline does not implement. Sources written against RARS-specific behaviour should stay on the `rars` backend; only switch a suite to `gcc` after confirming it doesn't depend on that runtime.
+
+---
+
+## 📝 Manifest Generation
+
+* **`benches.lst`** — one per test root (e.g. `build/C/benches.lst`), written after every build:
+
+  ```text
+  <test_name>,<relative_path_to_imem>,<relative_path_to_dmem>,<relative_path_to_config>
+  ```
+
+* **`tests.lst`** — one aggregated manifest at `build/tests.lst`, listing the output folder of every successfully built test across all roots (`C/foo`, `C/pr_my_project`, `asm/bar`, ...). A higher-level index on top of the per-root `benches.lst` files.
+
+Both are parsed natively by test benches (`pytest`) to dynamically parameterize execution targets.
+
+---
+
+## 🪵 Logging
+
+Each run of `build.py` writes a timestamped log file to `build/logs/build_<timestamp>.log`. Only failures are logged (successful builds aren't, to keep the log focused), one line per failure with the test name, its kind (`simple`/`project`), the backend that was used, and the error. The console mirrors this with just the failing test's name printed above the progress bar, plus a final `X / Y compiled` summary per root and overall.
 
 ---
 
 ## 🚀 Execution
 
-To trigger an isolated rebuild of the entire validation framework, run the master orchestration script from the execution context:
+To trigger a full rebuild of every configured test root, run the master script from `benchmarks/`:
 
 ```bash
 python build.py
-
 ```
 
-The script automatically flushes obsolete artifact directories inside `build/`, executes the compilation routines sequentially, handles error diagnostics via terminal feedback loops, and exports the structural verification manifests.
+The script clears each root's `build/<root>/` directory, discovers and compiles every test, prints/logs a live progress bar with per-root and total success counts, and writes out `benches.lst`/`tests.lst`.
