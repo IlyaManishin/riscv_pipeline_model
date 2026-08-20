@@ -25,7 +25,7 @@ from tqdm import tqdm
 
 import build_config as cfg
 import build_paths as bpaths
-from test_collect import collect_tests
+from benchmarks.collect_utils import collect_tests
 from compiler import compile_test
 
 
