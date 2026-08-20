@@ -74,13 +74,13 @@ class Core:
         self.dmem_byte_we = 0
 
     # ---------------------------------------------------------------------
-    # FETCH ADDRESS FROM PC
+    # STAGE 1: FETCH ADDRESS FROM PC
     # ---------------------------------------------------------------------
     def get_imem_addr(self) -> int:
         return self.pc_inst.read()
 
     # ---------------------------------------------------------------------
-    # STAGE 1: DECODE/REGISTER_FETCH + EXECUTE
+    # STAGE 2: DECODE/REGISTER_FETCH + EXECUTE
     # ---------------------------------------------------------------------
     def dec_exec_alu(self, instr_raw: int) -> DMemAccessData:
         self.instr = conf.Instruction(instr_raw)
@@ -146,7 +146,7 @@ class Core:
         )
 
     # ---------------------------------------------------------------------
-    # STAGE 2: SEQUENTIAL LOGIC & WRITE-BACK (Clock step)
+    # STAGE 3: WRITE-BACK (Clock step)
     # ---------------------------------------------------------------------
     def write_back_comb(self, dmem_data_in: int) -> None:
 
