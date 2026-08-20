@@ -3,5 +3,6 @@
     "imem_size": 4096,
     "dmem_size": 4096,
     "max_cycles": 20000,
-    "compiler": "gcc"
+    "compiler": "gcc",
+    "ignore" : ["include/"]
 }

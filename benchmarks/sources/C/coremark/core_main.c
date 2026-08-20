@@ -21,6 +21,7 @@ Original Author: Shay Gal-on
    initial parameters, tun t he benchmark and report the results.
 */
 #include "include/coremark.h"
+#include "../include/c_tests.h"
 
 /* Function: iterate
         Run the benchmark for a specified number of iterations.
@@ -257,6 +258,7 @@ for (i = 0; i < MULTITHREAD; i++)
             divisor = 1;
         results[0].iterations *= 1 + 10 / divisor;
     }
+    results[0].iterations = 1;
     /* perform actual benchmark */
     start_time();
 #if (MULTITHREAD > 1)
@@ -363,9 +365,8 @@ for (i = 0; i < MULTITHREAD; i++)
 #endif
     if (time_in_secs(total_time) < 10)
     {
-        ee_printf(
-            "ERROR! Must execute for at least 10 secs for a valid result!\n");
-        total_errors++;
+        // ee_printf("ERROR! Must execute for at least 10 secs for a valid result!\n");
+        // total_errors++;
     }
 
     ee_printf("Iterations       : %lu\n",
@@ -421,12 +422,16 @@ for (i = 0; i < MULTITHREAD; i++)
             "Cannot validate operation for these seed values, please compare "
             "with results on a known platform.\n");
 
-#if (MEM_METHOD == MEM_MALLOC)
-    for (i = 0; i < MULTITHREAD; i++)
-        portable_free(results[i].memblock[0]);
-#endif
-    /* And last call any target specific code for finalizing */
-    portable_fini(&(results[0].port));
+    // finish test
+    bool is_succ = (total_errors == 0);
+    TEST_FINISH(is_succ);
+
+// #if (MEM_METHOD == MEM_MALLOC)
+//     for (i = 0; i < MULTITHREAD; i++)
+//         portable_free(results[i].memblock[0]);
+// #endif
+//     /* And last call any target specific code for finalizing */
+//     portable_fini(&(results[0].port));
 
     return MAIN_RETURN_VAL;
 }
