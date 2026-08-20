@@ -17,7 +17,7 @@ from pathlib import Path
 
 import build_config as cfg
 from riscv_linker import riscv_compiler
-from benchmarks.collect_utils import TestCase
+from collect_utils import TestCase
 
 
 @dataclass
