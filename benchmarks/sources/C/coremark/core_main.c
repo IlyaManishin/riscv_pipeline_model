@@ -20,8 +20,8 @@ Original Author: Shay Gal-on
         This file contains the framework to acquire a block of memory, seed
    initial parameters, tun t he benchmark and report the results.
 */
-#include "include/coremark.h"
 #include "../include/c_tests.h"
+#include "include/coremark.h"
 
 /* Function: iterate
         Run the benchmark for a specified number of iterations.
@@ -426,12 +426,12 @@ for (i = 0; i < MULTITHREAD; i++)
     bool is_succ = (total_errors == 0);
     TEST_FINISH(is_succ);
 
-// #if (MEM_METHOD == MEM_MALLOC)
-//     for (i = 0; i < MULTITHREAD; i++)
-//         portable_free(results[i].memblock[0]);
-// #endif
-//     /* And last call any target specific code for finalizing */
-//     portable_fini(&(results[0].port));
+    // #if (MEM_METHOD == MEM_MALLOC)
+    //     for (i = 0; i < MULTITHREAD; i++)
+    //         portable_free(results[i].memblock[0]);
+    // #endif
+    //     /* And last call any target specific code for finalizing */
+    //     portable_fini(&(results[0].port));
 
     return MAIN_RETURN_VAL;
 }

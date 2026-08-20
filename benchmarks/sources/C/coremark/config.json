@@ -1,6 +1,6 @@
 {
-    "stack_size": 8192,
-    "imem_size": 32768,
-    "dmem_size": 32768,
-    "max_cycles": 100000
+    "stack_size": 16384,
+    "imem_size": 65536,
+    "dmem_size": 65536,
+    "max_cycles": 5000000
 }
