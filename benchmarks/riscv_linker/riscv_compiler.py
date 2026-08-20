@@ -16,32 +16,55 @@ RES_DIR      = SCRIPT_DIR / "result"
 START_SCRIPT = LINKER_DIR / "start.s"
 LINKER       = LINKER_DIR / "riscv.ld"
 
-SRC          = "test.c"
+SRC          = ["test.c", "utils.c"]
 OUT_NAME     = "res"
 
 #--------------------------VARS-------------------------------
 CC           = "riscv64-unknown-elf-gcc"
 OBJCOPY      = "riscv64-unknown-elf-objcopy"
 
+DEFAULT_IMEM_SIZE  = 2**12
+DEFAULT_DMEM_SIZE  = 2**12
+DEFAULT_STACK_SIZE = 2**9
+
 RISC32_FLAGS = ["-march=rv32i", "-mabi=ilp32", "-save-temps"]
 COMPR_FLAGS  = [
     "-ffreestanding", "-nostdlib", "-ffunction-sections",
     "-fdata-sections", "-fno-asynchronous-unwind-tables", "-fno-unwind-tables"
 ]
-LDFLAGS      = ["-T", str(LINKER), "-Wl,--gc-sections"]
 
 
 # ===============================================================
 # COMPILING
 # ===============================================================
 
-def compile_riscv(src_file: str | Path, target_dir: str | Path = RES_DIR) -> bool:
-    src = Path(src_file).resolve()
+def compile_riscv(
+    src_files: list[str | Path] | str | Path,
+    target_dir: str | Path = RES_DIR,
+    imem_size: int = DEFAULT_IMEM_SIZE,
+    dmem_size: int = DEFAULT_DMEM_SIZE,
+    stack_size: int = DEFAULT_STACK_SIZE
+) -> bool:
+    # normalize src_files into a list of absolute resolved Paths
+    if isinstance(src_files, (str, Path)):
+        src_list = [Path(src_files).resolve()]
+    else:
+        src_list = [Path(f).resolve() for f in src_files]
+
     res_dir = Path(target_dir)    
 
     out  = res_dir / OUT_NAME
     imem = res_dir / "imem.bin"
     dmem = res_dir / "dmem.bin"
+
+    # dynamic linker arguments for memory configuration
+    ldflags = [
+        "-T", str(LINKER),
+        "-Wl,--gc-sections",
+        f"-Wl,--defsym,IMEM_SIZE={imem_size}",
+        f"-Wl,--defsym,DMEM_SIZE={dmem_size}",
+        f"-Wl,--defsym,STACK_SIZE={stack_size}"
+    ]
 
     if res_dir.exists():
         for f in res_dir.glob("*"):
@@ -55,7 +78,8 @@ def compile_riscv(src_file: str | Path, target_dir: str | Path = RES_DIR) -> boo
     TEMPS_DIR.mkdir(parents=True, exist_ok=True)
 
     temp_out = TEMPS_DIR / OUT_NAME
-    cc_cmd = [CC] + RISC32_FLAGS + COMPR_FLAGS + LDFLAGS + [str(src), str(START_SCRIPT), "-o", str(temp_out)]
+    src_cmd_args = [str(f) for f in src_list]
+    cc_cmd = [CC] + RISC32_FLAGS + COMPR_FLAGS + ldflags + src_cmd_args + [str(START_SCRIPT), "-o", str(temp_out)]
     
     res = subprocess.run(cc_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     if res.returncode != 0:

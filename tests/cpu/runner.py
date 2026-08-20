@@ -1,21 +1,21 @@
-from pathlib import Path
 from typing import Optional
+from pathlib import Path
 import pytest
 
 from risc_v.base.icpu_system import ICpuSystem
 from tracers.base_tracers import BaseTracer
 from tests.cpu.tests_config import *
-from benchmarks.build_paths import TEST_LIST_NAME
+from benches import CpuTestConfig
 
 
 # ============================================================
 # BINARY UTILITIES
 # ============================================================
 
-def load_bin_file(filename: str) -> list[int]:
+def load_bin_file(file_path: Path) -> list[int]:
     result = []
 
-    with open(filename, "rb") as f:
+    with open(file_path, "rb") as f:
         while True:
             chunk = f.read(4)
             if not chunk:
@@ -31,13 +31,13 @@ def load_bin_file(filename: str) -> list[int]:
 
 def load_program(
     cpu: ICpuSystem,
-    text_file: str,
-    data_file: Optional[str],
+    text_path: Path,
+    data_path: Optional[Path],
 ) -> None:
-    cpu.imem.load_program(load_bin_file(text_file))
+    cpu.imem.load_program(load_bin_file(text_path))
 
-    if data_file is not None:
-        cpu.dmem.load_data(load_bin_file(data_file))
+    if data_path is not None:
+        cpu.dmem.load_data(load_bin_file(data_path))
 
 
 # ============================================================
@@ -46,11 +46,12 @@ def load_program(
 
 def execute_program(
     cpu: ICpuSystem,
-    tracers: list[BaseTracer]
+    tracers: list[BaseTracer],
+    max_cycles: int
 ) -> None:
     try:
         # Main clock cycle loop
-        for cycle in range(TIMEOUT_ITERATIONS):
+        for cycle in range(max_cycles):
             cpu.step()
 
             for tracer in tracers:
@@ -70,70 +71,28 @@ def execute_program(
 
             raise ValueError(f"Invalid RF_DBG value: {rf_dbg:#x}")
 
-        pytest.fail(f"Timeout ({TIMEOUT_ITERATIONS} cycles)")
+        pytest.fail(f"Timeout ({max_cycles} cycles)")
 
     finally:
-        tracer.close()
+        # Close all tracers appropriately
+        for tracer in tracers:
+            tracer.close()
 
 
 def run_program(
     cpu: ICpuSystem,
     tracers: list[BaseTracer],
-    test_name: str,
-    text_file: str,
-    data_file: Optional[str],
+    test_config: CpuTestConfig
 ) -> None:
-    load_program(cpu, text_file, data_file)
+    load_program(cpu, test_config.imem_path, test_config.dmem_path)
 
     for tracer in tracers:
-        tracer.on_test_start(test_name)
+        tracer.on_test_start(test_config.name)
 
     passed = False
     try:
-        execute_program(cpu, tracers)
+        execute_program(cpu, tracers, test_config.max_cycles)
         passed = True
     finally:
         for tracer in tracers:
             tracer.on_test_end(passed)
-
-
-# ============================================================
-# TEST DISCOVERY
-# ============================================================
-
-def collect_tests(tests_dir: Path) -> list[tuple[str, str, Optional[str]]]:
-    list_file = tests_dir / TEST_LIST_NAME
-    if not list_file.exists():
-        raise FileNotFoundError(list_file)
-
-    result = []
-
-    with open(list_file, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-
-            # Parse structural record fields
-            parts = [p.strip() for p in line.split(",")]
-            test_name = parts[0]
-            imem_path = tests_dir / parts[1]
-
-            dmem_path = None
-            if len(parts) > 2 and parts[2]:
-                dmem_path = tests_dir / parts[2]
-
-            if not imem_path.exists():
-                raise FileNotFoundError(imem_path)
-            if dmem_path and not dmem_path.exists():
-                raise FileNotFoundError(dmem_path)
-
-            result.append(
-                (
-                    test_name,
-                    str(imem_path),
-                    str(dmem_path) if dmem_path is not None else None,
-                )
-            )
-
-    return result

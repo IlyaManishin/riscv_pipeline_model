@@ -1,0 +1,32 @@
+// base_config.template.jsonc
+//
+// Root-level config for a test root (e.g. sources/C/base_config.json).
+// Applies as defaults to every test under that root; a project's own
+// config.json can override any of these per-project.
+//
+// This file is documentation only (JSON does not support comments) -
+// copy the fields you need into a real base_config.json without the
+// comments and with values uncommented.
+
+{
+    // Stack size in bytes, passed to the linker as STACK_SIZE.
+    // "stack_size": 512,
+
+    // Instruction memory (imem) size in bytes.
+    // "imem_size": 4096,
+
+    // Data memory (dmem) size in bytes.
+    // "dmem_size": 4096,
+
+    // Max simulator cycles before a test is considered timed out/failed
+    // by the test runner (not used by the compiler itself).
+    // "max_cycles": 1000000,
+
+    // Which backend compiles tests in this root: "gcc" (default, via
+    // riscv_compiler) or "rars" (via RARS, needed for RARS-flavoured asm).
+    // "compiler": "gcc",
+
+    // Files/folders (relative to this root) to skip entirely - applies
+    // to loose test files and whole project folders alike.
+    // "ignore": ["deprecated/", "broken_test.c", "wip"]
+}
