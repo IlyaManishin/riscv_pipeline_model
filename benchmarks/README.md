@@ -95,7 +95,7 @@ Only fields actually present in a config file override the previous level - anyt
 * **`config.json`** (project level) may set `"ignore"` the same way (relative to the project folder), or `"files"` - an explicit list of source files to compile, which bypasses auto-discovery and `"ignore"` entirely.
 * **`"compiler"`** selects the backend: `"gcc"` (default, via `riscv_compiler`) or `"rars"`. It can be set at any of the three levels above, e.g. to make an entire `asm/` suite build with RARS while `C/` stays on gcc, or to flip a single project.
 
-Every successfully built test gets its own `config.json` written into its output folder: the effective config that was actually used, the list of compiled source file names, and - only if the file was actually produced - `"imem"`/`"dmem"` pointing at `imem.bin`/`dmem.bin` in that same folder. A missing key means the file doesn't exist (e.g. no data section was assembled), rather than pointing at a binary that isn't there.
+Every successfully built test gets its own `config.json` written into its output folder: the effective config that was actually used, the list of compiled source files as paths relative to the test's own folder (so a project's nested layout, e.g. `core/algo.c`, is preserved rather than flattened to a bare filename), and - only if the file was actually produced - `"imem"`/`"dmem"` pointing at `imem.bin`/`dmem.bin` in that same folder. A missing key means the file doesn't exist (e.g. no data section was assembled), rather than pointing at a binary that isn't there.
 
 ---
 

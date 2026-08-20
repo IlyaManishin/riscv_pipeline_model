@@ -19,6 +19,7 @@ class TestCase:
     name: str                  # output dir name (pr_-prefixed for projects)
     kind: str                  # "simple" | "project"
     sources: list[Path]
+    src_dir: Path              # sources are reported relative to this in config.json
     out_dir: Path
     config: dict = field(default_factory=dict)
 
@@ -128,6 +129,7 @@ def collect_tests(root: Path, out_root: Path) -> list[TestCase]:
                 name=name,
                 kind="simple",
                 sources=[entry],
+                src_dir=root,
                 out_dir=out_root / name,
                 config=effective,
             ))
@@ -141,6 +143,7 @@ def collect_tests(root: Path, out_root: Path) -> list[TestCase]:
                 name=name,
                 kind="project",
                 sources=sources,          # may be empty -> reported as failure downstream
+                src_dir=entry,
                 out_dir=out_root / name,
                 config=effective,
             ))

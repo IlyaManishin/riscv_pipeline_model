@@ -29,7 +29,7 @@ class CompileResult:
 
 def _write_output_config(test: TestCase) -> None:
     payload = dict(test.config)
-    payload["sources"] = [f.name for f in test.sources]
+    payload["sources"] = [str(f.relative_to(test.src_dir)) for f in test.sources]
 
     imem_path = test.out_dir / cfg.IMEM_FILENAME
     if imem_path.exists():
