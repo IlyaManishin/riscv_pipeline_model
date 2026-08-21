@@ -1,0 +1,29 @@
+from pathlib import Path
+
+from tests_config import *
+from .perf_reports import gen_compare_performance_report
+
+def build_reports():
+    if not BASE_TRACE_ENABLE:
+        return
+    
+    summary_inputs = {
+        "sc": Path(SC_TRACE_DIR) / PERF_SUMMARY_NAME,
+        "pl": Path(PL_TRACE_DIR) / PERF_SUMMARY_NAME,
+    }
+
+    full_report_path = Path(TRACE_DIRNAME) / "global_performance_report.csv"
+    compact_report_path = Path(TRACE_DIRNAME) / \
+        "global_performance_compact_report.csv"
+
+    gen_compare_performance_report(
+        summaries=summary_inputs,
+        output_path=full_report_path,
+        columns=FULL_PERF_REPORT_COLS
+    )
+
+    gen_compare_performance_report(
+        summaries=summary_inputs,
+        output_path=compact_report_path,
+        columns=COMPACT_PERF_REPORT_COLS
+    )

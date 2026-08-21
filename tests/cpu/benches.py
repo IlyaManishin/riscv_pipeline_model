@@ -17,6 +17,7 @@ class CpuTestConfig:
     dmem_size: int
     max_cycles: int
     imem_path: Path
+    duration_scale: int = 1
     dmem_path: Optional[Path] = None
 
 # ============================================================
@@ -70,6 +71,8 @@ def _load_test_config(test_name: str, config_path: Path) -> CpuTestConfig:
     if dmem_path and not dmem_path.exists():
         raise FileNotFoundError(f"DMEM file missing: {dmem_path}")
 
+    duration_scale = int(cfg_data["duration_scale"])
+
     return CpuTestConfig(
         name=test_name,
         config_path=config_path,
@@ -77,6 +80,7 @@ def _load_test_config(test_name: str, config_path: Path) -> CpuTestConfig:
         dmem_size=int(cfg_data["dmem_size"]),
         max_cycles=int(cfg_data["max_cycles"]),
         imem_path=imem_path,
+        duration_scale=duration_scale,
         dmem_path=dmem_path
     )
 

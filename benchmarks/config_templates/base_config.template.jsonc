@@ -26,6 +26,10 @@
     // riscv_compiler) or "rars" (via RARS, needed for RARS-flavoured asm).
     // "compiler": "gcc",
 
+    // Estimated test execution duration rating from 1 to 5
+    // (1 = fast/short, 3 = medium, 5 = very long). Defaults to 1 if omitted.
+    // "duration_scale": 1,
+
     // Files/folders (relative to this root) to skip entirely - applies
     // to loose test files and whole project folders alike.
     // "ignore": ["deprecated/", "broken_test.c", "wip"]
