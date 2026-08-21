@@ -1,5 +1,4 @@
 import pytest
-from typing import Optional
 
 from risc_v.base.icpu_system import ICpuSystem
 from models.pipeline import cpu_system as pl_cpu_system

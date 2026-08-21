@@ -14,3 +14,4 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src", ""]
+pytest_plugins = ["tests.conftest"]
