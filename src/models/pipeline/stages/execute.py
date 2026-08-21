@@ -28,6 +28,9 @@ class Execute:
         self.alu_out: int = 0
         self.pc4: int = 0
 
+        self.is_stall: bool = False
+        self.is_flush: bool = False
+
     def update(self):
         # ===== Operand Read =====
         rd1 = self.buff_id_ex.rf_rd1.read()
@@ -72,10 +75,23 @@ class Execute:
         self.jfexe_M.set(self.jfexe)
         self.jfpc_M.set(self.jfpc)
 
+        self.is_stall = False
+        self.is_flush = False
+
+    def stall(self):
+        # flush has higher priority
+        if self.is_flush:
+            return
+
+        self.buff_ex_mem.stall()
+        self.is_stall = True
+
     def flush(self):
         self.buff_ex_mem.flush()
         self.jfexe_M.set(False)
-        self.jfpc_M.set(0) # not necessery
+        self.jfpc_M.set(0)
+        
+        self.is_flush = True
 
     def rst(self):
         self.flush()

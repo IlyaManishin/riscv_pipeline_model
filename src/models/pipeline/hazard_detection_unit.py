@@ -100,14 +100,19 @@ class Hazard_Detection_Unit:
         # ===== Control Hazards (branch / jump redirect) =====
 
         # jfexe_M: JALR target was resolved in Execute
-        if self.stage_execute.jfexe_M.read():
+        jfexe_M_val = self.stage_execute.jfexe_M.read()
+        if jfexe_M_val:
             self.stage_decode.flush()
             self.stage_execute.flush()
-            return
 
         # jfid_E: branch/jal outcome was resolved in Decode
-        if self.stage_decode.jfid_E.read():
+        jfid_E_val = self.stage_decode.jfid_E.read()
+        if jfid_E_val:
             self.stage_decode.flush()
+
+        # jfid_E and jfexe_M ignore RAW hazards because decode stage already has been flushed
+        is_control_hazard = jfid_E_val or jfexe_M_val
+        if is_control_hazard:
             return
 
         # ===== Data Hazards (RAW) =====
