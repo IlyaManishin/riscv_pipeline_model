@@ -1,3 +1,4 @@
 {
-    "compiler": "rars"
+    "compiler": "rars",
+    "duration_scale" : 1
 }

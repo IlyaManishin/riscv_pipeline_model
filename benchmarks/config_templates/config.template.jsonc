@@ -14,6 +14,7 @@
     // "dmem_size": 8192,
     // "max_cycles": 2000000,
     // "compiler": "gcc",
+    // "duration_scale": 1,
 
     // Explicit file list (relative to this project folder). If set,
     // auto-discovery and "ignore" below are skipped entirely.

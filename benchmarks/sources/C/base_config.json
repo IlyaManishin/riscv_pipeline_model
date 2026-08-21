@@ -4,5 +4,6 @@
     "dmem_size": 4096,
     "max_cycles": 20000,
     "compiler": "gcc",
-    "ignore" : ["include/"]
+    "ignore" : ["include/"],
+    "duration_scale" : 2
 }

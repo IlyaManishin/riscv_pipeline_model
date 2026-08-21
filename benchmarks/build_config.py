@@ -47,10 +47,11 @@ DEFAULT_TEST_CONFIG = {
     "dmem_size": riscv_compiler.DEFAULT_DMEM_SIZE,
     "max_cycles": 1_000_000,
     "compiler": "gcc",   # "gcc" (riscv_compiler) or "rars"
+    "duration_scale": 1, # estimated test duration scale (1..5: 1 = fast, 5 = very long)
 }
 
 # keys recognized in config files and forwarded into a test's effective config
-CONFIG_KEYS = ("stack_size", "imem_size", "dmem_size", "max_cycles", "compiler")
+CONFIG_KEYS = ("stack_size", "imem_size", "dmem_size", "max_cycles", "compiler", "duration_scale")
 
 BASE_CONFIG_FILENAME = "base_config.json"   # root-level, e.g. sources/C/base_config.json
 CONFIG_FILENAME = "config.json"             # project-level, inside a project subfolder
