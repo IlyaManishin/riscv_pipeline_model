@@ -28,8 +28,9 @@ class Fetch:
         self.pc: int = 0
         self.pc_next: int = 0
         self.is_pc_stall: bool = False
+
         self.is_stall: bool = False
-        
+        self.is_flush: bool = False
 
     def update(self) -> None:
         # ===== Branch/Jump Mux =====
@@ -56,8 +57,9 @@ class Fetch:
         self.valid = True
         self.buff_if_id.pc.set(self.pc_next)
         self.buff_if_id.valid.set(self.valid)
-        self.is_stall = False
         
+        self.is_stall = False
+        self.is_flush = False
 
     def pc_stall(self):
         self.is_pc_stall = True
@@ -65,6 +67,10 @@ class Fetch:
         self.pc_inst.stall()
 
     def stall(self):
+        # flush has higher priority
+        if self.is_flush:
+            return
+        
         self.imem.set(self.buff_if_id.pc.read() >> 2)
 
         self.buff_if_id.stall()
@@ -72,6 +78,7 @@ class Fetch:
 
     def flush(self):
         self.buff_if_id.flush()
+        self.is_flush = True
 
     def rst(self):
         self.flush()

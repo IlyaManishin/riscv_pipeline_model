@@ -40,7 +40,8 @@ class Decode:
         self.pc: int = 0
         self.imm: int = 0
 
-        self._is_stall: bool = False
+        self.is_stall: bool = False
+        self.is_flush: bool = False
 
     def update(self):
         # ===== Instruction Field Extraction =====
@@ -97,19 +98,26 @@ class Decode:
         self.jfid_E.set(self.jfid)
         self.jfpc_E.set(self.imm_pc)
 
-        self._is_stall = True
+        self.is_stall = False
+        self.is_flush = False
 
     def stall(self):
+        # flush has higher priority
+        if self.is_flush:
+            return
+
         self.jfid_E.set(self.jfid_E.read())
         self.jfpc_E.set(self.jfpc_E.read())
         self.buff_id_ex.stall()
 
-        self._is_stall = False
+        self._is_stall = True
 
     def flush(self):
         self.jfid_E.set(False)
         self.jfpc_E.set(0)
         self.buff_id_ex.flush()
+
+        self.is_flush = False
 
     def rst(self):
         self.flush()

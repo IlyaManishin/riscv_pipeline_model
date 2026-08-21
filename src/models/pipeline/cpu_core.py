@@ -111,4 +111,4 @@ class Core:
         return self._rf_inst
 
     def get_cur_pc(self) -> int:
-        return self.stage_fetch.pc_next
+        return self.stage_fetch.pc
