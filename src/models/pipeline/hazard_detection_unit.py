@@ -64,32 +64,19 @@ class Hazard_Detection_Unit:
         wb_reg_wr = self.buff_mem_wb.reg_wr.read()
         wb_rd = self.buff_mem_wb.rd.read()
 
-        opcode = self.stage_decode.instr.opcode >> 2
-        uses_rs1 = opcode in (
-            0b11001,  # JALR
-            0b11000,  # Branch (BEQ, BNE, etc.)
-            0b00000,  # Load
-            0b01000,  # Store
-            0b00100,  # Immediate ALU (ADDI, etc.)
-            0b01100   # Register ALU (ADD, SUB, etc.)
-        )
-        uses_rs2 = opcode in (
-            0b11000,  # Branch
-            0b01000,  # Store
-            0b01100   # Register ALU
+        is_ex_hazard = ex_reg_wr and ex_rd != 0 and (
+            ex_rd == self.stage_decode.rs1 or
+            ex_rd == self.stage_decode.rs2
         )
 
-        is_ex_hazard = ex_reg_wr and ex_rd != 0 and (
-            (uses_rs1 and ex_rd == self.stage_decode.rs1) or
-            (uses_rs2 and ex_rd == self.stage_decode.rs2)
-        )
         is_mem_hazard = mem_reg_wr and mem_rd != 0 and (
-            (uses_rs1 and mem_rd == self.stage_decode.rs1) or
-            (uses_rs2 and mem_rd == self.stage_decode.rs2)
+            mem_rd == self.stage_decode.rs1 or
+            mem_rd == self.stage_decode.rs2
         )
+
         is_wb_hazard = wb_reg_wr and wb_rd != 0 and (
-            (uses_rs1 and wb_rd == self.stage_decode.rs1) or
-            (uses_rs2 and wb_rd == self.stage_decode.rs2)
+            wb_rd == self.stage_decode.rs1 or
+            wb_rd == self.stage_decode.rs2
         )
 
         self.is_id_ex_raw_hazard = is_ex_hazard
