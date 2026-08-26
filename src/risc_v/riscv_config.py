@@ -41,7 +41,7 @@ class Instr_type_t(enum.Enum):
     TYPE_ANY = 0b000
 
 
-class WB_sel_t(enum.Enum):
+class WB_sel(enum.Enum):
     PC4_OUT = 0b00
     ALU_OUT = 0b01
     DMEM_OUT = 0b10
@@ -63,7 +63,7 @@ class Id_controls_out:
     br_un: int = 0
     pc_sel: int = 0
     alu_sel: Alu_sel_t = Alu_sel_t.ANY
-    wb_sel: WB_sel_t = WB_sel_t.ANY
+    wb_sel: WB_sel = WB_sel.ANY
     imm_type: int = Instr_type_t.TYPE_ANY
     illegal: int = 0
     jfexe: int = 0

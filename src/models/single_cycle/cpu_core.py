@@ -13,7 +13,7 @@ from risc_v.modules.branch_unit import BranchUnit
 from risc_v.mem.dmem_wr_port import dmem_wr_port
 from risc_v.mem.dmem_rd_port import dmem_rd_port
 
-from risc_v.riscv_config import WB_sel_t
+from risc_v.riscv_config import WB_sel
 import risc_v.riscv_config as conf
 
 
@@ -153,11 +153,11 @@ class Core:
 
         # Write-back MUX
         match self.id_controls.wb_sel:
-            case WB_sel_t.PC4_OUT:
+            case WB_sel.PC4_OUT:
                 self.rf_wd3 = (self.pc + 4) & ((1 << conf.XLEN) - 1)
-            case WB_sel_t.ALU_OUT:
+            case WB_sel.ALU_OUT:
                 self.rf_wd3 = self.alu_out
-            case WB_sel_t.DMEM_OUT:
+            case WB_sel.DMEM_OUT:
                 self.rf_wd3 = dmem_rdata_out
             case _:
                 self.rf_wd3 = 0

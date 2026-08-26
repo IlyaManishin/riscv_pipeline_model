@@ -39,12 +39,13 @@ class WriteBack:
 
         # ===== Write-Back Data Multiplexing =====
         self.pc4 = self.buff_mem_wb.pc4.read()
-        match conf.WB_sel_t(self.buff_mem_wb.wb_sel.read()):
-            case conf.WB_sel_t.PC4_OUT:
+        wb_sel = self.buff_mem_wb.wb_sel.read()
+        match wb_sel:
+            case conf.WB_sel.PC4_OUT:
                 self.rf_wd3 = self.pc4
-            case conf.WB_sel_t.ALU_OUT:
+            case conf.WB_sel.ALU_OUT:
                 self.rf_wd3 = self.buff_mem_wb.alu_out.read()
-            case conf.WB_sel_t.DMEM_OUT:
+            case conf.WB_sel.DMEM_OUT:
                 self.rf_wd3 = self.dmem_rdata
             case _:
                 self.rf_wd3 = 0

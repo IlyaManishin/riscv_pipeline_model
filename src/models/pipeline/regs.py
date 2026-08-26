@@ -1,6 +1,6 @@
 from sim_base.mem.register import Register
 from sim_base.mem.block_mem import BlockMem
-from risc_v.modules.decode import DMem_sel
+from risc_v.modules.decode import DMem_sel, WB_sel
 
 
 class IF_ID_Stage:
@@ -37,7 +37,7 @@ class ID_EX_Stage:
     shift_sel: Register[bool]
     a_sel: Register[bool]
     b_sel: Register[bool]
-    wb_sel: Register[bool]
+    wb_sel: Register[WB_sel]
     reg_wr: Register[bool]
     dmem_sel: Register[DMem_sel]
     jfexe: Register[bool]
@@ -57,7 +57,7 @@ class ID_EX_Stage:
         self.shift_sel = Register(False)
         self.a_sel = Register(False)
         self.b_sel = Register(False)
-        self.wb_sel = Register(False)
+        self.wb_sel = Register(0)
         self.reg_wr = Register(False)
         self.dmem_sel = Register(DMem_sel())
         self.jfexe = Register(False)
@@ -88,7 +88,7 @@ class ID_EX_Stage:
         self.shift_sel.set(False)
         self.a_sel.set(False)
         self.b_sel.set(False)
-        self.wb_sel.set(False)
+        self.wb_sel.set(0)
         self.reg_wr.set(False)
         self.dmem_sel.set(DMem_sel())
         self.jfexe.set(False)
@@ -100,7 +100,7 @@ class EX_MEM_Stage:
     alu_out: Register[int]
     rf_rd2: Register[int]
     rd: Register[int]
-    wb_sel: Register[bool]
+    wb_sel: Register[WB_sel]
     reg_wr: Register[bool]
     dmem_sel: Register[DMem_sel]
     pc4: Register[int]
@@ -110,7 +110,7 @@ class EX_MEM_Stage:
         self.alu_out = Register(0)
         self.rf_rd2 = Register(0)
         self.rd = Register(0)
-        self.wb_sel = Register(False)
+        self.wb_sel = Register(0)
         self.reg_wr = Register(False)
         self.dmem_sel = Register(DMem_sel())
         self.pc4 = Register(0)
@@ -126,7 +126,7 @@ class EX_MEM_Stage:
         self.alu_out.set(0)
         self.rf_rd2.set(0)
         self.rd.set(0)
-        self.wb_sel.set(False)
+        self.wb_sel.set(0)
         self.reg_wr.set(False)
         self.dmem_sel.set(DMem_sel())
         self.pc4.set(0)
@@ -139,7 +139,7 @@ class MEM_WB_Stage:
     dmem_byte_off: Register[int]
     dmem_funct3: Register[int]
     rd: Register[int]
-    wb_sel: Register[bool]
+    wb_sel: Register[WB_sel]
     reg_wr: Register[bool]
     pc4: Register[int]
     valid: Register[bool]
@@ -150,7 +150,7 @@ class MEM_WB_Stage:
         self.dmem_byte_off = Register(0)
         self.dmem_funct3 = Register(0)
         self.rd = Register(0)
-        self.wb_sel = Register(False)
+        self.wb_sel = Register(0)
         self.reg_wr = Register(False)
         self.pc4 = Register(0)
         self.valid = Register(False)
@@ -165,6 +165,6 @@ class MEM_WB_Stage:
         self.alu_out.set(0)
         self.rd.set(0)
         self.pc4.set(0)
-        self.wb_sel.set(False)
+        self.wb_sel.set(0)
         self.reg_wr.set(False)
         self.valid.set(False)
