@@ -92,23 +92,23 @@ class SingleCyclePerfTracer(BasePerfTracer):
         pc_sel = bool(core.id_controls.pc_sel)
 
         if not pc_sel:
-            self.raw_jumps += 1
             self.jumps += 1
 
         shifted_opcode = core.instr.opcode >> 2
 
         # Check for specific instruction types based on raw opcode
         if shifted_opcode == 0b11000:       # Branch
+            self.raw_jumps += 1
             self.br += 1
             if not pc_sel:
                 self.br_taken += 1
-            else:
-                self.raw_jumps += 1
 
         elif shifted_opcode == 0b11011:     # JAL
+            self.raw_jumps += 1
             self.jal += 1
 
         elif shifted_opcode == 0b11001:     # JALR
+            self.raw_jumps += 1
             self.jalr += 1
 
 
