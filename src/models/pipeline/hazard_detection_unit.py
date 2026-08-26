@@ -46,10 +46,10 @@ class Hazard_Detection_Unit:
         self.stage_writeback = stage_writeback
 
         # --- Debug Flags ---
-        self.is_id_ex_raw_hazard: bool = False
-        self.is_id_mem_raw_hazard: bool = False
-        self.is_id_wb_raw_hazard: bool = False
-        self.is_raw_hazard: bool = False
+        self.id_ex_raw_hazard: bool = False
+        self.id_mem_raw_hazard: bool = False
+        self.id_wb_raw_hazard: bool = False
+        self.raw_hazard: bool = False
 
     def update(self) -> None:
         self.reset_debug_state()
@@ -79,10 +79,10 @@ class Hazard_Detection_Unit:
             wb_rd == self.stage_decode.rs2
         )
 
-        self.is_id_ex_raw_hazard = is_ex_hazard
-        self.is_id_mem_raw_hazard = is_mem_hazard
-        self.is_id_wb_raw_hazard = is_wb_hazard
-        self.is_raw_hazard = is_ex_hazard or is_mem_hazard or is_wb_hazard
+        self.id_ex_raw_hazard = is_ex_hazard
+        self.id_mem_raw_hazard = is_mem_hazard
+        self.id_wb_raw_hazard = is_wb_hazard
+        self.raw_hazard = is_ex_hazard or is_mem_hazard or is_wb_hazard
 
         # ===== Control Hazards (branch / jump redirect) =====
 
@@ -109,7 +109,7 @@ class Hazard_Detection_Unit:
             self.stage_decode.flush()
 
     def reset_debug_state(self) -> None:
-        self.is_id_ex_raw_hazard = False
-        self.is_id_mem_raw_hazard = False
-        self.is_id_wb_raw_hazard = False
-        self.is_raw_hazard = False
+        self.id_ex_raw_hazard = False
+        self.id_mem_raw_hazard = False
+        self.id_wb_raw_hazard = False
+        self.raw_hazard = False

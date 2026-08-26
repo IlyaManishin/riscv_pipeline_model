@@ -156,7 +156,7 @@ class PipelinePerfTracer(BasePerfTracer):
         if bool(sw.valid):
             self.instructions += 1
 
-        if hdu.is_id_ex_raw_hazard or hdu.is_id_mem_raw_hazard or hdu.is_id_wb_raw_hazard:
+        if hdu.id_ex_raw_hazard or hdu.id_mem_raw_hazard or hdu.id_wb_raw_hazard:
             self.stalls += 1
 
         if bool(se.jfexe) or bool(sd.jfid):
