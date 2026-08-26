@@ -40,6 +40,9 @@ class CpuSystem(ICpuSystem):
     def step(self) -> None:
         self.core.step()
 
+        # Commit all synchronous changes
+        self.clk.tick()
+
     @property
     def imem(self) -> InstrMem:
         return self._imem
