@@ -45,7 +45,12 @@ class Hazard_Detection_Unit:
         self.stage_memory = stage_memory
         self.stage_writeback = stage_writeback
 
-        # --- Debug Flags ---
+        # ============ Debug Flags ==============
+        # Control Hazards
+        self.jfid_hazard: bool = False
+        self.jfexe_hazard: bool = False
+
+        # Data Hazards
         self.id_ex_raw_hazard: bool = False
         self.id_mem_raw_hazard: bool = False
         self.id_wb_raw_hazard: bool = False
@@ -79,22 +84,19 @@ class Hazard_Detection_Unit:
             wb_rd == self.stage_decode.rs2
         )
 
-        self.id_ex_raw_hazard = is_ex_hazard
-        self.id_mem_raw_hazard = is_mem_hazard
-        self.id_wb_raw_hazard = is_wb_hazard
-        self.raw_hazard = is_ex_hazard or is_mem_hazard or is_wb_hazard
-
         # ===== Control Hazards (branch / jump redirect) =====
 
         # jfexe_M: JALR target was resolved in Execute
         jfexe_M_val = self.stage_execute.jfexe_M.read()
         if jfexe_M_val:
+            self.jfexe_hazard = True
             self.stage_decode.flush()
             self.stage_execute.flush()
 
         # jfid_E: branch/jal outcome was resolved in Decode
         jfid_E_val = self.stage_decode.jfid_E.read()
         if jfid_E_val:
+            self.jfid_hazard = True
             self.stage_decode.flush()
 
         # jfid_E and jfexe_M ignore RAW hazards because decode stage already has been flushed
@@ -103,12 +105,21 @@ class Hazard_Detection_Unit:
             return
 
         # ===== Data Hazards (RAW) =====
+        # Set debug wires
+        self.id_ex_raw_hazard = is_ex_hazard
+        self.id_mem_raw_hazard = is_mem_hazard
+        self.id_wb_raw_hazard = is_wb_hazard
+        self.raw_hazard = is_ex_hazard or is_mem_hazard or is_wb_hazard
+        
+        # Pipeline stall
         if is_ex_hazard or is_mem_hazard or is_wb_hazard:
             self.stage_fetch.pc_stall()
             self.stage_fetch.stall()
             self.stage_decode.flush()
 
     def reset_debug_state(self) -> None:
+        self.jfid_hazard = False
+        self.jfexe_hazard = False
         self.id_ex_raw_hazard = False
         self.id_mem_raw_hazard = False
         self.id_wb_raw_hazard = False
