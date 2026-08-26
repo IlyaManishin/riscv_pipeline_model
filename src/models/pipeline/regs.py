@@ -1,5 +1,6 @@
 from sim_base.mem.register import Register
 from sim_base.mem.block_mem import BlockMem
+from risc_v.modules.decode import DMem_sel
 
 
 class IF_ID_Stage:
@@ -38,7 +39,7 @@ class ID_EX_Stage:
     b_sel: Register[bool]
     wb_sel: Register[bool]
     reg_wr: Register[bool]
-    dmem_sel: Register[bool]
+    dmem_sel: Register[DMem_sel]
     jfexe: Register[bool]
     alushift_sel: Register[bool]
     valid: Register[bool]
@@ -58,7 +59,7 @@ class ID_EX_Stage:
         self.b_sel = Register(False)
         self.wb_sel = Register(False)
         self.reg_wr = Register(False)
-        self.dmem_sel = Register(False)
+        self.dmem_sel = Register(DMem_sel())
         self.jfexe = Register(False)
         self.alushift_sel = Register(False)
         self.valid = Register(False)
@@ -89,7 +90,7 @@ class ID_EX_Stage:
         self.b_sel.set(False)
         self.wb_sel.set(False)
         self.reg_wr.set(False)
-        self.dmem_sel.set(False)
+        self.dmem_sel.set(DMem_sel())
         self.jfexe.set(False)
         self.alushift_sel.set(False)
         self.valid.set(False)
@@ -101,7 +102,7 @@ class EX_MEM_Stage:
     rd: Register[int]
     wb_sel: Register[bool]
     reg_wr: Register[bool]
-    dmem_sel: Register[bool]
+    dmem_sel: Register[DMem_sel]
     pc4: Register[int]
     valid: Register[bool]
 
@@ -111,7 +112,7 @@ class EX_MEM_Stage:
         self.rd = Register(0)
         self.wb_sel = Register(False)
         self.reg_wr = Register(False)
-        self.dmem_sel = Register(False)
+        self.dmem_sel = Register(DMem_sel())
         self.pc4 = Register(0)
         self.valid = Register(False)
 
@@ -127,7 +128,7 @@ class EX_MEM_Stage:
         self.rd.set(0)
         self.wb_sel.set(False)
         self.reg_wr.set(False)
-        self.dmem_sel.set(False)
+        self.dmem_sel.set(DMem_sel())
         self.pc4.set(0)
         self.valid.set(False)
 

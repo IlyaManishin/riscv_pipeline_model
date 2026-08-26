@@ -92,7 +92,7 @@ class PipelineTracer(CsvTracer):
                               core.stage_execute.valid),
             self.disasm_pc_instr(core.stage_memory.pc4 - 4,
                               core.stage_memory.valid),
-            bin(core.stage_memory.dmem_sel.to_int()),
+            bin(core.stage_memory.dmem_funct3),
             self.disasm_pc_instr(core.stage_writeback.pc4 - 4,
                               core.stage_writeback.valid)
         ]

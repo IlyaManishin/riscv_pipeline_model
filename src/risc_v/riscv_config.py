@@ -53,16 +53,6 @@ class DMem_sel:
     dmem_we: bool = False
     funct3: int = 0
 
-    @staticmethod
-    def from_int(value: int) -> "DMem_sel":
-        return DMem_sel(
-            dmem_we=bool(value & 0b1000),
-            funct3=value & 0b111
-        )
-
-    def to_int(self) -> int:
-        return (int(self.dmem_we) << 3) | (self.funct3 & 0b111)
-
 @dataclass
 class Id_controls_out:
     reg_wr: int = 0
