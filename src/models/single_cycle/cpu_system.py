@@ -35,7 +35,7 @@ class CpuSystem(ICpuSystem):
 
         # Processor core instantiation
         self._core = Core(self._clk, rst_reg=self._rst_reg)
-    
+
     @property
     def imem(self) -> InstrMem:
         return self._imem
@@ -49,7 +49,6 @@ class CpuSystem(ICpuSystem):
         return self._core.rf_inst
 
     def step(self) -> None:
-
         # 1. Instruction Fetch Stage
         imem_addr = self._core.get_imem_addr()
         word_imem_addr = imem_addr >> 2
@@ -59,14 +58,14 @@ class CpuSystem(ICpuSystem):
         dmem_data = self._core.dec_exec_alu(instr_raw)
 
         # 3. Handle Data Memory access based on combinational outputs
-        is_dmem_access = True # TEMP HACK
+        is_dmem_access = True  # TEMP HACK
         if is_dmem_access:
             word_dmem_addr = (dmem_data.addr & 0x0FFFFFFF) >> 2
 
             # Execute memory writes if write enable is active
             if dmem_data.byte_we != 0:
                 self._dmem.write(word_dmem_addr, dmem_data.wdata,
-                                byte_we=dmem_data.byte_we)
+                                 byte_we=dmem_data.byte_we)
 
             data_to_cpu = self._dmem.read(word_dmem_addr)
         else:
@@ -75,8 +74,9 @@ class CpuSystem(ICpuSystem):
         # 4. Core Write-Back & Sequential updates (Updates PC and RF)
         self._core.write_back_comb(dmem_data_in=data_to_cpu)
 
+    def tick(self) -> None:
         # 5. Commit all synchronous changes (Clock Tick)
         self._clk.tick()
-        
+
     def get_cur_pc(self):
         return self._core.pc

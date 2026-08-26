@@ -29,5 +29,9 @@ class ICpuSystem(ABC):
         pass
     
     @abstractmethod
+    def tick(self) -> None:
+        pass
+    
+    @abstractmethod
     def get_cur_pc(self) -> int:
         pass

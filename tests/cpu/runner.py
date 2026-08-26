@@ -52,10 +52,14 @@ def execute_program(
     try:
         # Main clock cycle loop
         for cycle in range(max_cycles):
+            # Run combinational logic
             cpu.step()
 
             for tracer in tracers:
                 tracer.trace_cycle(cycle)
+
+            # Update registers and memory
+            cpu.tick()
 
             # Check test signature
             rf_dbg = cpu.reg_file.read(RF_DBG_NUM)
