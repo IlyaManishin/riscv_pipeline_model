@@ -72,7 +72,7 @@ class Decode:
         self.jfid = self.valid and (not bool(self.id_controls.pc_sel)) and (
             not bool(self.id_controls.jfexe))
 
-        if not self.buff_if_id.valid.read():
+        if not self.buff_if_id.valid.read(): # maybe not necessary because there is no flush in fetch (reset?)
             self.flush()
             return
 

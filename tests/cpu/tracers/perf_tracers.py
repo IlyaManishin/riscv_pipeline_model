@@ -14,7 +14,7 @@ class SingleCyclePerfTracer(BasePerfTracer):
         self.cpu = None
         self.cycles = 0
         self.instructions = 0
-        
+
         # Branch and jump tracking parameters
         self.raw_jumps = 0
         self.jumps = 0
@@ -29,7 +29,7 @@ class SingleCyclePerfTracer(BasePerfTracer):
     def reset_metrics(self) -> None:
         self.cycles = 0
         self.instructions = 0
-        
+
         # Branch and jump tracking parameters
         self.raw_jumps = 0
         self.jumps = 0
@@ -43,8 +43,19 @@ class SingleCyclePerfTracer(BasePerfTracer):
     # ---------------------------------------------------------------------
     def get_header(self) -> list[str]:
         return [
-            "test_name", "cycles", "instructions", "cpi", 
-            "raw_jumps", "jumps", "jpi", "br", "br_taken", "jal", "jalr", "br_taken%", "status"
+            "test_name",     
+            "cycles",        # Total clock cycles
+            "instructions",  # Total instructions
+            "cpi",           # Cycles per instruction
+            "raw_jumps",     # Total PC redirecting instructions (JAL, JALR, all branches)
+            "jumps",         # Count of jump operations
+            "jpi",           # Jumps per instruction 
+            "br",            # Total branch instructions encountered
+            "br_taken",      # Count of branches taken
+            "br_taken%",     # br_taken percent
+            "jal",           # Count of JAL instructions
+            "jalr",          # Count of JALR instructions
+            "status"         # Test result status (PASSED/FAILED)
         ]
 
     def format_test_row(self, test_name: str, passed: bool) -> list:
@@ -55,11 +66,11 @@ class SingleCyclePerfTracer(BasePerfTracer):
         br_taken_pct = round((self.br_taken / self.br) * 100,
                              1) if self.br > 0 else 0.0
         status = "PASSED" if passed else "FAILED"
-        
+
         return [
-            test_name, self.cycles, self.instructions, cpi, 
-            self.raw_jumps, self.jumps, jpi, self.br, self.br_taken, 
-            self.jal, self.jalr, f"{br_taken_pct}%", status
+            test_name, self.cycles, self.instructions, cpi,
+            self.raw_jumps, self.jumps, jpi, self.br, self.br_taken,  f"{br_taken_pct}%",
+            self.jal, self.jalr, status
         ]
 
     # ---------------------------------------------------------------------
@@ -68,7 +79,7 @@ class SingleCyclePerfTracer(BasePerfTracer):
     def trace_cycle(self, cycle: int) -> None:
         if self.cpu is None:
             return
-            
+
         self.cycles += 1
         core = self.cpu._core
 
@@ -76,16 +87,16 @@ class SingleCyclePerfTracer(BasePerfTracer):
             return
 
         self.instructions += 1
-        
+
         # pc_sel == 0 indicates a control transfer (jump or taken branch)
         pc_sel = bool(core.id_controls.pc_sel)
-        
+
         if not pc_sel:
             self.raw_jumps += 1
             self.jumps += 1
-            
+
         shifted_opcode = core.instr.opcode >> 2
-        
+
         # Check for specific instruction types based on raw opcode
         if shifted_opcode == 0b11000:       # Branch
             self.br += 1
@@ -93,13 +104,13 @@ class SingleCyclePerfTracer(BasePerfTracer):
                 self.br_taken += 1
             else:
                 self.raw_jumps += 1
-                
+
         elif shifted_opcode == 0b11011:     # JAL
             self.jal += 1
-            
+
         elif shifted_opcode == 0b11001:     # JALR
             self.jalr += 1
-            
+
 
 class PipelinePerfTracer(BasePerfTracer):
     def __init__(self, trace_dir: str | Path):
