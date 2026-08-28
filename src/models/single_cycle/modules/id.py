@@ -1,7 +1,30 @@
 from risc_v.riscv_config import *
 
+
+@dataclass
+class Id_controls_out:
+    reg_wr: int = 0
+    dmem_sel: DMem_sel = None
+    a_sel: int = 0
+    b_sel: int = 0
+    sh_sel: Shift_sel_t = Shift_sel_t.ANY
+    br_un: int = 0
+    pc_sel: int = 0
+    alu_sel: Alu_sel_t = Alu_sel_t.ANY
+    wb_sel: WB_sel = WB_sel.ANY
+    imm_type: int = Instr_type_t.TYPE_ANY
+    illegal: int = 0
+    jfexe: int = 0
+    alushift_sel: int = 0
+
+    # workaround for dataclass mutable default error
+    def __post_init__(self):
+        if self.dmem_sel is None:
+            self.dmem_sel = DMem_sel(0, 0)
+
+
 class InstructionDecoder:
-    
+
     @staticmethod
     def decode(instr: Instruction, br_eq: bool = False, br_lt: bool = False) -> Id_controls_out:
         opcode = instr.opcode >> 2
@@ -241,7 +264,8 @@ class InstructionDecoder:
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0, jfexe=0,
                         alushift_sel=1
                     )
-                if funct7 == 0b100000:   # 0b1 00000? RISC-V SRAI has funct7[5]=1
+                # 0b1 00000? RISC-V SRAI has funct7[5]=1
+                if funct7 == 0b100000:
                     return Id_controls_out(
                         reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=0,
                         sh_sel=Shift_sel_t.SRA, br_un=0, pc_sel=1,
