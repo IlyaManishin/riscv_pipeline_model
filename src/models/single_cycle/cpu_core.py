@@ -5,7 +5,7 @@ from sim_base.mem.register import Register
 
 from risc_v.modules.pc import PC
 from risc_v.mem.reg_file import RegFile
-from risc_v.modules.decode import Instruction_Decoder
+from .modules.id import InstructionDecoder
 from risc_v.modules.immgen import ImmGen
 from risc_v.modules.alu import Alu
 from risc_v.modules.shifter import Shifter
@@ -92,14 +92,14 @@ class Core:
         self.rf_rd2 = self.rf_inst.read(rs2)
 
         # Branch Unit & Instruction Decoder
-        self.id_controls = Instruction_Decoder.decode(
+        self.id_controls = InstructionDecoder.decode(
             self.instr)
 
         # Re-evaluate Branch Unit with exact signedness from decoder
         br_eq, br_lt = BranchUnit.compare(
             self.rf_rd1, self.rf_rd2, bool(self.id_controls.br_un))
 
-        self.id_controls = Instruction_Decoder.decode(
+        self.id_controls = InstructionDecoder.decode(
             self.instr, br_eq=br_eq, br_lt=br_lt)
 
         # Immediate Generation

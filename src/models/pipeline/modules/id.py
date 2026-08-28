@@ -1,6 +1,6 @@
 from risc_v.riscv_config import *
 
-class Instruction_Decoder:
+class InstructionDecoder:
     
     @staticmethod
     def decode(instr: Instruction, br_eq: bool = False, br_lt: bool = False) -> Id_controls_out:

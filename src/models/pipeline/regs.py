@@ -1,6 +1,7 @@
 from sim_base.mem.register import Register
 from sim_base.mem.block_mem import BlockMem
-from risc_v.modules.decode import DMem_sel, WB_sel
+
+from models.pipeline.modules.id import DMem_sel, WB_sel
 
 
 class IF_ID_Stage:
@@ -10,11 +11,13 @@ class IF_ID_Stage:
 
     def __init__(self, imem: BlockMem):
         self.pc = Register(0)
-        self.instr = imem  # imem is itself register-like (addr in -> data out next cycle)
+        # imem is itself register-like (addr in -> data out next cycle)
+        self.instr = imem
         self.valid = Register(False)
 
     def get_registers(self) -> list[Register[int] | Register[bool]]:
-        return [self.pc, self.valid]  # instr/imem is committed externally, not here
+        # instr/imem is committed externally, not here
+        return [self.pc, self.valid]
 
     def stall(self):
         for r in self.get_registers():
@@ -146,7 +149,8 @@ class MEM_WB_Stage:
 
     def __init__(self, dmem: BlockMem):
         self.alu_out = Register(0)
-        self.dmem_data = dmem  # dmem is itself register-like (addr in -> data out next cycle)
+        # dmem is itself register-like (addr in -> data out next cycle)
+        self.dmem_data = dmem
         self.dmem_byte_off = Register(0)
         self.dmem_funct3 = Register(0)
         self.rd = Register(0)

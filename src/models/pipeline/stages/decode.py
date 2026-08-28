@@ -2,8 +2,8 @@ from sim_base.mem.register import Register
 
 import risc_v.riscv_config as conf
 from models.pipeline import regs
+from models.pipeline.modules.id import InstructionDecoder
 
-from risc_v.modules.decode import Instruction_Decoder
 from risc_v.modules.immgen import ImmGen
 from risc_v.modules.branch_unit import BranchUnit
 from risc_v.mem.reg_file import RegFile
@@ -58,10 +58,10 @@ class Decode:
         self.rf_rd2 = self.rf_inst.read(self.rs2)
 
         # ===== Control Decode & Branch Resolution =====
-        self.id_controls = Instruction_Decoder.decode(self.instr)
+        self.id_controls = InstructionDecoder.decode(self.instr)
         self.br_eq, self.br_lt = BranchUnit.compare(
             self.rf_rd1, self.rf_rd2, bool(self.id_controls.br_un))
-        self.id_controls = Instruction_Decoder.decode(
+        self.id_controls = InstructionDecoder.decode(
             self.instr, br_eq=self.br_eq, br_lt=self.br_lt)
 
         # ===== Immediate Generation & Branch Target =====
