@@ -53,28 +53,6 @@ class DMem_sel:
     dmem_we: bool = False
     funct3: int = 0
 
-@dataclass
-class Id_controls_out:
-    reg_wr: int = 0
-    dmem_sel: DMem_sel = None
-    a_sel: int = 0
-    b_sel: int = 0
-    sh_sel: Shift_sel_t = Shift_sel_t.ANY
-    br_un: int = 0
-    pc_sel: int = 0
-    alu_sel: Alu_sel_t = Alu_sel_t.ANY
-    wb_sel: WB_sel = WB_sel.ANY
-    imm_type: int = Instr_type_t.TYPE_ANY
-    illegal: int = 0
-    jfexe: int = 0
-    alushift_sel: int = 0
-
-    # workaround for dataclass mutable default error
-    def __post_init__(self):
-        if self.dmem_sel is None:
-            self.dmem_sel = DMem_sel(0, 0)
-
-
 class Instruction:
     def __init__(self, raw: int):
         if not (0 <= raw <= 0xFFFFFFFF):

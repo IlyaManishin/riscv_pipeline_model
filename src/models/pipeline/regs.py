@@ -1,6 +1,7 @@
 from sim_base.mem.register import Register
 from sim_base.mem.block_mem import BlockMem
-from risc_v.modules.decode import DMem_sel, WB_sel
+
+from models.pipeline.modules.id import Id_controls_out, DMem_sel, WB_sel
 
 
 class IF_ID_Stage:
@@ -10,11 +11,13 @@ class IF_ID_Stage:
 
     def __init__(self, imem: BlockMem):
         self.pc = Register(0)
-        self.instr = imem  # imem is itself register-like (addr in -> data out next cycle)
+        # imem is itself register-like (addr in -> data out next cycle)
+        self.instr = imem
         self.valid = Register(False)
 
     def get_registers(self) -> list[Register[int] | Register[bool]]:
-        return [self.pc, self.valid]  # instr/imem is committed externally, not here
+        # instr/imem is committed externally, not here
+        return [self.pc, self.valid]
 
     def stall(self):
         for r in self.get_registers():
@@ -33,15 +36,8 @@ class ID_EX_Stage:
     rs1: Register[int]
     rs2: Register[int]
     rd: Register[int]
-    alu_sel: Register[bool]
-    shift_sel: Register[bool]
-    a_sel: Register[bool]
-    b_sel: Register[bool]
-    wb_sel: Register[WB_sel]
-    reg_wr: Register[bool]
-    dmem_sel: Register[DMem_sel]
-    jfexe: Register[bool]
-    alushift_sel: Register[bool]
+    funct3: Register[int]
+    id_controls: Register[Id_controls_out]
     valid: Register[bool]
 
     def __init__(self):
@@ -52,24 +48,16 @@ class ID_EX_Stage:
         self.rs1 = Register(0)
         self.rs2 = Register(0)
         self.rd = Register(0)
+        self.funct3 = Register(0)
 
-        self.alu_sel = Register(False)
-        self.shift_sel = Register(False)
-        self.a_sel = Register(False)
-        self.b_sel = Register(False)
-        self.wb_sel = Register(0)
-        self.reg_wr = Register(False)
-        self.dmem_sel = Register(DMem_sel())
-        self.jfexe = Register(False)
-        self.alushift_sel = Register(False)
+        self.id_controls = Register(Id_controls_out())
         self.valid = Register(False)
 
-    def get_registers(self) -> list[Register[int] | Register[bool]]:
+    def get_registers(self) -> list[Register]:
         return [
             self.pc, self.rf_rd1, self.rf_rd2, self.imm,
-            self.rs1, self.rs2, self.rd,
-            self.alu_sel, self.a_sel, self.b_sel, self.wb_sel, self.reg_wr, self.dmem_sel,
-            self.jfexe, self.alushift_sel, self.valid, self.shift_sel
+            self.rs1, self.rs2, self.rd, self.funct3,
+            self.id_controls, self.valid
         ]
 
     def stall(self):
@@ -84,15 +72,9 @@ class ID_EX_Stage:
         self.rs1.set(0)
         self.rs2.set(0)
         self.rd.set(0)
-        self.alu_sel.set(False)
-        self.shift_sel.set(False)
-        self.a_sel.set(False)
-        self.b_sel.set(False)
-        self.wb_sel.set(0)
-        self.reg_wr.set(False)
-        self.dmem_sel.set(DMem_sel())
-        self.jfexe.set(False)
-        self.alushift_sel.set(False)
+        self.funct3.set(0)
+
+        self.id_controls.set(Id_controls_out())
         self.valid.set(False)
 
 
@@ -122,6 +104,10 @@ class EX_MEM_Stage:
             self.wb_sel, self.reg_wr, self.dmem_sel, self.pc4, self.valid
         ]
 
+    def stall(self):
+        for r in self.get_registers():
+            r.set(r.read())
+
     def flush(self):
         self.alu_out.set(0)
         self.rf_rd2.set(0)
@@ -146,7 +132,8 @@ class MEM_WB_Stage:
 
     def __init__(self, dmem: BlockMem):
         self.alu_out = Register(0)
-        self.dmem_data = dmem  # dmem is itself register-like (addr in -> data out next cycle)
+        # dmem is itself register-like (addr in -> data out next cycle)
+        self.dmem_data = dmem
         self.dmem_byte_off = Register(0)
         self.dmem_funct3 = Register(0)
         self.rd = Register(0)

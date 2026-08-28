@@ -1,4 +1,3 @@
-```markdown
 # `risc_v/pipeline/stages/` – Pipeline Stage Logic
 
 Each stage is implemented as an autonomous processing unit. During `update()`, a stage reads the current combinational state from its **upstream input pipeline buffer** and writes the calculated next-state values into its **downstream output pipeline buffer**. All inter-stage register transfers commit synchronously on `Clock.tick()`.
@@ -19,7 +18,7 @@ Each stage is implemented as an autonomous processing unit. During `update()`, a
 
 - **Input Interfacing:** `PC`, `InstrMem`.
 - **Managed Output Buffer:** `IF_ID_Stage` (upstream producer).
-- `update(jfexe, jfid, alures, imm_pc)`: Fetches instruction at the current PC into `IF_ID.instr`, asserts `IF_ID.valid = True`, and updates internal data path state. Resolves next-PC selection via branch/jump signals (`jfid` or `jfexe`).
+- `update(jfexe, jfpc)`: Fetches instruction at the current PC into `IF_ID.instr`, asserts `IF_ID.valid = True`, and updates internal data path state. Resolves next-PC selection via branch/jump signals received from the Execute stage (`jfexe`, `jfpc`).
 - **Control Interface:**
   - `stall()`: Holds current PC state and delegates pipeline register hold to `IF_ID.stall()`.
   - `flush()`: Delegates instruction squashing to `IF_ID.flush()`.
@@ -28,7 +27,7 @@ Each stage is implemented as an autonomous processing unit. During `update()`, a
 
 - **Input Interfacing:** `RegFile`, `IF_ID_Stage` (downstream consumer).
 - **Managed Output Buffer:** `ID_EX_Stage` (upstream producer).
-- `update()`: Decodes `IF_ID.instr` via `Instruction_Decoder`, generates immediates via `ImmGen`, evaluates branch conditions via `BranchUnit`, and combinationally populates all decoded execution signals into `ID_EX_Stage`.
+- `update()`: Decodes `IF_ID.instr` via a dedicated pipeline instruction decoder, generates immediates via `ImmGen`, and combinationally populates operands and control flags (bundled inside the `Id_controls_out` structure) into `ID_EX_Stage`.
 - **Control Interface:**
   - `stall()`: Delegates pipeline hold to `ID_EX.stall()`.
   - `flush()`: Squashes decoded control signals via `ID_EX.flush()`.
@@ -37,9 +36,9 @@ Each stage is implemented as an autonomous processing unit. During `update()`, a
 
 - **Input Interfacing:** `ID_EX_Stage` (downstream consumer).
 - **Managed Output Buffer:** `EX_MEM_Stage` (upstream producer).
-- `update()`: Selects ALU/Shifter operands based on control vectors, executes arithmetic/logic and shift operations, and writes the execution context (`alu_out`, `rf_rd2`, `rd`, control flags) into `EX_MEM_Stage`.
+- `update()`: Selects ALU/Shifter operands based on control vectors inside `id_controls`, executes arithmetic/logic and shift operations, and evaluates all control transfers (branches, JAL, JALR) using `BranchUnit`. Generates control-hazard redirection signals (`jfexe`, `jfpc`) and writes execution context (`alu_out`, `rf_rd2`, `rd`, memory/WB control flags) into `EX_MEM_Stage`.
 
-## `mem.py` – `Memory` (MEM)
+## `memory.py` – `Memory` (MEM)
 
 - **Input Interfacing:** `DataMem`, `EX_MEM_Stage` (downstream consumer).
 - **Managed Output Buffer:** `MEM_WB_Stage` (upstream producer).
@@ -73,5 +72,3 @@ The `Hazard_Detection_Unit` resolves hazards purely through high-level stage con
 ```
 
 * **Debug Interface:** The hazard unit provides runtime diagnostic flags (`is_id_ex_raw_hazard`, `is_id_mem_raw_hazard`, `is_id_wb_raw_hazard`), which are automatically cleared via `reset_debug_state()` at the start of each evaluation cycle.
-
-```

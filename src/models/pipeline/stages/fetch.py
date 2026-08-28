@@ -9,13 +9,10 @@ from models.pipeline import regs
 class Fetch:
     def __init__(self, pc: PC, imem: InstrMem,
                  buff_if_id: regs.IF_ID_Stage,
-                 jfid_E: Register[bool], jfpc_E: Register[int],
                  jfexe_M: Register[bool], jfpc_M: Register[int]):
         ########## INPUT SIGNALS ##########
         self.pc_inst: PC = pc
         self.imem: InstrMem = imem
-        self.jfid_E: Register[bool] = jfid_E
-        self.jfpc_E: Register[int] = jfpc_E
         self.jfexe_M: Register[bool] = jfexe_M
         self.jfpc_M: Register[int] = jfpc_M
 
@@ -34,14 +31,11 @@ class Fetch:
 
     def update(self) -> None:
         # ===== Branch/Jump Mux =====
-        br_taken = False
         if self.jfexe_M.read():
             br_taken = True
             pc_br = self.jfpc_M.read()
-        elif self.jfid_E.read():
-            br_taken = True
-            pc_br = self.jfpc_E.read()
         else:
+            br_taken = False
             pc_br = 0
 
         # ===== PC & IMEM Address =====

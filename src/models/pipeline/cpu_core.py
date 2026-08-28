@@ -34,13 +34,11 @@ class Core:
         self._rf_inst = RegFile()
         self.clk.add_trigger(self._rf_inst)
 
-        # Control-hazard jump registers (ID/EX and EX/MEM "extra" flops)
-        self.jfid_E: Register[bool] = Register(False)
-        self.jfpc_E: Register[int] = Register(0)
+        # Control-hazard jump registers (EX/MEM "extra" flops)
         self.jfexe_M: Register[bool] = Register(False)
         self.jfpc_M: Register[int] = Register(0)
 
-        for reg in (self.jfid_E, self.jfpc_E, self.jfexe_M, self.jfpc_M):
+        for reg in (self.jfexe_M, self.jfpc_M):
             self.clk.add_trigger(reg)
 
         # Pipeline Buffers
@@ -62,15 +60,11 @@ class Core:
         self.stage_fetch = Fetch(self.pc_inst,
                                  self.imem,
                                  self.buff_if_id,
-                                 self.jfid_E,
-                                 self.jfpc_E,
                                  self.jfexe_M,
                                  self.jfpc_M)
         self.stage_decode = Decode(self._rf_inst,
                                    self.buff_if_id,
-                                   self.buff_id_ex,
-                                   self.jfid_E,
-                                   self.jfpc_E)
+                                   self.buff_id_ex)
         self.stage_execute = Execute(self.buff_id_ex,
                                      self.buff_ex_mem,
                                      self.jfexe_M,

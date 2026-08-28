@@ -16,9 +16,9 @@ Implements `ICpuSystem`. Responsibilities:
 - Instantiates the five stages (`stages/`) and the `Hazard_Detection_Unit`.
 - `step()` evaluates combinational stage logic first (Decode, Execute, Memory,
   WriteBack), then `Fetch.update(...)` passing branch/jump resolution signals
-  (`jfexe`, `jfid`, `alures`, `imm_pc`) so the next PC is decided correctly,
-  then runs `hdu.update()` for stall/flush control, and finally commits
-  everything with `self.clk.tick()`.
+  (`jfexe`, `jfpc`) from Execute so the next PC is decided correctly, then runs
+  `hdu.update()` for stall/flush control, and finally commits everything with
+  `self.clk.tick()`.
 - Exposes `imem`, `dmem`, `reg_file`, `get_cur_pc()`.
 
 ## `regs.py` – Pipeline Buffers
@@ -29,9 +29,8 @@ binding), `stall()` (hold current values), and `flush()` (clear control/valid
 bits to squash a stage).
 
 - `IF_ID_Stage` – `pc`, `instr`, `valid`.
-- `ID_EX_Stage` – `pc`, `rf_rd1`, `rf_rd2`, `imm`, `rs1`, `rs2`, `rd`,
-  `alu_sel`, `shift_sel`, `a_sel`, `b_sel`, `wb_sel`, `reg_wr`, `dmem_sel`,
-  `jfexe`, `alushift_sel`, `valid`.
+- `ID_EX_Stage` – `pc`, `rf_rd1`, `rf_rd2`, `imm`, `rs1`, `rs2`, `rd`, `funct3`,
+  `id_controls` (bundle register of type `Id_controls_out`), `valid`.
 - `EX_MEM_Stage` – `alu_out`, `rf_rd2`, `rd`, `wb_sel`, `reg_wr`, `dmem_sel`,
   `pc4`, `valid`.
 - `MEM_WB_Stage` – `alu_out`, `dmem_data`, `rd`, `wb_sel`, `reg_wr`, `pc4`,
@@ -41,8 +40,9 @@ bits to squash a stage).
 
 Resolves pipeline hazards using the bound buffers and stage instances:
 
-- **Control hazards** – JALR (`jf_exe` in Decode/Execute) flushes IF/ID (and
-  ID/EX when resolved in Execute); branches/JAL (`jfid` in Decode) flush IF/ID.
+- **Control hazards** – All control transfers (JAL, JALR, Branches) are resolved in
+  Execute. When `jfexe` is asserted by EX, it flushes preceding pipeline stages
+  (IF/ID and ID/EX).
 - **RAW data hazards** – when an in-flight instruction in EX/MEM/WB will write
   a register that the current Decode reads (`rs1`/`rs2`), the unit stalls Fetch,
   stalls IF/ID, and flushes ID/EX until the producer reaches WB.

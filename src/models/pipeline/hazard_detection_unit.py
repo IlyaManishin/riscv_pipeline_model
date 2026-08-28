@@ -60,7 +60,8 @@ class Hazard_Detection_Unit:
         self.reset_debug_state()
 
         # ===== RAW Hazard Detection (rs1/rs2 usage per opcode) =====
-        ex_reg_wr = self.buff_id_ex.reg_wr.read()
+        id_controls_out_E = self.buff_id_ex.id_controls
+        ex_reg_wr = id_controls_out_E.read().reg_wr
         ex_rd = self.buff_id_ex.rd.read()
 
         mem_reg_wr = self.buff_ex_mem.reg_wr.read()
@@ -86,21 +87,15 @@ class Hazard_Detection_Unit:
 
         # ===== Control Hazards (branch / jump redirect) =====
 
-        # jfexe_M: JALR target was resolved in Execute
+        # jfexe_M: branch/jal/jalr outcome was resolved in Execute
         jfexe_M_val = self.stage_execute.jfexe_M.read()
         if jfexe_M_val:
             self.jfexe_hazard = True
             self.stage_decode.flush()
             self.stage_execute.flush()
 
-        # jfid_E: branch/jal outcome was resolved in Decode
-        jfid_E_val = self.stage_decode.jfid_E.read()
-        if jfid_E_val:
-            self.jfid_hazard = True
-            self.stage_decode.flush()
-
         # jfid_E and jfexe_M ignore RAW hazards because decode stage already has been flushed
-        is_control_hazard = jfid_E_val or jfexe_M_val
+        is_control_hazard = jfexe_M_val
         if is_control_hazard:
             return
 
