@@ -13,7 +13,7 @@ from risc_v.modules.branch_unit import BranchUnit
 from risc_v.mem.dmem_wr_port import dmem_wr_port
 from risc_v.mem.dmem_rd_port import dmem_rd_port
 
-from risc_v.riscv_config import WB_sel_t
+from risc_v.riscv_config import WB_sel
 import risc_v.riscv_config as conf
 
 
@@ -47,8 +47,6 @@ class Core:
         # Internal Wires (Combinational state of cpu)
         self.pc = 0
         self.instr = None
-        self.rs1 = 0
-        self.rs2 = 0
         self.rd = 0
 
         self.rf_rd1 = 0
@@ -67,8 +65,6 @@ class Core:
 
         # DMEM Interface Wires
         self.dmem_addr = 0
-        self.dmem_we = False
-        self.dmem_funct3 = 0
         self.dmem_byte_off = 0
         self.dmem_wdata = 0
         self.dmem_byte_we = 0
@@ -87,13 +83,13 @@ class Core:
         self.pc = self.pc_inst.read()
 
         # Instruction Decode basic fields
-        self.rs1 = self.instr.rs1
-        self.rs2 = self.instr.rs2
+        rs1 = self.instr.rs1
+        rs2 = self.instr.rs2
         self.rd = self.instr.rd
 
         # Register File read (asynchronous / combinational)
-        self.rf_rd1 = self.rf_inst.read(self.rs1)
-        self.rf_rd2 = self.rf_inst.read(self.rs2)
+        self.rf_rd1 = self.rf_inst.read(rs1)
+        self.rf_rd2 = self.rf_inst.read(rs2)
 
         # Branch Unit & Instruction Decoder
         self.id_controls = Instruction_Decoder.decode(
@@ -128,16 +124,16 @@ class Core:
         self.alu_out = self.shifter_out if self.id_controls.alushift_sel else self.alu_res
 
         # DMEM Write Port Logic (Data formatting and Byte Enable)
-        self.dmem_we = self.id_controls.dmem_sel.dmem_we
-        self.dmem_funct3 = self.id_controls.dmem_sel.funct3
+        dmem_we = self.id_controls.dmem_sel.dmem_we
+        dmem_funct3 = self.id_controls.dmem_sel.funct3
         self.dmem_byte_off = self.dmem_addr & 0b11
 
         self.dmem_wdata = 0
         self.dmem_byte_we = 0
 
-        if self.dmem_we:
+        if dmem_we:
             self.dmem_wdata, self.dmem_byte_we = dmem_wr_port(
-                self.rf_rd2, self.dmem_byte_off, self.dmem_funct3)
+                self.rf_rd2, self.dmem_byte_off, dmem_funct3)
 
         return DMemAccessData(
             addr=self.dmem_addr,
@@ -149,18 +145,19 @@ class Core:
     # STAGE 3: WRITE-BACK (Clock step)
     # ---------------------------------------------------------------------
     def write_back_comb(self, dmem_data_in: int) -> None:
+        dmem_funct3 = self.id_controls.dmem_sel.funct3
 
         # DMEM Read Port Logic (Data formatting from memory)
         dmem_rdata_out = dmem_rd_port(
-            dmem_data_in, self.dmem_byte_off, self.dmem_funct3)
+            dmem_data_in, self.dmem_byte_off, dmem_funct3)
 
         # Write-back MUX
         match self.id_controls.wb_sel:
-            case WB_sel_t.PC4_OUT:
+            case WB_sel.PC4_OUT:
                 self.rf_wd3 = (self.pc + 4) & ((1 << conf.XLEN) - 1)
-            case WB_sel_t.ALU_OUT:
+            case WB_sel.ALU_OUT:
                 self.rf_wd3 = self.alu_out
-            case WB_sel_t.DMEM_OUT:
+            case WB_sel.DMEM_OUT:
                 self.rf_wd3 = dmem_rdata_out
             case _:
                 self.rf_wd3 = 0

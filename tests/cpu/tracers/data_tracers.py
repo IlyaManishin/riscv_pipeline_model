@@ -83,7 +83,7 @@ class PipelineTracer(CsvTracer):
             wb_stage.rf_we3,
             wb_stage.rd,
             wb_stage.rf_wd3,
-            hdu.is_raw_hazard,
+            hdu.raw_hazard,
             self.disasm_pc_instr(
                 core.stage_fetch.pc_next, core.stage_fetch.valid),
             self.disasm_instr(core.stage_decode.instr.raw,
@@ -92,7 +92,7 @@ class PipelineTracer(CsvTracer):
                               core.stage_execute.valid),
             self.disasm_pc_instr(core.stage_memory.pc4 - 4,
                               core.stage_memory.valid),
-            bin(core.stage_memory.dmem_sel.to_int()),
+            bin(core.stage_memory.dmem_funct3),
             self.disasm_pc_instr(core.stage_writeback.pc4 - 4,
                               core.stage_writeback.valid)
         ]

@@ -103,9 +103,6 @@ class Core:
 
         self.hdu.update()
 
-        # Commit all synchronous changes
-        self.clk.tick()
-
     @property
     def reg_file(self) -> RegFile:
         return self._rf_inst

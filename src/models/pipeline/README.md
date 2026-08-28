@@ -49,9 +49,10 @@ Resolves pipeline hazards using the bound buffers and stage instances:
   *Note on Opcode-Based Optimization:* To prevent unnecessary stalls caused by 
   "ghost" register indices (where an instruction format exposes fields in `rs1`/`rs2` 
   but does not actually use them, such as in `JAL` or `LUI`), the unit evaluates the 
-  current Decode instruction `opcode`. It dynamically generates `uses_rs1` and 
+  current Decode instruction `opcode`.
+  ~~It dynamically generates `uses_rs1` and 
   `uses_rs2` validation flags, ensuring stalls are strictly triggered only when 
-  the source registers are actively required by the decoded instruction type. 
+  the source registers are actively required by the decoded instruction type.~~
 
 The `update()` method is the single point where stall/flush control signals are
 produced each cycle.

@@ -45,11 +45,16 @@ class Hazard_Detection_Unit:
         self.stage_memory = stage_memory
         self.stage_writeback = stage_writeback
 
-        # --- Debug Flags ---
-        self.is_id_ex_raw_hazard: bool = False
-        self.is_id_mem_raw_hazard: bool = False
-        self.is_id_wb_raw_hazard: bool = False
-        self.is_raw_hazard: bool = False
+        # ============ Debug Flags ==============
+        # Control Hazards
+        self.jfid_hazard: bool = False
+        self.jfexe_hazard: bool = False
+
+        # Data Hazards
+        self.id_ex_raw_hazard: bool = False
+        self.id_mem_raw_hazard: bool = False
+        self.id_wb_raw_hazard: bool = False
+        self.raw_hazard: bool = False
 
     def update(self) -> None:
         self.reset_debug_state()
@@ -64,50 +69,34 @@ class Hazard_Detection_Unit:
         wb_reg_wr = self.buff_mem_wb.reg_wr.read()
         wb_rd = self.buff_mem_wb.rd.read()
 
-        opcode = self.stage_decode.instr.opcode >> 2
-        uses_rs1 = opcode in (
-            0b11001,  # JALR
-            0b11000,  # Branch (BEQ, BNE, etc.)
-            0b00000,  # Load
-            0b01000,  # Store
-            0b00100,  # Immediate ALU (ADDI, etc.)
-            0b01100   # Register ALU (ADD, SUB, etc.)
-        )
-        uses_rs2 = opcode in (
-            0b11000,  # Branch
-            0b01000,  # Store
-            0b01100   # Register ALU
-        )
-
         is_ex_hazard = ex_reg_wr and ex_rd != 0 and (
-            (uses_rs1 and ex_rd == self.stage_decode.rs1) or
-            (uses_rs2 and ex_rd == self.stage_decode.rs2)
-        )
-        is_mem_hazard = mem_reg_wr and mem_rd != 0 and (
-            (uses_rs1 and mem_rd == self.stage_decode.rs1) or
-            (uses_rs2 and mem_rd == self.stage_decode.rs2)
-        )
-        is_wb_hazard = wb_reg_wr and wb_rd != 0 and (
-            (uses_rs1 and wb_rd == self.stage_decode.rs1) or
-            (uses_rs2 and wb_rd == self.stage_decode.rs2)
+            ex_rd == self.stage_decode.rs1 or
+            ex_rd == self.stage_decode.rs2
         )
 
-        self.is_id_ex_raw_hazard = is_ex_hazard
-        self.is_id_mem_raw_hazard = is_mem_hazard
-        self.is_id_wb_raw_hazard = is_wb_hazard
-        self.is_raw_hazard = is_ex_hazard or is_mem_hazard or is_wb_hazard
+        is_mem_hazard = mem_reg_wr and mem_rd != 0 and (
+            mem_rd == self.stage_decode.rs1 or
+            mem_rd == self.stage_decode.rs2
+        )
+
+        is_wb_hazard = wb_reg_wr and wb_rd != 0 and (
+            wb_rd == self.stage_decode.rs1 or
+            wb_rd == self.stage_decode.rs2
+        )
 
         # ===== Control Hazards (branch / jump redirect) =====
 
         # jfexe_M: JALR target was resolved in Execute
         jfexe_M_val = self.stage_execute.jfexe_M.read()
         if jfexe_M_val:
+            self.jfexe_hazard = True
             self.stage_decode.flush()
             self.stage_execute.flush()
 
         # jfid_E: branch/jal outcome was resolved in Decode
         jfid_E_val = self.stage_decode.jfid_E.read()
         if jfid_E_val:
+            self.jfid_hazard = True
             self.stage_decode.flush()
 
         # jfid_E and jfexe_M ignore RAW hazards because decode stage already has been flushed
@@ -116,13 +105,22 @@ class Hazard_Detection_Unit:
             return
 
         # ===== Data Hazards (RAW) =====
+        # Set debug wires
+        self.id_ex_raw_hazard = is_ex_hazard
+        self.id_mem_raw_hazard = is_mem_hazard
+        self.id_wb_raw_hazard = is_wb_hazard
+        self.raw_hazard = is_ex_hazard or is_mem_hazard or is_wb_hazard
+        
+        # Pipeline stall
         if is_ex_hazard or is_mem_hazard or is_wb_hazard:
             self.stage_fetch.pc_stall()
             self.stage_fetch.stall()
             self.stage_decode.flush()
 
     def reset_debug_state(self) -> None:
-        self.is_id_ex_raw_hazard = False
-        self.is_id_mem_raw_hazard = False
-        self.is_id_wb_raw_hazard = False
-        self.is_raw_hazard = False
+        self.jfid_hazard = False
+        self.jfexe_hazard = False
+        self.id_ex_raw_hazard = False
+        self.id_mem_raw_hazard = False
+        self.id_wb_raw_hazard = False
+        self.raw_hazard = False

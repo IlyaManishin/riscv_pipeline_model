@@ -18,7 +18,6 @@ class Memory:
         ########## DEBUG SIGNALS ##########
         self.valid: bool = False
 
-        self.dmem_sel: conf.DMem_sel = conf.DMem_sel(0, 0)
         self.dmem_we: bool = False
 
         self.dmem_addr: int = 0
@@ -33,10 +32,9 @@ class Memory:
         # ===== Address / Control Decode =====
         self.dmem_addr = self.buff_ex_mem.alu_out.read()
 
-        self.dmem_sel = conf.DMem_sel.from_int(
-            self.buff_ex_mem.dmem_sel.read())
-        self.dmem_we = self.dmem_sel.dmem_we
-        self.dmem_funct3 = self.dmem_sel.funct3
+        dmem_sel = self.buff_ex_mem.dmem_sel.read()
+        self.dmem_we = dmem_sel.dmem_we
+        self.dmem_funct3 = dmem_sel.funct3
         self.dmem_byte_off = self.dmem_addr & 0b11
 
         # ===== Store Data / Byte-Enable Formatting =====
