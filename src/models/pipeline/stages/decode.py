@@ -72,7 +72,7 @@ class Decode:
         self.buff_id_ex.dmem_sel.set(self.id_controls.dmem_sel)
         self.buff_id_ex.pc_sel.set(self.id_controls.pc_sel)
         self.buff_id_ex.br_unit_sel.set(bool(self.id_controls.br_unit_sel))
-        self.buff_id_ex.br_un.set(bool(self.id_controls.br_un))
+        self.buff_id_ex.br_un.set(bool(self.id_controls.br_unsigned))
         self.buff_id_ex.alushift_sel.set(bool(self.id_controls.alushift_sel))
         self.buff_id_ex.shift_sel.set(self.id_controls.sh_sel)
         self.buff_id_ex.valid.set(self.valid)

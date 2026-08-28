@@ -8,7 +8,7 @@ class Id_controls_out:
     a_sel: int = 0
     b_sel: int = 0
     sh_sel: Shift_sel_t = Shift_sel_t.ANY
-    br_un: int = 0
+    br_unsigned: int = 0
     pc_sel: int = 1
     br_unit_sel: int = 0
     alu_sel: Alu_sel_t = Alu_sel_t.ANY
@@ -34,7 +34,7 @@ class InstructionDecoder:
         # default signals (illegal=1)
         default = Id_controls_out(
             reg_wr=0, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=0, b_sel=0,
-            sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1, br_unit_sel=0,
+            sh_sel=Shift_sel_t.ANY, br_unsigned=0, pc_sel=1, br_unit_sel=0,
             alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel.ANY,
             imm_type=Instr_type_t.TYPE_ANY, illegal=1
         )
@@ -46,7 +46,7 @@ class InstructionDecoder:
         if opcode == 0b01101:  # 13
             return Id_controls_out(
                 reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=0, b_sel=0,
-                sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1, br_unit_sel=0,
+                sh_sel=Shift_sel_t.ANY, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                 alu_sel=Alu_sel_t.LUI, wb_sel=WB_sel.ALU_OUT,
                 imm_type=Instr_type_t.TYPE_U, illegal=0
             )
@@ -55,7 +55,7 @@ class InstructionDecoder:
         if opcode == 0b00101:  # 5
             return Id_controls_out(
                 reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=0, b_sel=0,
-                sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1, br_unit_sel=0,
+                sh_sel=Shift_sel_t.ANY, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                 alu_sel=Alu_sel_t.ADD, wb_sel=WB_sel.ALU_OUT,
                 imm_type=Instr_type_t.TYPE_U, illegal=0
             )
@@ -64,7 +64,7 @@ class InstructionDecoder:
         if opcode == 0b11011:  # 27
             return Id_controls_out(
                 reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=0, b_sel=0,
-                sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=0, br_unit_sel=0,
+                sh_sel=Shift_sel_t.ANY, br_unsigned=0, pc_sel=0, br_unit_sel=0,
                 alu_sel=Alu_sel_t.ADD, wb_sel=WB_sel.PC4_OUT,
                 imm_type=Instr_type_t.TYPE_J, illegal=0
             )
@@ -73,7 +73,7 @@ class InstructionDecoder:
         if opcode == 0b11001 and funct3 == 0b000 and funct7 == 0b0:
             return Id_controls_out(
                 reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=0,
-                sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=0, br_unit_sel=0,
+                sh_sel=Shift_sel_t.ANY, br_unsigned=0, pc_sel=0, br_unit_sel=0,
                 alu_sel=Alu_sel_t.JALR, wb_sel=WB_sel.PC4_OUT,
                 imm_type=Instr_type_t.TYPE_I, illegal=0
             )
@@ -84,7 +84,7 @@ class InstructionDecoder:
                 br_un = 1 if funct3 in (0b110, 0b111) else 0
                 return Id_controls_out(
                     reg_wr=0, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=0, b_sel=0,
-                    sh_sel=Shift_sel_t.ANY, br_un=br_un, pc_sel=0, br_unit_sel=1,
+                    sh_sel=Shift_sel_t.ANY, br_unsigned=br_un, pc_sel=0, br_unit_sel=1,
                     alu_sel=Alu_sel_t.ADD, wb_sel=WB_sel.ANY,
                     imm_type=Instr_type_t.TYPE_B, illegal=0
                 )
@@ -96,7 +96,7 @@ class InstructionDecoder:
                 return Id_controls_out(
                     reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=funct3),
                     a_sel=1, b_sel=0,
-                    sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1, br_unit_sel=0,
+                    sh_sel=Shift_sel_t.ANY, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                     alu_sel=Alu_sel_t.ADD, wb_sel=WB_sel.DMEM_OUT,
                     imm_type=Instr_type_t.TYPE_I, illegal=0
                 )
@@ -108,7 +108,7 @@ class InstructionDecoder:
                 return Id_controls_out(
                     reg_wr=0, dmem_sel=DMem_sel(dmem_we=1, funct3=funct3),
                     a_sel=1, b_sel=0,
-                    sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1, br_unit_sel=0,
+                    sh_sel=Shift_sel_t.ANY, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                     alu_sel=Alu_sel_t.ADD, wb_sel=WB_sel.ANY,
                     imm_type=Instr_type_t.TYPE_S, illegal=0
                 )
@@ -119,42 +119,42 @@ class InstructionDecoder:
             if funct3 == 0b000:  # ADDI
                 return Id_controls_out(
                     reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=0,
-                    sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1, br_unit_sel=0,
+                    sh_sel=Shift_sel_t.ANY, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                     alu_sel=Alu_sel_t.ADD, wb_sel=WB_sel.ALU_OUT,
                     imm_type=Instr_type_t.TYPE_I, illegal=0
                 )
             if funct3 == 0b010:  # SLTI
                 return Id_controls_out(
                     reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=0,
-                    sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1, br_unit_sel=0,
+                    sh_sel=Shift_sel_t.ANY, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                     alu_sel=Alu_sel_t.SLT, wb_sel=WB_sel.ALU_OUT,
                     imm_type=Instr_type_t.TYPE_I, illegal=0
                 )
             if funct3 == 0b011:  # SLTIU
                 return Id_controls_out(
                     reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=0,
-                    sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1, br_unit_sel=0,
+                    sh_sel=Shift_sel_t.ANY, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                     alu_sel=Alu_sel_t.SLTU, wb_sel=WB_sel.ALU_OUT,
                     imm_type=Instr_type_t.TYPE_I, illegal=0
                 )
             if funct3 == 0b100:  # XORI
                 return Id_controls_out(
                     reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=0,
-                    sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1, br_unit_sel=0,
+                    sh_sel=Shift_sel_t.ANY, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                     alu_sel=Alu_sel_t.XOR, wb_sel=WB_sel.ALU_OUT,
                     imm_type=Instr_type_t.TYPE_I, illegal=0
                 )
             if funct3 == 0b110:  # ORI
                 return Id_controls_out(
                     reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=0,
-                    sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1, br_unit_sel=0,
+                    sh_sel=Shift_sel_t.ANY, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                     alu_sel=Alu_sel_t.OR, wb_sel=WB_sel.ALU_OUT,
                     imm_type=Instr_type_t.TYPE_I, illegal=0
                 )
             if funct3 == 0b111:  # ANDI
                 return Id_controls_out(
                     reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=0,
-                    sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1, br_unit_sel=0,
+                    sh_sel=Shift_sel_t.ANY, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                     alu_sel=Alu_sel_t.AND, wb_sel=WB_sel.ALU_OUT,
                     imm_type=Instr_type_t.TYPE_I, illegal=0
                 )
@@ -162,7 +162,7 @@ class InstructionDecoder:
                 if funct7 == 0b0:
                     return Id_controls_out(
                         reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=0,
-                        sh_sel=Shift_sel_t.SLL, br_un=0, pc_sel=1, br_unit_sel=0,
+                        sh_sel=Shift_sel_t.SLL, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                         alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel.ALU_OUT,
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0,
                         alushift_sel=1
@@ -171,7 +171,7 @@ class InstructionDecoder:
                 if funct7 == 0b0:
                     return Id_controls_out(
                         reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=0,
-                        sh_sel=Shift_sel_t.SRL, br_un=0, pc_sel=1, br_unit_sel=0,
+                        sh_sel=Shift_sel_t.SRL, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                         alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel.ALU_OUT,
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0,
                         alushift_sel=1
@@ -179,7 +179,7 @@ class InstructionDecoder:
                 if funct7 == 0b100000:
                     return Id_controls_out(
                         reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=0,
-                        sh_sel=Shift_sel_t.SRA, br_un=0, pc_sel=1, br_unit_sel=0,
+                        sh_sel=Shift_sel_t.SRA, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                         alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel.ALU_OUT,
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0,
                         alushift_sel=1
@@ -192,14 +192,14 @@ class InstructionDecoder:
                 if funct7 == 0b0:
                     return Id_controls_out(
                         reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=1,
-                        sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1, br_unit_sel=0,
+                        sh_sel=Shift_sel_t.ANY, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                         alu_sel=Alu_sel_t.ADD, wb_sel=WB_sel.ALU_OUT,
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0
                     )
                 if funct7 == 0b100000:  # SUB
                     return Id_controls_out(
                         reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=1,
-                        sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1, br_unit_sel=0,
+                        sh_sel=Shift_sel_t.ANY, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                         alu_sel=Alu_sel_t.SUB, wb_sel=WB_sel.ALU_OUT,
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0
                     )
@@ -207,7 +207,7 @@ class InstructionDecoder:
                 if funct7 == 0b0:
                     return Id_controls_out(
                         reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=1,
-                        sh_sel=Shift_sel_t.SLL, br_un=0, pc_sel=1, br_unit_sel=0,
+                        sh_sel=Shift_sel_t.SLL, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                         alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel.ALU_OUT,
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0,
                         alushift_sel=1
@@ -216,7 +216,7 @@ class InstructionDecoder:
                 if funct7 == 0b0:
                     return Id_controls_out(
                         reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=1,
-                        sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1, br_unit_sel=0,
+                        sh_sel=Shift_sel_t.ANY, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                         alu_sel=Alu_sel_t.SLT, wb_sel=WB_sel.ALU_OUT,
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0
                     )
@@ -224,7 +224,7 @@ class InstructionDecoder:
                 if funct7 == 0b0:
                     return Id_controls_out(
                         reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=1,
-                        sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1, br_unit_sel=0,
+                        sh_sel=Shift_sel_t.ANY, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                         alu_sel=Alu_sel_t.SLTU, wb_sel=WB_sel.ALU_OUT,
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0
                     )
@@ -232,7 +232,7 @@ class InstructionDecoder:
                 if funct7 == 0b0:
                     return Id_controls_out(
                         reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=1,
-                        sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1, br_unit_sel=0,
+                        sh_sel=Shift_sel_t.ANY, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                         alu_sel=Alu_sel_t.XOR, wb_sel=WB_sel.ALU_OUT,
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0
                     )
@@ -240,7 +240,7 @@ class InstructionDecoder:
                 if funct7 == 0b0:
                     return Id_controls_out(
                         reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=1,
-                        sh_sel=Shift_sel_t.SRL, br_un=0, pc_sel=1, br_unit_sel=0,
+                        sh_sel=Shift_sel_t.SRL, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                         alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel.ALU_OUT,
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0,
                         alushift_sel=1
@@ -248,7 +248,7 @@ class InstructionDecoder:
                 if funct7 == 0b100000:
                     return Id_controls_out(
                         reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=1,
-                        sh_sel=Shift_sel_t.SRA, br_un=0, pc_sel=1, br_unit_sel=0,
+                        sh_sel=Shift_sel_t.SRA, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                         alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel.ALU_OUT,
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0,
                         alushift_sel=1
@@ -257,7 +257,7 @@ class InstructionDecoder:
                 if funct7 == 0b0:
                     return Id_controls_out(
                         reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=1,
-                        sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1, br_unit_sel=0,
+                        sh_sel=Shift_sel_t.ANY, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                         alu_sel=Alu_sel_t.OR, wb_sel=WB_sel.ALU_OUT,
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0
                     )
@@ -265,7 +265,7 @@ class InstructionDecoder:
                 if funct7 == 0b0:
                     return Id_controls_out(
                         reg_wr=1, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=1, b_sel=1,
-                        sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1, br_unit_sel=0,
+                        sh_sel=Shift_sel_t.ANY, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                         alu_sel=Alu_sel_t.AND, wb_sel=WB_sel.ALU_OUT,
                         imm_type=Instr_type_t.TYPE_ANY, illegal=0
                     )
@@ -275,7 +275,7 @@ class InstructionDecoder:
         if opcode == 0b00011 and funct3 == 0b000:
             return Id_controls_out(
                 reg_wr=0, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=0, b_sel=0,
-                sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1, br_unit_sel=0,
+                sh_sel=Shift_sel_t.ANY, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                 alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel.ANY,
                 imm_type=Instr_type_t.TYPE_ANY, illegal=0
             )
@@ -284,7 +284,7 @@ class InstructionDecoder:
         if opcode == 0b11100 and funct3 == 0b000 and funct7 == 0b0:
             return Id_controls_out(
                 reg_wr=0, dmem_sel=DMem_sel(dmem_we=0, funct3=0), a_sel=0, b_sel=0,
-                sh_sel=Shift_sel_t.ANY, br_un=0, pc_sel=1, br_unit_sel=0,
+                sh_sel=Shift_sel_t.ANY, br_unsigned=0, pc_sel=1, br_unit_sel=0,
                 alu_sel=Alu_sel_t.ANY, wb_sel=WB_sel.ANY,
                 imm_type=Instr_type_t.TYPE_ANY, illegal=0
             )

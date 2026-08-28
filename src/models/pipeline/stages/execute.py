@@ -76,7 +76,9 @@ class Execute:
         funct3 = self.buff_id_ex.funct3.read()
 
         if self.valid and (pc_sel == 0):
-            if br_unit_sel:
+            if not br_unit_sel:
+                self.jfexe = True
+            else:
                 br_eq, br_lt = BranchUnit.compare(rd1, rd2, bool(br_un))
                 if funct3 == 0b000:    # BEQ
                     br_taken = br_eq
@@ -93,8 +95,7 @@ class Execute:
                 else:
                     br_taken = False
                 self.jfexe = br_taken
-            else:
-                self.jfexe = True
+            
         else:
             self.jfexe = False
 
