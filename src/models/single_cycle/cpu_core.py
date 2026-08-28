@@ -9,7 +9,7 @@ from .modules.id import InstructionDecoder
 from risc_v.modules.immgen import ImmGen
 from risc_v.modules.alu import Alu
 from risc_v.modules.shifter import Shifter
-from risc_v.modules.branch_unit import BranchUnit
+from risc_v.modules.br_comparator import BranchComparator
 from risc_v.mem.dmem_wr_port import dmem_wr_port
 from risc_v.mem.dmem_rd_port import dmem_rd_port
 
@@ -96,7 +96,7 @@ class Core:
             self.instr)
 
         # Re-evaluate Branch Unit with exact signedness from decoder
-        br_eq, br_lt = BranchUnit.compare(
+        br_eq, br_lt = BranchComparator.compare(
             self.rf_rd1, self.rf_rd2, bool(self.id_controls.br_un))
 
         self.id_controls = InstructionDecoder.decode(

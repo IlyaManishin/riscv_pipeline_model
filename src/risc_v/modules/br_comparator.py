@@ -1,7 +1,7 @@
 from risc_v.riscv_config import XLEN
 
 
-class BranchUnit:
+class BranchComparator:
 
     @staticmethod
     def compare(rd1: int, rd2: int, br_un: bool) -> tuple[bool, bool]:

@@ -1,11 +1,11 @@
 from sim_base.mem.register import Register
 
-from models.pipeline import regs
-
 from risc_v.modules.alu import Alu
 from risc_v.modules.shifter import Shifter
-from risc_v.modules.branch_unit import BranchUnit
 from risc_v.riscv_config import Alu_sel_t, Shift_sel_t
+
+from models.pipeline import regs
+from models.pipeline.modules.br_unit import BranchUnit 
 
 
 class Execute:
@@ -79,23 +79,7 @@ class Execute:
             if not br_unit_sel:
                 self.jfexe = True
             else:
-                br_eq, br_lt = BranchUnit.compare(rd1, rd2, bool(br_un))
-                if funct3 == 0b000:    # BEQ
-                    br_taken = br_eq
-                elif funct3 == 0b001:  # BNE
-                    br_taken = not br_eq
-                elif funct3 == 0b100:  # BLT
-                    br_taken = br_lt
-                elif funct3 == 0b101:  # BGE
-                    br_taken = not br_lt
-                elif funct3 == 0b110:  # BLTU
-                    br_taken = br_lt
-                elif funct3 == 0b111:  # BGEU
-                    br_taken = not br_lt
-                else:
-                    br_taken = False
-                self.jfexe = br_taken
-            
+                self.jfexe = BranchUnit.evaluate(rd1, rd2, bool(br_un), funct3)
         else:
             self.jfexe = False
 
