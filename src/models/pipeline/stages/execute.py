@@ -4,6 +4,7 @@ from models.pipeline import regs
 
 from risc_v.modules.alu import Alu
 from risc_v.modules.shifter import Shifter
+from risc_v.modules.branch_unit import BranchUnit
 from risc_v.riscv_config import Alu_sel_t, Shift_sel_t
 
 
@@ -68,8 +69,35 @@ class Execute:
         self.buff_ex_mem.pc4.set(self.pc4)
         self.buff_ex_mem.valid.set(self.valid)
 
-        # ===== Control-Hazard Signal =====
-        self.jfexe = bool(self.valid and self.buff_id_ex.jfexe.read())
+        # ===== Control-Hazard / Branch Resolution =====
+        pc_sel = self.buff_id_ex.pc_sel.read()
+        br_unit_sel = self.buff_id_ex.br_unit_sel.read()
+        br_un = self.buff_id_ex.br_un.read()
+        funct3 = self.buff_id_ex.funct3.read()
+
+        if self.valid and (pc_sel == 0):
+            if br_unit_sel:
+                br_eq, br_lt = BranchUnit.compare(rd1, rd2, bool(br_un))
+                if funct3 == 0b000:    # BEQ
+                    br_taken = br_eq
+                elif funct3 == 0b001:  # BNE
+                    br_taken = not br_eq
+                elif funct3 == 0b100:  # BLT
+                    br_taken = br_lt
+                elif funct3 == 0b101:  # BGE
+                    br_taken = not br_lt
+                elif funct3 == 0b110:  # BLTU
+                    br_taken = br_lt
+                elif funct3 == 0b111:  # BGEU
+                    br_taken = not br_lt
+                else:
+                    br_taken = False
+                self.jfexe = br_taken
+            else:
+                self.jfexe = True
+        else:
+            self.jfexe = False
+
         self.jfpc = self.alu_out
 
         self.jfexe_M.set(self.jfexe)

@@ -36,6 +36,7 @@ class ID_EX_Stage:
     rs1: Register[int]
     rs2: Register[int]
     rd: Register[int]
+    funct3: Register[int]
     alu_sel: Register[bool]
     shift_sel: Register[bool]
     a_sel: Register[bool]
@@ -43,7 +44,9 @@ class ID_EX_Stage:
     wb_sel: Register[WB_sel]
     reg_wr: Register[bool]
     dmem_sel: Register[DMem_sel]
-    jfexe: Register[bool]
+    pc_sel: Register[int]
+    br_unit_sel: Register[bool]
+    br_un: Register[bool]
     alushift_sel: Register[bool]
     valid: Register[bool]
 
@@ -55,6 +58,7 @@ class ID_EX_Stage:
         self.rs1 = Register(0)
         self.rs2 = Register(0)
         self.rd = Register(0)
+        self.funct3 = Register(0)
 
         self.alu_sel = Register(False)
         self.shift_sel = Register(False)
@@ -63,16 +67,18 @@ class ID_EX_Stage:
         self.wb_sel = Register(0)
         self.reg_wr = Register(False)
         self.dmem_sel = Register(DMem_sel())
-        self.jfexe = Register(False)
+        self.pc_sel = Register(1)
+        self.br_unit_sel = Register(False)
+        self.br_un = Register(False)
         self.alushift_sel = Register(False)
         self.valid = Register(False)
 
     def get_registers(self) -> list[Register[int] | Register[bool]]:
         return [
             self.pc, self.rf_rd1, self.rf_rd2, self.imm,
-            self.rs1, self.rs2, self.rd,
+            self.rs1, self.rs2, self.rd, self.funct3,
             self.alu_sel, self.a_sel, self.b_sel, self.wb_sel, self.reg_wr, self.dmem_sel,
-            self.jfexe, self.alushift_sel, self.valid, self.shift_sel
+            self.pc_sel, self.br_unit_sel, self.br_un, self.alushift_sel, self.valid, self.shift_sel
         ]
 
     def stall(self):
@@ -87,6 +93,7 @@ class ID_EX_Stage:
         self.rs1.set(0)
         self.rs2.set(0)
         self.rd.set(0)
+        self.funct3.set(0)
         self.alu_sel.set(False)
         self.shift_sel.set(False)
         self.a_sel.set(False)
@@ -94,7 +101,9 @@ class ID_EX_Stage:
         self.wb_sel.set(0)
         self.reg_wr.set(False)
         self.dmem_sel.set(DMem_sel())
-        self.jfexe.set(False)
+        self.pc_sel.set(1)
+        self.br_unit_sel.set(False)
+        self.br_un.set(False)
         self.alushift_sel.set(False)
         self.valid.set(False)
 
@@ -124,6 +133,10 @@ class EX_MEM_Stage:
             self.alu_out, self.rf_rd2, self.rd,
             self.wb_sel, self.reg_wr, self.dmem_sel, self.pc4, self.valid
         ]
+
+    def stall(self):
+        for r in self.get_registers():
+            r.set(r.read())
 
     def flush(self):
         self.alu_out.set(0)

@@ -1,17 +1,13 @@
-from sim_base.mem.register import Register
-
 import risc_v.riscv_config as conf
 from models.pipeline import regs
 from models.pipeline.modules.id import InstructionDecoder
 
 from risc_v.modules.immgen import ImmGen
-from risc_v.modules.branch_unit import BranchUnit
 from risc_v.mem.reg_file import RegFile
 
 
 class Decode:
-    def __init__(self, rf: RegFile, buff_if_id: regs.IF_ID_Stage, buff_id_ex: regs.ID_EX_Stage,
-                 jfid_E: Register[bool], jfpc_E: Register[int]):
+    def __init__(self, rf: RegFile, buff_if_id: regs.IF_ID_Stage, buff_id_ex: regs.ID_EX_Stage):
         ########## INPUT SIGNALS ##########
         self.rf_inst: RegFile = rf
         self.buff_if_id: regs.IF_ID_Stage = buff_if_id
@@ -19,18 +15,10 @@ class Decode:
         ########## OUTPUT SIGNALS ##########
         self.buff_id_ex: regs.ID_EX_Stage = buff_id_ex
 
-        # --- jump logic ---
-        self.jfid_E: Register[bool] = jfid_E
-        self.jfpc_E: Register[int] = jfpc_E
-        self.jfid: bool = False
-        self.imm_pc: int = 0
-
         ########## DEBUG SIGNALS ##########
         self.id_controls = None
         self.instr = None
         self.valid: bool = False
-        self.br_eq: bool = False
-        self.br_lt: bool = False
 
         self.rs1: int = 0
         self.rs2: int = 0
@@ -57,20 +45,11 @@ class Decode:
         self.rf_rd1 = self.rf_inst.read(self.rs1)
         self.rf_rd2 = self.rf_inst.read(self.rs2)
 
-        # ===== Control Decode & Branch Resolution =====
+        # ===== Control Decode =====
         self.id_controls = InstructionDecoder.decode(self.instr)
-        self.br_eq, self.br_lt = BranchUnit.compare(
-            self.rf_rd1, self.rf_rd2, bool(self.id_controls.br_un))
-        self.id_controls = InstructionDecoder.decode(
-            self.instr, br_eq=self.br_eq, br_lt=self.br_lt)
 
-        # ===== Immediate Generation & Branch Target =====
+        # ===== Immediate Generation =====
         self.imm = ImmGen.generate(self.instr, self.id_controls.imm_type)
-        self.imm_pc = self.pc + self.imm
-
-        # ===== Control-Hazard Signal =====
-        self.jfid = self.valid and (not bool(self.id_controls.pc_sel)) and (
-            not bool(self.id_controls.jfexe))
 
         if not self.buff_if_id.valid.read(): # maybe not necessary because there is no flush in fetch (reset?)
             self.flush()
@@ -84,19 +63,19 @@ class Decode:
         self.buff_id_ex.rs1.set(self.instr.rs1)
         self.buff_id_ex.rs2.set(self.instr.rs2)
         self.buff_id_ex.rd.set(self.rd)
+        self.buff_id_ex.funct3.set(self.instr.funct3)
         self.buff_id_ex.alu_sel.set(self.id_controls.alu_sel.value)
         self.buff_id_ex.a_sel.set(self.id_controls.a_sel)
         self.buff_id_ex.b_sel.set(self.id_controls.b_sel)
         self.buff_id_ex.wb_sel.set(self.id_controls.wb_sel)
         self.buff_id_ex.reg_wr.set(self.id_controls.reg_wr)
         self.buff_id_ex.dmem_sel.set(self.id_controls.dmem_sel)
-        self.buff_id_ex.jfexe.set(bool(self.id_controls.jfexe))
+        self.buff_id_ex.pc_sel.set(self.id_controls.pc_sel)
+        self.buff_id_ex.br_unit_sel.set(bool(self.id_controls.br_unit_sel))
+        self.buff_id_ex.br_un.set(bool(self.id_controls.br_un))
         self.buff_id_ex.alushift_sel.set(bool(self.id_controls.alushift_sel))
         self.buff_id_ex.shift_sel.set(self.id_controls.sh_sel)
         self.buff_id_ex.valid.set(self.valid)
-
-        self.jfid_E.set(self.jfid)
-        self.jfpc_E.set(self.imm_pc)
 
         self.is_stall = False
         self.is_flush = False
@@ -106,15 +85,11 @@ class Decode:
         if self.is_flush:
             return
 
-        self.jfid_E.set(self.jfid_E.read())
-        self.jfpc_E.set(self.jfpc_E.read())
         self.buff_id_ex.stall()
 
-        self._is_stall = True
+        self.is_stall = True
 
     def flush(self):
-        self.jfid_E.set(False)
-        self.jfpc_E.set(0)
         self.buff_id_ex.flush()
 
         self.is_flush = False
