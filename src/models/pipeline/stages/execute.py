@@ -38,41 +38,42 @@ class Execute:
         rd2 = self.buff_id_ex.rf_rd2.read()
         
         self.valid = self.buff_id_ex.valid.read()
+        id_controls = self.buff_id_ex.id_controls.read()
 
         # ===== ALU Operand Multiplexing =====
-        alu_in_a = rd1 if self.buff_id_ex.a_sel.read() else self.buff_id_ex.pc.read()
-        alu_in_b = rd2 if self.buff_id_ex.b_sel.read() else self.buff_id_ex.imm.read()
+        alu_in_a = rd1 if id_controls.a_sel else self.buff_id_ex.pc.read()
+        alu_in_b = rd2 if id_controls.b_sel else self.buff_id_ex.imm.read()
 
         # ===== Arithmetic / Logic =====
-        alures = Alu.execute(Alu_sel_t(self.buff_id_ex.alu_sel.read()),
+        alures = Alu.execute(Alu_sel_t(id_controls.alu_sel),
                              alu_in_a, alu_in_b)
 
         # ===== Shifter =====
-        shift_shamt = (rd2 & 0x1F) if self.buff_id_ex.b_sel.read() else (
+        shift_shamt = (rd2 & 0x1F) if id_controls.b_sel else (
             self.buff_id_ex.rs2.read() & 0x1F)
-        shift_res = Shifter.shift(sel=Shift_sel_t(self.buff_id_ex.shift_sel.read()),
+        shift_res = Shifter.shift(sel=Shift_sel_t(id_controls.sh_sel),
                                   data=alu_in_a,
                                   shamt=shift_shamt)
 
         self.pc4 = self.buff_id_ex.pc.read() + 4
 
         # ===== ALU out =====
-        self.alu_out = shift_res if self.buff_id_ex.alushift_sel.read() else alures
+        self.alu_out = shift_res if id_controls.alushift_sel else alures
 
         # ===== EX/MEM Pipeline Register =====
         self.buff_ex_mem.alu_out.set(self.alu_out)
         self.buff_ex_mem.rf_rd2.set(rd2)
         self.buff_ex_mem.rd.set(self.buff_id_ex.rd.read())
-        self.buff_ex_mem.wb_sel.set(self.buff_id_ex.wb_sel.read())
-        self.buff_ex_mem.reg_wr.set(self.buff_id_ex.reg_wr.read())
-        self.buff_ex_mem.dmem_sel.set(self.buff_id_ex.dmem_sel.read())
+        self.buff_ex_mem.wb_sel.set(id_controls.wb_sel)
+        self.buff_ex_mem.reg_wr.set(id_controls.reg_wr)
+        self.buff_ex_mem.dmem_sel.set(id_controls.dmem_sel)
         self.buff_ex_mem.pc4.set(self.pc4)
         self.buff_ex_mem.valid.set(self.valid)
 
         # ===== Control-Hazard / Branch Resolution =====
-        pc_sel = self.buff_id_ex.pc_sel.read()
-        br_unit_sel = self.buff_id_ex.br_unit_sel.read()
-        br_un = self.buff_id_ex.br_un.read()
+        pc_sel = id_controls.pc_sel
+        br_unit_sel = id_controls.br_unit_sel
+        br_un = id_controls.br_unsigned
         funct3 = self.buff_id_ex.funct3.read()
 
         if self.valid and (pc_sel == 0):

@@ -64,17 +64,7 @@ class Decode:
         self.buff_id_ex.rs2.set(self.instr.rs2)
         self.buff_id_ex.rd.set(self.rd)
         self.buff_id_ex.funct3.set(self.instr.funct3)
-        self.buff_id_ex.alu_sel.set(self.id_controls.alu_sel.value)
-        self.buff_id_ex.a_sel.set(self.id_controls.a_sel)
-        self.buff_id_ex.b_sel.set(self.id_controls.b_sel)
-        self.buff_id_ex.wb_sel.set(self.id_controls.wb_sel)
-        self.buff_id_ex.reg_wr.set(self.id_controls.reg_wr)
-        self.buff_id_ex.dmem_sel.set(self.id_controls.dmem_sel)
-        self.buff_id_ex.pc_sel.set(self.id_controls.pc_sel)
-        self.buff_id_ex.br_unit_sel.set(bool(self.id_controls.br_unit_sel))
-        self.buff_id_ex.br_un.set(bool(self.id_controls.br_unsigned))
-        self.buff_id_ex.alushift_sel.set(bool(self.id_controls.alushift_sel))
-        self.buff_id_ex.shift_sel.set(self.id_controls.sh_sel)
+        self.buff_id_ex.id_controls.set(self.id_controls)
         self.buff_id_ex.valid.set(self.valid)
 
         self.is_stall = False

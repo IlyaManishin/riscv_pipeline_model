@@ -1,7 +1,7 @@
 from sim_base.mem.register import Register
 from sim_base.mem.block_mem import BlockMem
 
-from models.pipeline.modules.id import DMem_sel, WB_sel
+from models.pipeline.modules.id import Id_controls_out, DMem_sel, WB_sel
 
 
 class IF_ID_Stage:
@@ -37,17 +37,7 @@ class ID_EX_Stage:
     rs2: Register[int]
     rd: Register[int]
     funct3: Register[int]
-    alu_sel: Register[bool]
-    shift_sel: Register[bool]
-    a_sel: Register[bool]
-    b_sel: Register[bool]
-    wb_sel: Register[WB_sel]
-    reg_wr: Register[bool]
-    dmem_sel: Register[DMem_sel]
-    pc_sel: Register[int]
-    br_unit_sel: Register[bool]
-    br_un: Register[bool]
-    alushift_sel: Register[bool]
+    id_controls: Register[Id_controls_out]
     valid: Register[bool]
 
     def __init__(self):
@@ -60,25 +50,14 @@ class ID_EX_Stage:
         self.rd = Register(0)
         self.funct3 = Register(0)
 
-        self.alu_sel = Register(False)
-        self.shift_sel = Register(False)
-        self.a_sel = Register(False)
-        self.b_sel = Register(False)
-        self.wb_sel = Register(0)
-        self.reg_wr = Register(False)
-        self.dmem_sel = Register(DMem_sel())
-        self.pc_sel = Register(1)
-        self.br_unit_sel = Register(False)
-        self.br_un = Register(False)
-        self.alushift_sel = Register(False)
+        self.id_controls = Register(Id_controls_out())
         self.valid = Register(False)
 
-    def get_registers(self) -> list[Register[int] | Register[bool]]:
+    def get_registers(self) -> list[Register]:
         return [
             self.pc, self.rf_rd1, self.rf_rd2, self.imm,
             self.rs1, self.rs2, self.rd, self.funct3,
-            self.alu_sel, self.a_sel, self.b_sel, self.wb_sel, self.reg_wr, self.dmem_sel,
-            self.pc_sel, self.br_unit_sel, self.br_un, self.alushift_sel, self.valid, self.shift_sel
+            self.id_controls, self.valid
         ]
 
     def stall(self):
@@ -94,17 +73,8 @@ class ID_EX_Stage:
         self.rs2.set(0)
         self.rd.set(0)
         self.funct3.set(0)
-        self.alu_sel.set(False)
-        self.shift_sel.set(False)
-        self.a_sel.set(False)
-        self.b_sel.set(False)
-        self.wb_sel.set(0)
-        self.reg_wr.set(False)
-        self.dmem_sel.set(DMem_sel())
-        self.pc_sel.set(1)
-        self.br_unit_sel.set(False)
-        self.br_un.set(False)
-        self.alushift_sel.set(False)
+
+        self.id_controls.set(Id_controls_out())
         self.valid.set(False)
 
 

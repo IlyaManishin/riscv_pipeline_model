@@ -60,7 +60,8 @@ class Hazard_Detection_Unit:
         self.reset_debug_state()
 
         # ===== RAW Hazard Detection (rs1/rs2 usage per opcode) =====
-        ex_reg_wr = self.buff_id_ex.reg_wr.read()
+        id_controls_out_E = self.buff_id_ex.id_controls
+        ex_reg_wr = id_controls_out_E.read().reg_wr
         ex_rd = self.buff_id_ex.rd.read()
 
         mem_reg_wr = self.buff_ex_mem.reg_wr.read()
