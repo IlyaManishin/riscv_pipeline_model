@@ -254,10 +254,5 @@ class PipelinePerfTracer(BasePerfTracer):
         ex_dmem_load = (ex_wb_sel == rv_conf.WB_sel.DMEM_OUT)
         if hdu.id_ex_raw_hazard and ex_dmem_load:
             return True
-
-        mem_wb_sel = buff_ex_mem.wb_sel.read()
-        mem_dmem_load = (mem_wb_sel == rv_conf.WB_sel.DMEM_OUT)
-        if hdu.id_mem_raw_hazard and mem_dmem_load:
-            return True
         
         return False
