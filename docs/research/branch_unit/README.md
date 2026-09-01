@@ -62,11 +62,11 @@ This allowed estimation of CPI for both architectural options without implementi
 
 Branch resolution in Decode:
 
-* Typical CPI ≈ 1.6 - 1.7
+* Typical CPI ≈ 1.2 - 1.4
 
 Branch resolution in Execute:
 
-* Typical CPI ≈ 1.7 - 1.8
+* Typical CPI ≈ 1.3 - 1.5
 
 The Decode-stage design showed a slightly better CPI because control hazards were resolved earlier.
 
@@ -77,10 +77,10 @@ RTL timing analysis produced the following results:
 | Configuration          | Estimated Frequency |
 | ---------------------- | ------------------- |
 | Branch unit in Decode  | ~127 MHz            |
-| Branch unit in Execute | ~141 MHz            |
+| Branch unit in Execute | ~137 MHz            |
 
-Moving branch processing to Execute improved the maximum frequency by approximately 11%.
-
+Moving branch processing to Execute improved the maximum frequency by approximately 8%.
+* Note: These estimates are based on RTL without forwarding and do not account for forwarding MUX overhead
 ---
 
 ## Performance Evaluation
@@ -100,7 +100,7 @@ The research shows that moving branch processing from **Decode** to **Execute** 
 Key reasons:
 
 * Significant reduction of the decode-stage critical path.
-* Increase in maximum frequency from approximately **127 MHz** to **141 MHz**.
+* Increase in maximum frequency from approximately **127 MHz** to **137 MHz**.
 * Only a small CPI increase after accounting for forwarding.
 * Better overall performance despite the additional control hazard penalty.
 

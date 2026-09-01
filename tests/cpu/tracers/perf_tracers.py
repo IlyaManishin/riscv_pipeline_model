@@ -244,7 +244,6 @@ class PipelinePerfTracer(BasePerfTracer):
     def is_no_fwd_hazard(self, core: PL_Core) -> bool:
         hdu = core.hdu
         buff_id_ex = core.buff_id_ex
-        buff_ex_mem = core.buff_ex_mem
 
         if not hdu.raw_hazard:
             return False
