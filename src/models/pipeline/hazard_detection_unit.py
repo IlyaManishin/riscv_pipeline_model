@@ -96,8 +96,6 @@ class Hazard_Detection_Unit:
 
         # jfid_E and jfexe_M ignore RAW hazards because decode stage already has been flushed
         is_control_hazard = jfexe_M_val
-        if is_control_hazard:
-            return
 
         # ===== Data Hazards (RAW) =====
         # Set debug wires
@@ -108,8 +106,10 @@ class Hazard_Detection_Unit:
         
         # Pipeline stall
         if is_ex_hazard or is_mem_hazard or is_wb_hazard:
-            self.stage_fetch.pc_stall()
-            self.stage_fetch.stall()
+            if not is_control_hazard:
+                self.stage_fetch.pc_stall()
+                self.stage_fetch.stall()
+
             self.stage_decode.flush()
 
     def reset_debug_state(self) -> None:
