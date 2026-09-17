@@ -30,8 +30,8 @@ class RegisterTracer(CsvTracer):
             cycle,
             self.cpu.get_cur_pc()
         ]
-        for i in range(REG_COUNT):
-            row.append(self.cpu.reg_file.read(i))
+        reg_list: list[int] = self.cpu.reg_file._memory
+        row.extend(reg_list[:REG_COUNT])
         self.write_row(row)
 
 
@@ -47,6 +47,7 @@ class PipelineTracer(CsvTracer):
     def __init__(self, cpu: PL_CpuSystem | Any, trace_dir: str | Path, tracer_name: str = "pipeline"):
         super().__init__(trace_dir, tracer_name)
         self.cpu = cpu
+        self._pc_mask: int = (1 << IMEM_ADDR_BYTE_WIDTH) - 1
 
     def get_header(self) -> list[str]:
         header = ["cycle",
@@ -93,15 +94,15 @@ class PipelineTracer(CsvTracer):
             self.disasm_instr(core.buff_mem_wb.instr.read(),
                               core.stage_writeback.valid)
         ]
-        for i in range(REG_COUNT):
-            row.append(self.cpu.reg_file.read(i))
+        reg_list: list[int] = self.cpu.reg_file._memory
+        row.extend(reg_list[:REG_COUNT])
+            
         self.writer.writerow(row)
 
     def disasm_pc_instr(self, pc: int, valid: int | bool = True) -> str:
         if not bool(valid):
             return "nop"
-        pc_mask = (1 << IMEM_ADDR_BYTE_WIDTH) - 1
-        instr_raw = self.cpu.imem._memory[(pc & pc_mask) >> 2]
+        instr_raw = self.cpu.imem._memory[(pc & self._pc_mask) >> 2]
         return Instruction(instr_raw).disasm()
 
     def disasm_instr(self, instr: Instruction, valid: int | bool = True) -> str:
