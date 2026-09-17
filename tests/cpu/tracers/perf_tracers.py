@@ -241,7 +241,8 @@ class PipelinePerfTracer(BasePerfTracer):
         if self.is_no_fwd_hazard(core):
             self.no_fwd_hazards += 1
 
-    def is_no_fwd_hazard(self, core: PL_Core) -> bool:
+    @staticmethod
+    def is_no_fwd_hazard(core: PL_Core) -> bool:
         hdu = core.hdu
         buff_id_ex = core.buff_id_ex
 

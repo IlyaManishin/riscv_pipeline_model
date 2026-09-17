@@ -11,7 +11,7 @@ class RegFile(LutMemory):
     def read(self, addr: int) -> int:
         if addr == 0:
             return 0
-        return super().read(addr)
+        return self._read_cell(addr)
 
     def update(self) -> None:
         super().update()

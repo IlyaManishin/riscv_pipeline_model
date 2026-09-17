@@ -1,8 +1,9 @@
 from risc_v.riscv_config import XLEN, Shift_sel_t
 
 
-
 class Shifter:
+    _DATA_MASK: int = (1 << XLEN) - 1
+    _SHIFT_MASK: int = (1 << ((XLEN - 1).bit_length())) - 1
 
     @staticmethod
     def shift(data: int, shamt: int, sel: Shift_sel_t) -> int:
@@ -18,10 +19,8 @@ class Shifter:
             Shift result.
         """
 
-        mask = (1 << XLEN) - 1
-
-        data &= mask
-        shamt &= (1 << ((XLEN - 1).bit_length())) - 1
+        data &= Shifter._DATA_MASK
+        shamt &= Shifter._SHIFT_MASK
 
         match sel:
 
@@ -47,4 +46,4 @@ class Shifter:
             case _:
                 raise ValueError(f"Unsupported shift operation: {sel}")
 
-        return res & mask
+        return res & Shifter._DATA_MASK

@@ -67,9 +67,10 @@ class Memory:
         self.buff_mem_wb.reg_wr.set(self.buff_ex_mem.reg_wr.read())
         self.buff_mem_wb.pc4.set(self.pc4)
         self.buff_mem_wb.valid.set(self.valid)
+        self.buff_mem_wb.instr.set(self.buff_ex_mem.instr.read())
 
     def flush(self):
         self.buff_mem_wb.flush()
-    
+
     def rst(self):
         self.flush()

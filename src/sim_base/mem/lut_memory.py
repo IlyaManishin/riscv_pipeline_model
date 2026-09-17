@@ -12,7 +12,6 @@ class LutMemory(MemoryArray):
         if self._next_write is not None:
             raise RuntimeError("Memory write conflict: multiple writes detected within a single clock cycle")
 
-        self._validate_address(addr)
         self._next_write = (addr, value)
 
     def update(self) -> None:

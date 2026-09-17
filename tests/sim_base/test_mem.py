@@ -48,6 +48,7 @@ class TestLutMemory:
         mem = LutMemory(size=4, cell_size=32)
         with pytest.raises(IndexError):
             mem.write(-1, 10)
+            mem.update()
 
     def test_multiple_cycles_sequence(self):
         mem = LutMemory(size=8, cell_size=32)

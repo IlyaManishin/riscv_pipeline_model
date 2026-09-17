@@ -5,7 +5,7 @@ from risc_v.modules.shifter import Shifter
 from risc_v.riscv_config import Alu_sel_t, Shift_sel_t
 
 from models.pipeline import regs
-from models.pipeline.modules.br_unit import BranchUnit 
+from models.pipeline.modules.br_unit import BranchUnit
 
 
 class Execute:
@@ -36,7 +36,7 @@ class Execute:
         # ===== Operand Read =====
         rd1 = self.buff_id_ex.rf_rd1.read()
         rd2 = self.buff_id_ex.rf_rd2.read()
-        
+
         self.valid = self.buff_id_ex.valid.read()
         id_controls = self.buff_id_ex.id_controls.read()
 
@@ -45,13 +45,13 @@ class Execute:
         alu_in_b = rd2 if id_controls.b_sel else self.buff_id_ex.imm.read()
 
         # ===== Arithmetic / Logic =====
-        alures = Alu.execute(Alu_sel_t(id_controls.alu_sel),
+        alures = Alu.execute(id_controls.alu_sel,
                              alu_in_a, alu_in_b)
 
         # ===== Shifter =====
         shift_shamt = (rd2 & 0x1F) if id_controls.b_sel else (
             self.buff_id_ex.rs2.read() & 0x1F)
-        shift_res = Shifter.shift(sel=Shift_sel_t(id_controls.sh_sel),
+        shift_res = Shifter.shift(sel=id_controls.sh_sel,
                                   data=alu_in_a,
                                   shamt=shift_shamt)
 
@@ -69,6 +69,7 @@ class Execute:
         self.buff_ex_mem.dmem_sel.set(id_controls.dmem_sel)
         self.buff_ex_mem.pc4.set(self.pc4)
         self.buff_ex_mem.valid.set(self.valid)
+        self.buff_ex_mem.instr.set(self.buff_id_ex.instr.read())
 
         # ===== Control-Hazard / Branch Resolution =====
         pc_sel = id_controls.pc_sel
@@ -104,7 +105,7 @@ class Execute:
         self.buff_ex_mem.flush()
         self.jfexe_M.set(False)
         self.jfpc_M.set(0)
-        
+
         self.is_flush = True
 
     def rst(self):

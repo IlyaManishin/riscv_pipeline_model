@@ -2,12 +2,11 @@ from pathlib import Path
 from typing import Any
 
 from risc_v.base.icpu_system import ICpuSystem
-from risc_v.riscv_config import IMEM_ADDR_BYTE_WIDTH
+from risc_v.riscv_config import Instruction, IMEM_ADDR_BYTE_WIDTH
 from models.pipeline.cpu_system import CpuSystem as PL_CpuSystem
 
 from tests.cpu.tests_config import REG_COUNT
 from .base_tracers import CsvTracer
-from tests.utils import disasm
 
 # ============================================================
 # COMMON_REGISTER_MONITOR_TRACER
@@ -31,8 +30,8 @@ class RegisterTracer(CsvTracer):
             cycle,
             self.cpu.get_cur_pc()
         ]
-        for i in range(REG_COUNT):
-            row.append(self.cpu.reg_file.read(i))
+        reg_list: list[int] = self.cpu.reg_file._memory
+        row.extend(reg_list[:REG_COUNT])
         self.write_row(row)
 
 
@@ -48,6 +47,7 @@ class PipelineTracer(CsvTracer):
     def __init__(self, cpu: PL_CpuSystem | Any, trace_dir: str | Path, tracer_name: str = "pipeline"):
         super().__init__(trace_dir, tracer_name)
         self.cpu = cpu
+        self._pc_mask: int = (1 << IMEM_ADDR_BYTE_WIDTH) - 1
 
     def get_header(self) -> list[str]:
         header = ["cycle",
@@ -82,32 +82,30 @@ class PipelineTracer(CsvTracer):
             wb_stage.rd,
             wb_stage.rf_wd3,
             hdu.raw_hazard,
-            self.disasm_pc_instr(
-                core.stage_fetch.pc_next, core.stage_fetch.valid),
-            self.disasm_instr(core.stage_decode.instr.raw,
+            self.disasm_pc_instr(core.stage_fetch.pc_next,
+                                 core.stage_fetch.valid),
+            self.disasm_instr(core.stage_decode.instr,
                               core.stage_decode.valid),
-            self.disasm_pc_instr(core.stage_execute.pc4 - 4,
+            self.disasm_instr(core.buff_id_ex.instr.read(),
                               core.stage_execute.valid),
-            self.disasm_pc_instr(core.stage_memory.pc4 - 4,
+            self.disasm_instr(core.buff_ex_mem.instr.read(),
                               core.stage_memory.valid),
             bin(core.stage_memory.dmem_funct3),
-            self.disasm_pc_instr(core.stage_writeback.pc4 - 4,
+            self.disasm_instr(core.buff_mem_wb.instr.read(),
                               core.stage_writeback.valid)
         ]
-        for i in range(REG_COUNT):
-            row.append(self.cpu.reg_file.read(i))
+        reg_list: list[int] = self.cpu.reg_file._memory
+        row.extend(reg_list[:REG_COUNT])
+            
         self.writer.writerow(row)
 
-    def disasm_pc_instr(self, pc: int, valid: int):
+    def disasm_pc_instr(self, pc: int, valid: int | bool = True) -> str:
         if not bool(valid):
             return "nop"
-        pc_mask = (1 << IMEM_ADDR_BYTE_WIDTH) - 1
-        instr = self.cpu.imem._memory[(pc & pc_mask) >> 2]
-        dis_instr = disasm.disasm(instr)
-        return f"{{{pc}}}{dis_instr}"
+        instr_raw = self.cpu.imem._memory[(pc & self._pc_mask) >> 2]
+        return Instruction(instr_raw).disasm()
 
-    def disasm_instr(self, instr, valid: int):
-        # if not bool(valid):
-        #     return "nop"
-        dis_instr = disasm.disasm(instr)
-        return f"{dis_instr}"
+    def disasm_instr(self, instr: Instruction, valid: int | bool = True) -> str:
+        if not bool(valid):
+            return "nop"
+        return instr.disasm()
