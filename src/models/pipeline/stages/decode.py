@@ -1,7 +1,8 @@
-import risc_v.riscv_config as conf
 from models.pipeline import regs
 from models.pipeline.modules.id import InstructionDecoder
 
+import risc_v.riscv_config as conf
+from risc_v.riscv_config import Instruction
 from risc_v.modules.immgen import ImmGen
 from risc_v.mem.reg_file import RegFile
 
@@ -17,7 +18,7 @@ class Decode:
 
         ########## DEBUG SIGNALS ##########
         self.id_controls = None
-        self.instr = None
+        self.instr: Instruction = None
         self.valid: bool = False
 
         self.rs1: int = 0
@@ -51,7 +52,7 @@ class Decode:
         # ===== Immediate Generation =====
         self.imm = ImmGen.generate(self.instr, self.id_controls.imm_type)
 
-        if not self.buff_if_id.valid.read(): # maybe not necessary because there is no flush in fetch (reset?)
+        if not self.buff_if_id.valid.read():  # maybe not necessary because there is no flush in fetch (reset?)
             self.flush()
             return
 
@@ -66,6 +67,7 @@ class Decode:
         self.buff_id_ex.funct3.set(self.instr.funct3)
         self.buff_id_ex.id_controls.set(self.id_controls)
         self.buff_id_ex.valid.set(self.valid)
+        self.buff_id_ex.instr.set(self.instr)
 
         self.is_stall = False
         self.is_flush = False

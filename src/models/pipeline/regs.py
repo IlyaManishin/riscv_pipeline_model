@@ -1,6 +1,7 @@
 from sim_base.mem.register import Register
 from sim_base.mem.block_mem import BlockMem
 
+from risc_v.riscv_config import Instruction
 from models.pipeline.modules.id import Id_controls_out, DMem_sel, WB_sel
 
 
@@ -39,6 +40,7 @@ class ID_EX_Stage:
     funct3: Register[int]
     id_controls: Register[Id_controls_out]
     valid: Register[bool]
+    instr: Register[Instruction] # Debug
 
     def __init__(self):
         self.pc = Register(0)
@@ -52,12 +54,14 @@ class ID_EX_Stage:
 
         self.id_controls = Register(Id_controls_out())
         self.valid = Register(False)
+        self.instr = Register(Instruction())  
 
     def get_registers(self) -> list[Register]:
         return [
             self.pc, self.rf_rd1, self.rf_rd2, self.imm,
             self.rs1, self.rs2, self.rd, self.funct3,
-            self.id_controls, self.valid
+            self.id_controls, self.valid,
+            self.instr  
         ]
 
     def stall(self):
@@ -76,6 +80,7 @@ class ID_EX_Stage:
 
         self.id_controls.set(Id_controls_out())
         self.valid.set(False)
+        self.instr.set(Instruction())  
 
 
 class EX_MEM_Stage:
@@ -87,6 +92,7 @@ class EX_MEM_Stage:
     dmem_sel: Register[DMem_sel]
     pc4: Register[int]
     valid: Register[bool]
+    instr: Register[Instruction] # Debug
 
     def __init__(self):
         self.alu_out = Register(0)
@@ -97,11 +103,13 @@ class EX_MEM_Stage:
         self.dmem_sel = Register(DMem_sel())
         self.pc4 = Register(0)
         self.valid = Register(False)
+        self.instr = Register(Instruction())  
 
-    def get_registers(self) -> list[Register[int] | Register[bool]]:
+    def get_registers(self) -> list[Register[int] | Register[bool] | Register[Instruction]]:
         return [
             self.alu_out, self.rf_rd2, self.rd,
-            self.wb_sel, self.reg_wr, self.dmem_sel, self.pc4, self.valid
+            self.wb_sel, self.reg_wr, self.dmem_sel, self.pc4, self.valid,
+            self.instr  
         ]
 
     def stall(self):
@@ -117,6 +125,7 @@ class EX_MEM_Stage:
         self.dmem_sel.set(DMem_sel())
         self.pc4.set(0)
         self.valid.set(False)
+        self.instr.set(Instruction(0))  
 
 
 class MEM_WB_Stage:
@@ -129,6 +138,7 @@ class MEM_WB_Stage:
     reg_wr: Register[bool]
     pc4: Register[int]
     valid: Register[bool]
+    instr: Register[Instruction] # Debug
 
     def __init__(self, dmem: BlockMem):
         self.alu_out = Register(0)
@@ -141,11 +151,13 @@ class MEM_WB_Stage:
         self.reg_wr = Register(False)
         self.pc4 = Register(0)
         self.valid = Register(False)
+        self.instr = Register(Instruction())  
 
-    def get_registers(self) -> list[Register[int] | Register[bool]]:
+    def get_registers(self) -> list[Register[int] | Register[bool] | Register[Instruction]]:
         return [
             self.alu_out, self.dmem_byte_off, self.dmem_funct3, self.rd,
-            self.wb_sel, self.reg_wr, self.pc4, self.valid
+            self.wb_sel, self.reg_wr, self.pc4, self.valid,
+            self.instr  
         ]  # dmem_data/dmem is committed externally, not here
 
     def flush(self):
@@ -155,3 +167,4 @@ class MEM_WB_Stage:
         self.wb_sel.set(0)
         self.reg_wr.set(False)
         self.valid.set(False)
+        self.instr.set(Instruction())  
