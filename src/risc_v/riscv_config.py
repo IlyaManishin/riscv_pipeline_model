@@ -57,7 +57,7 @@ class DMem_sel:
 
 
 class Instruction:
-    # Strict memory limit: max 16384 unique instructions (~3.5 MB RAM)
+    # Strict memory limit: max 16384 unique instructions (~4 MB RAM)
     _CACHE_MAX_SIZE: ClassVar[int] = 16_384
     _cache: ClassVar[OrderedDict[int, "Instruction"]] = OrderedDict()
 
