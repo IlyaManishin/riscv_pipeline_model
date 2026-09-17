@@ -45,13 +45,13 @@ class Execute:
         alu_in_b = rd2 if id_controls.b_sel else self.buff_id_ex.imm.read()
 
         # ===== Arithmetic / Logic =====
-        alures = Alu.execute(Alu_sel_t(id_controls.alu_sel),
+        alures = Alu.execute(id_controls.alu_sel,
                              alu_in_a, alu_in_b)
 
         # ===== Shifter =====
         shift_shamt = (rd2 & 0x1F) if id_controls.b_sel else (
             self.buff_id_ex.rs2.read() & 0x1F)
-        shift_res = Shifter.shift(sel=Shift_sel_t(id_controls.sh_sel),
+        shift_res = Shifter.shift(sel=id_controls.sh_sel,
                                   data=alu_in_a,
                                   shamt=shift_shamt)
 
