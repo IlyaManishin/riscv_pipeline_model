@@ -1,6 +1,8 @@
 import enum
 import math
 from dataclasses import dataclass
+from collections import OrderedDict
+from typing import ClassVar
 
 XLEN = 32
 PC_START_ADDR = 0
@@ -53,23 +55,44 @@ class DMem_sel:
     dmem_we: bool = False
     funct3: int = 0
 
+
 class Instruction:
+    # Strict memory limit: max 16384 unique instructions (~3.5 MB RAM)
+    _CACHE_MAX_SIZE: ClassVar[int] = 16_384
+    _cache: ClassVar[OrderedDict[int, "Instruction"]] = OrderedDict()
+
     __slots__ = (
         'raw', 'opcode', 'rd', 'funct3', 'rs1', 'rs2',
         'funct7', 'funct7_onebit', 'shamt',
         '_repr_cache', '_str_cache'
     )
 
-    def __init__(self, raw: int = 0x00000013):
+    def __new__(cls, raw: int = 0x00000013) -> "Instruction":
+        cache = cls._cache
+
+        # Fast-path cache hit
+        if raw in cache:
+            cache.move_to_end(raw)  # Mark as recently used
+            return cache[raw]
+
         if not (0 <= raw <= 0xFFFFFFFF):
             raise ValueError("Instruction must be 32-bit value")
-        self.raw = raw
-        
-        # Lazy init
-        self._repr_cache: str | None = None
-        self._str_cache: str | None = None
 
-        self._decode_fields()
+        instance = super().__new__(cls)
+        instance.raw = raw
+        instance._repr_cache = None
+        instance._str_cache = None
+        instance._decode_fields()
+
+        # Evict oldest entry if capacity exceeded
+        if len(cache) >= cls._CACHE_MAX_SIZE:
+            cache.popitem(last=False)
+
+        cache[raw] = instance
+        return instance
+
+    def __init__(self, raw: int = 0x00000013) -> None:
+        pass
 
     def _decode_fields(self) -> None:
         raw = self.raw
@@ -132,10 +155,12 @@ class Instruction:
 
         # B-type branch instructions
         if op5 == 0b11000:
-            imm_b = ((raw >> 19) & 0x1000) | ((raw << 4) & 0x800) | ((raw >> 20) & 0x7E0) | ((raw >> 7) & 0x1E)
+            imm_b = ((raw >> 19) & 0x1000) | ((raw << 4) & 0x800) | (
+                (raw >> 20) & 0x7E0) | ((raw >> 7) & 0x1E)
             if imm_b & 0x1000:
                 imm_b -= 0x2000
-            branches = {0: "beq", 1: "bne", 4: "blt", 5: "bge", 6: "bltu", 7: "bgeu"}
+            branches = {0: "beq", 1: "bne", 4: "blt",
+                        5: "bge", 6: "bltu", 7: "bgeu"}
             mnemonic = branches.get(f3)
             if mnemonic:
                 self._str_cache = f"{mnemonic} x{rs1}, x{rs2}, {imm_b}"
@@ -162,29 +187,47 @@ class Instruction:
 
         # I-type arithmetic instructions
         if op5 == 0b00100:
-            if f3 == 0: self._str_cache = f"addi x{rd}, x{rs1}, {imm_i}"
-            elif f3 == 2: self._str_cache = f"slti x{rd}, x{rs1}, {imm_i}"
-            elif f3 == 3: self._str_cache = f"sltiu x{rd}, x{rs1}, {imm_i}"
-            elif f3 == 4: self._str_cache = f"xori x{rd}, x{rs1}, {imm_i}"
-            elif f3 == 6: self._str_cache = f"ori x{rd}, x{rs1}, {imm_i}"
-            elif f3 == 7: self._str_cache = f"andi x{rd}, x{rs1}, {imm_i}"
-            elif f3 == 1 and bit30 == 0: self._str_cache = f"slli x{rd}, x{rs1}, {self.shamt}"
-            elif f3 == 5 and bit30 == 0: self._str_cache = f"srli x{rd}, x{rs1}, {self.shamt}"
-            elif f3 == 5 and bit30 == 1: self._str_cache = f"srai x{rd}, x{rs1}, {self.shamt}"
+            if f3 == 0:
+                self._str_cache = f"addi x{rd}, x{rs1}, {imm_i}"
+            elif f3 == 2:
+                self._str_cache = f"slti x{rd}, x{rs1}, {imm_i}"
+            elif f3 == 3:
+                self._str_cache = f"sltiu x{rd}, x{rs1}, {imm_i}"
+            elif f3 == 4:
+                self._str_cache = f"xori x{rd}, x{rs1}, {imm_i}"
+            elif f3 == 6:
+                self._str_cache = f"ori x{rd}, x{rs1}, {imm_i}"
+            elif f3 == 7:
+                self._str_cache = f"andi x{rd}, x{rs1}, {imm_i}"
+            elif f3 == 1 and bit30 == 0:
+                self._str_cache = f"slli x{rd}, x{rs1}, {self.shamt}"
+            elif f3 == 5 and bit30 == 0:
+                self._str_cache = f"srli x{rd}, x{rs1}, {self.shamt}"
+            elif f3 == 5 and bit30 == 1:
+                self._str_cache = f"srai x{rd}, x{rs1}, {self.shamt}"
             if self._str_cache is not None:
                 return self._str_cache
 
         # R-type instructions
         if op5 == 0b01100:
-            if f3 == 0: mnemonic = "sub" if bit30 else "add"
-            elif f3 == 1: mnemonic = "sll"
-            elif f3 == 2: mnemonic = "slt"
-            elif f3 == 3: mnemonic = "sltu"
-            elif f3 == 4: mnemonic = "xor"
-            elif f3 == 5: mnemonic = "sra" if bit30 else "srl"
-            elif f3 == 6: mnemonic = "or"
-            elif f3 == 7: mnemonic = "and"
-            else: mnemonic = None
+            if f3 == 0:
+                mnemonic = "sub" if bit30 else "add"
+            elif f3 == 1:
+                mnemonic = "sll"
+            elif f3 == 2:
+                mnemonic = "slt"
+            elif f3 == 3:
+                mnemonic = "sltu"
+            elif f3 == 4:
+                mnemonic = "xor"
+            elif f3 == 5:
+                mnemonic = "sra" if bit30 else "srl"
+            elif f3 == 6:
+                mnemonic = "or"
+            elif f3 == 7:
+                mnemonic = "and"
+            else:
+                mnemonic = None
 
             if mnemonic:
                 self._str_cache = f"{mnemonic} x{rd}, x{rs1}, x{rs2}"
