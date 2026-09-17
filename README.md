@@ -44,10 +44,11 @@ riscv_pipeline_model/
 │   ├── modules/             # Unit tests for IMEM / DMEM / RegFile
 │   ├── sim_base/            # Tests for the simulation framework
 │   └── utils/               # disasm helper
-├── benchmarks/              # Assembly + C benchmark sources and build scripts
+├── benchmarks/              # Assembly + C benchmark sources and build scripts (submodule)
 ├── trace/                   # Generated CSV / VCD waveforms (output)
 ├── pyproject.toml           # Package metadata, pytest config
 └── reqs.txt                 # Pinned dependencies
+
 
 ```
 
@@ -57,8 +58,20 @@ riscv_pipeline_model/
 
 Requires Python 3.11+.
 
+Clone the repository with submodules (required for running benchmarks and tests):
+
+```bash
+git clone --recurse-submodules <repository_url>
+# Or if already cloned:
+git submodule update --init --recursive
+
+```
+
+Install Python dependencies:
+
 ```bash
 python -m pip install -r reqs.txt
+
 ```
 
 Key runtime dependencies:
@@ -75,6 +88,7 @@ with `where = ["src"]`), so the `src` layout is importable directly when
 ---
 
 ## Quick Start
+
 Drive the full cores programmatically:
 
 ```python
@@ -86,6 +100,7 @@ pl_cpu = pl.CpuSystem()
 pl_cpu.imem.load_program(instructions)   # list[int], 32-bit each
 pl_cpu.dmem.load_data(data)
 pl_cpu.step()                            # advances one clock edge
+
 ```
 
 ---
@@ -96,6 +111,7 @@ To run the test suite, execute:
 
 ```bash
 pytest
+
 
 ```
 
@@ -116,3 +132,5 @@ For advanced test options, custom flags, and details on verification, see [`test
 | `src/sim_base/README.md` | Simulation framework |
 | `tests/README.md` | Verification suite |
 | `tests/cpu/README.md` | Architectural CPU tests & tracers |
+
+```
