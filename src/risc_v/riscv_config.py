@@ -89,44 +89,44 @@ class Instruction:
 
         raw = self.raw
 
-        # Opcode validation
+        # Opcode validation (lower 2 bits must be 0b11)
         if (self.opcode & 0x3) != 0x3:
             self._str_cache = "nop"
             return self._str_cache
 
         op5 = self.opcode >> 2
-        rd = self.rd
-        rs1 = self.rs1
-        rs2 = self.rs2
-        f3 = self.funct3
-        bit30 = self.funct7_onebit
+        rd, rs1, rs2 = self.rd, self.rs1, self.rs2
+        f3, bit30 = self.funct3, self.funct7_onebit
 
         # U-type instructions
-        if op5 == 0b01101:  # LUI
+        if op5 in (0b01101, 0b00101):
             imm_u = raw & 0xFFFFF000
-            self._str_cache = f"lui x{rd}, {imm_u}"
+            if imm_u & 0x80000000:  # Sign extend for 32-bit negative values
+                imm_u -= 0x100000000
+            mnemonic = "lui" if op5 == 0b01101 else "auipc"
+            self._str_cache = f"{mnemonic} x{rd}, {imm_u}"
             return self._str_cache
 
-        if op5 == 0b00101:  # AUIPC
-            imm_u = raw & 0xFFFFF000
-            self._str_cache = f"auipc x{rd}, {imm_u}"
-            return self._str_cache
-
-        # J-type instructions
-        if op5 == 0b11011:  # JAL
-            imm_j = ((raw >> 11) & 0x100000) | (raw & 0xFF000) | ((raw >> 9) & 0x800) | ((raw >> 20) & 0x7FE)
+        # J-type instructions (JAL)
+        if op5 == 0b11011:
+            imm_j = (
+                ((raw >> 11) & 0x100000) |
+                (raw & 0xFF000) |
+                ((raw >> 20) & 0x800) |
+                ((raw >> 20) & 0x7FE)
+            )
             if imm_j & 0x100000:
                 imm_j -= 0x200000
             self._str_cache = f"jal x{rd}, {imm_j}"
             return self._str_cache
 
-        # I-type immediates calculation for JALR, Load, Arith-I
+        # I-type immediates calculation
         imm_i = raw >> 20
         if imm_i & 0x800:
             imm_i -= 0x1000
 
-        # I-type jump
-        if op5 == 0b11001 and f3 == 0 and bit30 == 0:  # JALR
+        # I-type jump (JALR)
+        if op5 == 0b11001 and f3 == 0 and bit30 == 0:
             self._str_cache = f"jalr x{rd}, x{rs1}, {imm_i}"
             return self._str_cache
 
